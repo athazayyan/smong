@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { LessonNode, DisasterPhaseId } from "@/features/student-learning/types";
 import { LessonNodeButton } from "./LessonNodeButton";
 import { PhaseBanner } from "./PhaseBanner";
+import { Trophy } from "lucide-react";
 
 export interface ModulePathProps {
   nodes: LessonNode[];
@@ -87,12 +88,12 @@ export function ModulePath({ nodes }: ModulePathProps) {
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: nodes.length * 0.1 + 0.3 }}
-        className="flex flex-col items-center gap-2 mt-4"
+        className="flex flex-col items-center gap-3 mt-6"
       >
-        <div className="w-10 h-10 rounded-full bg-yellow-200/40 ring-2 ring-yellow-200 flex items-center justify-center text-xl">
-          🏆
+        <div className="w-14 h-14 rounded-full bg-yellow-200/40 ring-4 ring-yellow-200 flex items-center justify-center">
+          <Trophy className="w-7 h-7 text-yellow-700" />
         </div>
-        <p className="font-sans text-xs text-ink-700/50 text-center">
+        <p className="font-sans text-xs font-semibold text-ink-700/60 text-center max-w-[150px]">
           Selesaikan semua misi untuk badge Pahlawan Evakuasi!
         </p>
       </motion.div>

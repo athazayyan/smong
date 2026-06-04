@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { ChecklistActivity } from "@/features/student-learning/types";
+import { Check, CheckCircle2, ArrowRight } from "lucide-react";
 
 export interface ChecklistProps {
   activity: ChecklistActivity;
@@ -46,20 +47,20 @@ export function Checklist({ activity, onComplete }: ChecklistProps) {
               className={cn(
                 "flex items-center gap-4 w-full text-left rounded-2xl px-5 py-4 ring-2 transition-colors font-sans text-sm font-semibold",
                 isChecked
-                  ? "bg-mint-100 ring-teal-500 text-teal-500"
+                  ? "bg-mint-100 ring-teal-500 text-teal-700"
                   : "bg-white ring-lavender-200/60 text-ink-900 hover:ring-purple-500"
               )}
             >
-              <motion.span
+              <motion.div
                 animate={{ scale: isChecked ? [1, 1.3, 1] : 1 }}
                 transition={{ duration: 0.25 }}
                 className={cn(
-                  "w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 text-sm",
+                  "w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0",
                   isChecked ? "bg-teal-500 border-teal-500 text-white" : "border-lavender-200"
                 )}
               >
-                {isChecked ? "✓" : ""}
-              </motion.span>
+                {isChecked && <Check className="w-4 h-4" strokeWidth={3} />}
+              </motion.div>
               {item.label}
             </motion.button>
           );
@@ -67,7 +68,7 @@ export function Checklist({ activity, onComplete }: ChecklistProps) {
       </div>
 
       {/* Progress feedback */}
-      <p className="font-sans text-xs text-ink-700">
+      <p className="font-sans text-xs text-ink-700 font-medium">
         {checked.size}/{activity.items.length} langkah dicentang
       </p>
 
@@ -90,12 +91,15 @@ export function Checklist({ activity, onComplete }: ChecklistProps) {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-mint-100 rounded-2xl px-5 py-4 flex flex-col gap-3"
+            className="bg-mint-100 rounded-2xl px-5 py-4 flex flex-col gap-4 border border-teal-200"
           >
-            <p className="font-heading text-sm font-bold text-teal-500">✅ Daftar Lengkap!</p>
-            <p className="font-sans text-sm text-ink-700">{activity.successFeedback}</p>
-            <Button variant="secondary" size="md" onClick={() => onComplete(30)} className="self-start">
-              Lanjut →
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-teal-600" />
+              <p className="font-heading text-sm font-bold text-teal-700">Daftar Lengkap!</p>
+            </div>
+            <p className="font-sans text-sm text-ink-800">{activity.successFeedback}</p>
+            <Button variant="secondary" size="md" onClick={() => onComplete(30)} className="self-start gap-2">
+              Lanjut <ArrowRight className="w-4 h-4" />
             </Button>
           </motion.div>
         )}

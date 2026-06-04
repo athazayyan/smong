@@ -3,6 +3,7 @@ import { ProgressRail } from "@/features/student-learning/components/ProgressRai
 import { MascotGuide } from "@/components/ui/MascotGuide";
 import { lessonNodes, earthquakeModule } from "@/features/student-learning/data/mockData";
 import { mockProgress } from "@/features/student-learning/data/mockProgress";
+import { Map, School, ShieldAlert, Users } from "lucide-react";
 
 export default function StudentDashboardPage() {
   return (
@@ -10,7 +11,7 @@ export default function StudentDashboardPage() {
       {/* Header greeting */}
       <div className="mb-6">
         <h1 className="font-heading text-2xl font-bold text-purple-900">
-          Halo, Raka! 👋
+          Halo, Raka!
         </h1>
         <p className="font-sans text-sm text-ink-700 mt-1">
           Lanjutkan petualangan kesiapsiagaanmu hari ini.
@@ -35,25 +36,29 @@ export default function StudentDashboardPage() {
             <p className="font-sans text-xs text-ink-700 leading-relaxed mb-4">
               {earthquakeModule.title} — Modul pertama Smong untuk siswa SD–SMP. Pelajari gempa bumi dari tiga fase penting.
             </p>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {(["pra-bencana", "saat-bencana", "pascabencana"] as const).map((phase) => {
                 const phaseLabels = {
-                  "pra-bencana": { label: "Pra-Bencana", emoji: "🏫" },
-                  "saat-bencana": { label: "Saat Bencana", emoji: "🛡️" },
-                  "pascabencana": { label: "Pascabencana", emoji: "🤝" },
+                  "pra-bencana": { label: "Pra-Bencana", icon: School },
+                  "saat-bencana": { label: "Saat Bencana", icon: ShieldAlert },
+                  "pascabencana": { label: "Pascabencana", icon: Users },
                 };
                 const phaseNodes = lessonNodes.filter((n) => n.phaseId === phase);
                 const DONE_STATUSES = ["completed", "mastered"] as const;
                 const completed = phaseNodes.filter((n) =>
                   (DONE_STATUSES as readonly string[]).includes(n.status)
                 ).length;
+                const Icon = phaseLabels[phase].icon;
+
                 return (
                   <div key={phase} className="flex items-center justify-between text-xs font-sans">
-                    <span className="flex items-center gap-1.5 text-ink-700">
-                      <span>{phaseLabels[phase].emoji}</span>
+                    <span className="flex items-center gap-2 text-ink-700">
+                      <div className="w-6 h-6 rounded-md bg-lavender-100 flex items-center justify-center">
+                        <Icon className="w-3 h-3 text-purple-700" />
+                      </div>
                       {phaseLabels[phase].label}
                     </span>
-                    <span className="font-semibold text-purple-700">
+                    <span className="font-semibold text-purple-700 bg-lavender-100 px-2 py-0.5 rounded-md">
                       {completed}/{phaseNodes.length}
                     </span>
                   </div>
@@ -65,13 +70,18 @@ export default function StudentDashboardPage() {
 
         {/* Center: Learning Path */}
         <div className="flex flex-col">
-          <div className="sticky top-[56px] z-10 bg-cream-50/80 backdrop-blur-sm pb-3 mb-2">
-            <h2 className="font-heading text-base font-bold text-purple-900">
-              🗺️ Jalur Gempa Bumi MVP
-            </h2>
-            <p className="font-sans text-xs text-ink-700">
-              {lessonNodes.length} misi • Tiga fase bencana
-            </p>
+          <div className="sticky top-[56px] z-10 bg-cream-50/80 backdrop-blur-sm pb-3 mb-2 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-700 flex items-center justify-center shrink-0 shadow-sm">
+              <Map className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="font-heading text-base font-bold text-purple-900">
+                Jalur Gempa Bumi MVP
+              </h2>
+              <p className="font-sans text-xs text-ink-700">
+                {lessonNodes.length} misi • Tiga fase bencana
+              </p>
+            </div>
           </div>
           <ModulePath nodes={lessonNodes} />
         </div>

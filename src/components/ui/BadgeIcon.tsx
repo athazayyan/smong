@@ -4,6 +4,7 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { BadgeId } from "@/features/student-learning/types";
+import { Star, Shield, Users, Trophy } from "lucide-react";
 
 export interface BadgeIconProps {
   badgeId: BadgeId;
@@ -14,38 +15,38 @@ export interface BadgeIconProps {
 
 const BADGE_CONFIG: Record<
   BadgeId,
-  { label: string; emoji: string; bg: string; ring: string }
+  { label: string; icon: React.ElementType; bg: string; ring: string }
 > = {
   "siaga-pemula": {
     label: "Siaga Pemula",
-    emoji: "⭐",
+    icon: Star,
     bg: "bg-yellow-200",
     ring: "ring-yellow-200",
   },
   "penjaga-kepala": {
     label: "Penjaga Kepala",
-    emoji: "🛡️",
+    icon: Shield,
     bg: "bg-lavender-200",
     ring: "ring-lavender-200",
   },
   "teman-tangguh": {
     label: "Teman Tangguh",
-    emoji: "🤝",
+    icon: Users,
     bg: "bg-mint-100",
     ring: "ring-mint-100",
   },
   "pahlawan-evakuasi": {
     label: "Pahlawan Evakuasi",
-    emoji: "🏆",
+    icon: Trophy,
     bg: "bg-peach-200",
     ring: "ring-peach-200",
   },
 };
 
 const sizes = {
-  sm: { outer: "w-10 h-10", emoji: "text-xl" },
-  md: { outer: "w-14 h-14", emoji: "text-3xl" },
-  lg: { outer: "w-20 h-20", emoji: "text-4xl" },
+  sm: { outer: "w-10 h-10", icon: "w-5 h-5" },
+  md: { outer: "w-14 h-14", icon: "w-7 h-7" },
+  lg: { outer: "w-20 h-20", icon: "w-10 h-10" },
 };
 
 export function BadgeIcon({
@@ -55,7 +56,8 @@ export function BadgeIcon({
   className,
 }: BadgeIconProps) {
   const config = BADGE_CONFIG[badgeId];
-  const { outer, emoji } = sizes[size];
+  const { outer, icon: iconSize } = sizes[size];
+  const Icon = config.icon;
 
   return (
     <motion.div
@@ -71,7 +73,7 @@ export function BadgeIcon({
       )}
       title={config.label}
     >
-      <span className={emoji}>{config.emoji}</span>
+      <Icon className={cn("text-ink-900", iconSize)} strokeWidth={2.5} />
     </motion.div>
   );
 }

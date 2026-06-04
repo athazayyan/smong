@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { ReflectionChoiceActivity } from "@/features/student-learning/types";
+import { HeartHandshake, Star, Trophy } from "lucide-react";
 
 export interface ReflectionChoiceProps {
   activity: ReflectionChoiceActivity;
@@ -22,9 +23,11 @@ export function ReflectionChoice({ activity, onComplete }: ReflectionChoiceProps
   return (
     <div className="flex flex-col gap-6">
       {/* Warm framing */}
-      <div className="bg-peach-200/50 rounded-2xl px-5 py-4 flex items-start gap-3">
-        <span className="text-2xl shrink-0">💛</span>
-        <p className="font-sans text-sm text-ink-900 leading-relaxed">
+      <div className="bg-peach-200/50 rounded-2xl px-5 py-4 flex items-start gap-4 border border-peach-200">
+        <div className="w-10 h-10 bg-white/60 rounded-full flex items-center justify-center shrink-0">
+          <HeartHandshake className="w-5 h-5 text-coral-600" />
+        </div>
+        <p className="font-sans text-sm text-ink-900 leading-relaxed font-medium mt-1">
           {activity.prompt}
         </p>
       </div>
@@ -73,14 +76,17 @@ export function ReflectionChoice({ activity, onComplete }: ReflectionChoiceProps
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-peach-200/60 rounded-2xl px-5 py-4 flex flex-col gap-3"
+            className="bg-peach-200/60 rounded-2xl px-5 py-4 flex flex-col gap-4 border border-peach-300/50"
           >
-            <p className="font-heading text-sm font-bold text-ink-900">
-              🌟 Terima kasih sudah berbagi!
-            </p>
-            <p className="font-sans text-sm text-ink-700">{activity.successFeedback}</p>
-            <Button variant="reward" size="md" onClick={() => onComplete(20)} className="self-start">
-              Selesaikan Misi 🏆
+            <div className="flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-600 fill-yellow-500" />
+              <p className="font-heading text-sm font-bold text-ink-900">
+                Terima kasih sudah berbagi!
+              </p>
+            </div>
+            <p className="font-sans text-sm text-ink-800">{activity.successFeedback}</p>
+            <Button variant="reward" size="md" onClick={() => onComplete(20)} className="self-start gap-2">
+              Selesaikan Misi <Trophy className="w-4 h-4 text-ink-900" />
             </Button>
           </motion.div>
         )}

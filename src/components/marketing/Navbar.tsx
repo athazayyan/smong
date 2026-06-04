@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
-import { motion } from "framer-motion";
+import { Shield } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -10,7 +9,7 @@ export function Navbar() {
       <nav className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl">🌊</span>
+          <Shield className="w-6 h-6 text-purple-700" />
           <span className="font-heading text-xl font-bold text-purple-700">Smong</span>
         </Link>
 

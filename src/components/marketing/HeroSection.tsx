@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { Sparkles, ArrowRight, ArrowDown, Target, Award } from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 32 },
@@ -28,7 +29,7 @@ export function HeroSection() {
           {/* Badge pill */}
           <motion.div variants={fadeUp}>
             <span className="inline-flex items-center gap-2 text-sm font-semibold text-purple-700 bg-lavender-200/60 rounded-full px-4 py-1.5">
-              <span>✨</span> Platform Belajar Mitigasi Bencana
+              <Sparkles className="w-4 h-4" /> Platform Belajar Mitigasi Bencana
             </span>
           </motion.div>
 
@@ -71,13 +72,13 @@ export function HeroSection() {
               href="/dashboard/siswa"
               className="inline-flex items-center gap-2 bg-purple-700 text-white font-heading font-bold text-base px-7 py-3.5 rounded-2xl shadow-[0_5px_0_0_#2F176E] hover:bg-purple-500 transition-colors active:shadow-none active:translate-y-1"
             >
-              <span>🚀</span> Mulai Misi Gempa
+              Mulai Misi Gempa <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
               href="#modul"
               className="inline-flex items-center gap-2 text-purple-700 font-heading font-bold text-base px-6 py-3.5 rounded-2xl border-2 border-lavender-200 hover:border-purple-500 hover:bg-lavender-200/30 transition-colors"
             >
-              Lihat Modul <span>→</span>
+              Lihat Modul <ArrowRight className="w-5 h-5" />
             </Link>
           </motion.div>
 
@@ -122,9 +123,11 @@ export function HeroSection() {
           <motion.div
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-4 -right-2 lg:right-4 bg-white rounded-2xl px-4 py-2 shadow-lg border-2 border-yellow-200 flex items-center gap-2"
+            className="absolute -top-4 -right-2 lg:right-4 bg-white rounded-2xl px-4 py-2 shadow-lg border-2 border-yellow-200 flex items-center gap-3"
           >
-            <span className="text-xl">⭐</span>
+            <div className="w-8 h-8 rounded-full bg-yellow-200 flex items-center justify-center">
+              <Award className="w-4 h-4 text-ink-900" />
+            </div>
             <div>
               <p className="font-heading text-xs font-bold text-ink-900">Badge Baru!</p>
               <p className="font-sans text-xs text-ink-700">Siaga Pemula</p>
@@ -134,9 +137,11 @@ export function HeroSection() {
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}
-            className="absolute -bottom-4 -left-2 lg:left-4 bg-white rounded-2xl px-4 py-2 shadow-lg border-2 border-teal-500/30 flex items-center gap-2"
+            className="absolute -bottom-4 -left-2 lg:left-4 bg-white rounded-2xl px-4 py-2 shadow-lg border-2 border-teal-500/30 flex items-center gap-3"
           >
-            <span className="text-xl">🎯</span>
+            <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
+              <Target className="w-4 h-4 text-teal-600" />
+            </div>
             <div>
               <p className="font-heading text-xs font-bold text-ink-900">+20 XP</p>
               <p className="font-sans text-xs text-teal-500">Misi Selesai!</p>
@@ -156,9 +161,9 @@ export function HeroSection() {
         <motion.div
           animate={{ y: [0, 5, 0] }}
           transition={{ duration: 1.5, repeat: Infinity }}
-          className="text-purple-500 text-lg"
+          className="text-purple-500"
         >
-          ↓
+          <ArrowDown className="w-5 h-5" />
         </motion.div>
       </motion.div>
     </section>

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { DragAndDropActivity } from "@/features/student-learning/types";
+import { CheckCircle2, Circle, ArrowRight, RotateCcw } from "lucide-react";
 
 export interface DragAndDropProps {
   activity: DragAndDropActivity;
@@ -63,13 +64,14 @@ export function DragAndDrop({ activity, onComplete }: DragAndDropProps) {
                 onClick={() => toggleItem(item.id)}
                 disabled={submitted}
                 className={cn(
-                  "rounded-2xl px-4 py-3 ring-2 text-left font-sans text-sm font-semibold transition-colors",
+                  "rounded-2xl px-4 py-3 ring-2 flex items-center gap-3 text-left font-sans text-sm font-semibold transition-colors",
                   isChosen
                     ? "bg-purple-700 ring-purple-900 text-white"
                     : "bg-white ring-lavender-200/60 text-ink-900 hover:ring-purple-500"
                 )}
               >
-                {isChosen ? "✅ " : "○ "}{item.label}
+                {isChosen ? <CheckCircle2 className="w-5 h-5 text-white shrink-0" /> : <Circle className="w-5 h-5 text-ink-400 shrink-0" />}
+                {item.label}
               </motion.button>
             );
           })}
@@ -120,12 +122,15 @@ export function DragAndDrop({ activity, onComplete }: DragAndDropProps) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="bg-mint-100 rounded-2xl px-5 py-4 flex flex-col gap-3"
+            className="bg-mint-100 rounded-2xl px-5 py-4 flex flex-col gap-4 border border-teal-200"
           >
-            <p className="font-heading text-sm font-bold text-teal-500">✅ Tas Siaga Siap!</p>
-            <p className="font-sans text-sm text-ink-700">{activity.successFeedback}</p>
-            <Button variant="secondary" size="md" onClick={() => onComplete(25)} className="self-start">
-              Lanjut →
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-teal-600" />
+              <p className="font-heading text-sm font-bold text-teal-700">Tas Siaga Siap!</p>
+            </div>
+            <p className="font-sans text-sm text-ink-800">{activity.successFeedback}</p>
+            <Button variant="secondary" size="md" onClick={() => onComplete(25)} className="self-start gap-2">
+              Lanjut <ArrowRight className="w-4 h-4" />
             </Button>
           </motion.div>
         )}
@@ -135,12 +140,15 @@ export function DragAndDrop({ activity, onComplete }: DragAndDropProps) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="bg-coral-500/10 rounded-2xl px-5 py-4 flex flex-col gap-3"
+            className="bg-coral-50 rounded-2xl px-5 py-4 flex flex-col gap-4 border border-coral-200"
           >
-            <p className="font-heading text-sm font-bold text-coral-500">↩️ Coba Lagi</p>
-            <p className="font-sans text-sm text-ink-700">{activity.retryFeedback}</p>
-            <Button variant="ghost" size="sm" onClick={handleRetry} className="self-start">
-              Coba Lagi
+            <div className="flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-coral-600" />
+              <p className="font-heading text-sm font-bold text-coral-700">Coba Lagi</p>
+            </div>
+            <p className="font-sans text-sm text-ink-800">{activity.retryFeedback}</p>
+            <Button variant="ghost" size="sm" onClick={handleRetry} className="self-start px-0 text-coral-700 hover:bg-transparent">
+              <RotateCcw className="w-4 h-4 mr-2" /> Ulangi Pilihan
             </Button>
           </motion.div>
         )}
