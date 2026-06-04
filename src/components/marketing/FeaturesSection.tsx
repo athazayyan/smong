@@ -1,113 +1,114 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Map, Gamepad2, Medal, ShieldCheck, MapPin, LineChart } from "lucide-react";
+import { motion, Variants } from "framer-motion";
+import { Shield, Sparkles, Navigation } from "lucide-react";
+import { clsx } from "clsx";
 
-const FEATURES = [
+const PROMISES = [
   {
-    icon: Map,
-    title: "Jalur Belajar Petualangan",
-    desc: "Ikuti jalur seperti peta misi. Setiap titik adalah pelajaran baru tentang gempa bumi.",
-    color: "bg-lavender-200/60",
-    ring: "ring-purple-500/20",
-    iconColor: "text-purple-700"
-  },
-  {
-    icon: Gamepad2,
-    title: "Aktivitas Interaktif",
-    desc: "Pilih aksi aman, seret barang ke tas siaga, atau refleksi bersama teman.",
+    icon: Shield,
+    title: "Pilih Aksi Aman",
+    desc: "Bukan hafalan teori. Kamu akan terjun ke skenario kelas dan rumah, lalu memilih tindakan yang paling tepat untuk menyelamatkan diri.",
     color: "bg-mint-100",
     ring: "ring-teal-500/20",
-    iconColor: "text-teal-700"
+    iconColor: "text-teal-700",
+    iconBg: "bg-teal-100",
+    offset: "md:mt-0",
   },
   {
-    icon: Medal,
-    title: "Reward & Badge",
-    desc: "Kumpulkan XP, bintang, dan badge untuk setiap misi yang kamu selesaikan.",
-    color: "bg-yellow-200/60",
-    ring: "ring-yellow-200",
-    iconColor: "text-yellow-700"
+    icon: Sparkles,
+    title: "Kumpulkan Badge Siaga",
+    desc: "Selesaikan setiap misi untuk mendapatkan XP, bintang, dan badge spesial yang membuktikan kemampuanmu sebagai pahlawan evakuasi.",
+    color: "bg-yellow-200/40",
+    ring: "ring-yellow-500/20",
+    iconColor: "text-yellow-700",
+    iconBg: "bg-yellow-100",
+    offset: "md:mt-12",
   },
   {
-    icon: ShieldCheck,
-    title: "Aman & Ramah Anak",
-    desc: "Konten tanpa gambar menakutkan. Bencana diajarkan lewat aksi aman dan pemulihan.",
-    color: "bg-sky-100",
-    ring: "ring-teal-500/20",
-    iconColor: "text-sky-700"
-  },
-  {
-    icon: MapPin,
-    title: "Konteks Indonesia",
-    desc: "Skenario berbasis sekolah dan keluarga Indonesia. Relevan dengan kehidupan sehari-hari.",
-    color: "bg-peach-200/60",
-    ring: "ring-coral-500/20",
-    iconColor: "text-coral-700"
-  },
-  {
-    icon: LineChart,
-    title: "Pantau Progres",
-    desc: "Lihat perkembanganmu lewat dashboard yang menyenangkan, bukan tabel data.",
-    color: "bg-lavender-200/60",
+    icon: Navigation,
+    title: "Belajar Tanpa Takut",
+    desc: "Topik serius dibahas dengan gambar dan animasi yang ramah, aman, serta fokus pada kesiapsiagaan, bukan ketakutan.",
+    color: "bg-lavender-200/50",
     ring: "ring-purple-500/20",
-    iconColor: "text-purple-700"
+    iconColor: "text-purple-700",
+    iconBg: "bg-white",
+    offset: "md:mt-6",
   },
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.1 } },
+  show: { transition: { staggerChildren: 0.15 } },
 };
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 32 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
 };
 
 export function FeaturesSection() {
   return (
-    <section id="fitur" className="py-24 bg-cream-50">
-      <div className="max-w-6xl mx-auto px-6">
+    <section id="misi" className="py-24 bg-cream-50 relative overflow-hidden">
+      {/* Organic Top Divider */}
+      <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-cream-50 to-transparent" />
+
+      <div className="max-w-6xl mx-auto px-6 relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-16"
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16 md:mb-20"
         >
-          <span className="inline-block text-sm font-semibold text-purple-700 bg-lavender-200/60 rounded-full px-4 py-1.5 mb-4">
-            Kenapa Smong?
+          <span className="inline-block text-xs font-bold uppercase tracking-widest text-purple-700 mb-4">
+            Janji Petualangan
           </span>
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-purple-900 mb-4">
-            Belajar yang Seru, Materi yang Serius
+          <h2 className="font-heading text-3xl md:text-5xl font-bold text-purple-900 mb-5 max-w-2xl mx-auto leading-tight drop-shadow-sm">
+            Cara Baru Mengenal <br /> Kesiapsiagaan Bencana
           </h2>
-          <p className="font-sans text-ink-700 max-w-xl mx-auto">
-            Smong mengubah pendidikan kebencanaan menjadi petualangan kesiapsiagaan yang tidak terlupakan.
-          </p>
         </motion.div>
 
-        {/* Grid */}
+        {/* 3 Panels */}
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10"
         >
-          {FEATURES.map((feat) => {
-            const Icon = feat.icon;
+          {PROMISES.map((promise) => {
+            const Icon = promise.icon;
             return (
               <motion.div
-                key={feat.title}
+                key={promise.title}
                 variants={itemVariants}
-                className={`rounded-3xl p-6 ring-2 ${feat.ring} ${feat.color} flex flex-col gap-4`}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className={clsx(
+                  "relative rounded-[2rem] p-8 ring-2 transition-all duration-300 shadow-[0_8px_24px_rgba(47,23,110,0.04)]",
+                  promise.color,
+                  promise.ring,
+                  promise.offset
+                )}
               >
-                <div className="w-12 h-12 rounded-2xl bg-white/50 flex items-center justify-center">
-                  <Icon className={`w-6 h-6 ${feat.iconColor}`} />
+                {/* Decorative sticker pin */}
+                <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center border border-lavender-200/50">
+                  <div className="w-2 h-2 rounded-full bg-purple-200" />
                 </div>
-                <h3 className="font-heading text-lg font-bold text-ink-900">{feat.title}</h3>
-                <p className="font-sans text-sm text-ink-700 leading-relaxed">{feat.desc}</p>
+
+                <div
+                  className={clsx(
+                    "w-14 h-14 rounded-2xl flex items-center justify-center mb-6 shadow-sm",
+                    promise.iconBg
+                  )}
+                >
+                  <Icon className={clsx("w-7 h-7", promise.iconColor)} />
+                </div>
+                <h3 className="font-heading text-xl font-bold text-ink-900 mb-3">{promise.title}</h3>
+                <p className="font-sans text-base text-ink-700 leading-relaxed font-medium">
+                  {promise.desc}
+                </p>
               </motion.div>
             );
           })}

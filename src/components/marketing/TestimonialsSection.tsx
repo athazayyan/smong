@@ -1,80 +1,79 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MessageCircle, Backpack, BookOpen, Medal } from "lucide-react";
+import { Quote } from "lucide-react";
+import { clsx } from "clsx";
 
 const TESTIMONIALS = [
   {
-    quote: "Sekarang aku tahu harus sembunyi di mana kalau gempa. Misinya seru!",
+    quote: "Sekarang aku tahu harus berlindung dulu saat latihan gempa. Misinya seru.",
     name: "Rina",
-    role: "Siswa SD kelas 5",
-    icon: Backpack,
-    color: "bg-lavender-200/50",
-    iconColor: "text-purple-700"
+    role: "Siswa",
+    yOffset: "md:-translate-y-6",
+    delay: 0,
   },
   {
-    quote: "Anakku jadi lebih percaya diri soal kesiapsiagaan. Materinya tepat sasaran.",
+    quote: "Anak-anak lebih mudah mengingat langkah aman karena langsung mencoba.",
     name: "Pak Rudi",
-    role: "Guru SD Negeri",
-    icon: BookOpen,
-    color: "bg-mint-100",
-    iconColor: "text-teal-700"
+    role: "Guru",
+    yOffset: "md:translate-y-12",
+    delay: 0.15,
   },
   {
-    quote: "Lebih seru dari buku teks biasa. Aku dapat badge Penjaga Kepala!",
+    quote: "Lebih seru dari buku teks biasa. Aku dapat badge Penjaga Kepala.",
     name: "Bagas",
-    role: "Siswa SMP kelas 7",
-    icon: Medal,
-    color: "bg-peach-200/50",
-    iconColor: "text-coral-700"
+    role: "Siswa",
+    yOffset: "md:translate-y-2",
+    delay: 0.3,
   },
 ];
 
 export function TestimonialsSection() {
   return (
-    <section className="py-24 bg-cream-50">
-      <div className="max-w-6xl mx-auto px-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
-          <span className="inline-flex items-center gap-2 text-sm font-semibold text-purple-700 bg-lavender-200/60 rounded-full px-4 py-1.5 mb-4">
-            <MessageCircle className="w-4 h-4" /> Kata Mereka
-          </span>
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold text-purple-900">
-            Siap Bersama Smong
-          </h2>
-        </motion.div>
+    <section id="cerita" className="relative -mt-8 overflow-hidden bg-cream-50 py-28">
+      <div className="absolute left-1/2 top-10 h-[82%] w-[1160px] max-w-[116vw] -translate-x-1/2 rounded-[45%_55%_50%_50%/18%_18%_82%_82%] bg-sky-100" />
+      <div className="pointer-events-none absolute left-10 top-16 h-[300px] w-[400px] rounded-full bg-white/45 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-16 right-10 h-[360px] w-[500px] rounded-full bg-white/40 blur-3xl" />
 
-        {/* Cloud bubbles */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {TESTIMONIALS.map((t, i) => {
-            const Icon = t.icon;
-            return (
-              <motion.div
-                key={t.name}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12 }}
-                className={`${t.color} rounded-3xl rounded-tl-none p-8 ring-2 ring-lavender-200/40 flex flex-col gap-6`}
-              >
-                <div className="w-12 h-12 rounded-full bg-white/60 flex items-center justify-center">
-                  <Icon className={`w-5 h-5 ${t.iconColor}`} />
-                </div>
-                <p className="font-sans text-ink-900 leading-relaxed italic text-lg">
+      <div className="relative z-10 mx-auto max-w-6xl px-6">
+        <div className="mb-24 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            <h2 className="font-heading text-3xl font-bold text-purple-900 drop-shadow-sm md:text-5xl">
+              Suara Siaga
+            </h2>
+          </motion.div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-6">
+          {TESTIMONIALS.map((t) => (
+            <motion.div
+              key={t.name}
+              initial={{ opacity: 0, y: 32 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: t.delay, type: "spring", stiffness: 200, damping: 20 }}
+              className={clsx("relative", t.yOffset)}
+            >
+              <div className="relative mx-auto flex min-h-[260px] max-w-sm flex-col justify-center rounded-[42%_58%_54%_46%/28%_28%_72%_72%] bg-white px-10 pb-12 pt-10 text-center shadow-[0_18px_40px_rgba(47,23,110,0.07)]">
+                <div className="absolute -bottom-3 left-12 h-8 w-8 rounded-full bg-white shadow-sm" />
+                <div className="absolute -bottom-8 left-20 h-5 w-5 rounded-full bg-white shadow-sm" />
+                <div className="absolute right-8 top-10 h-3 w-3 rounded-full bg-yellow-200" />
+                <Quote className="mx-auto mb-4 h-9 w-9 text-lavender-200" />
+                <p className="font-sans text-base font-medium leading-relaxed text-ink-900">
                   &ldquo;{t.quote}&rdquo;
                 </p>
-                <div className="mt-auto pt-4 border-t border-ink-900/10">
-                  <p className="font-heading font-bold text-ink-900 text-sm">{t.name}</p>
-                  <p className="font-sans text-xs text-ink-700 mt-0.5">{t.role}</p>
+
+                <div className="mt-6 flex flex-col items-center gap-1">
+                  <p className="font-heading text-sm font-bold text-purple-900">{t.name}</p>
+                  <p className="font-sans text-[10px] font-semibold uppercase tracking-widest text-ink-400">{t.role}</p>
                 </div>
-              </motion.div>
-            );
-          })}
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
