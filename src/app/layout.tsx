@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Baloo_2, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -20,14 +21,14 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
     <html
-      lang="en"
+      lang="id"
       className={`${baloo2.variable} ${nunitoSans.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans text-ink-900 bg-cream-50">{children}</body>
+      <body className="min-h-full flex flex-col font-sans text-ink-900 bg-cream-50" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

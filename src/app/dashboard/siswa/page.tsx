@@ -44,9 +44,8 @@ export default function StudentDashboardPage() {
                   "pascabencana": { label: "Pascabencana", icon: Users },
                 };
                 const phaseNodes = lessonNodes.filter((n) => n.phaseId === phase);
-                const DONE_STATUSES = ["completed", "mastered"] as const;
                 const completed = phaseNodes.filter((n) =>
-                  (DONE_STATUSES as readonly string[]).includes(n.status)
+                  n.status === "completed" || n.status === "mastered"
                 ).length;
                 const Icon = phaseLabels[phase].icon;
 

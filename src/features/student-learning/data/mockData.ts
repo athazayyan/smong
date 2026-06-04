@@ -9,7 +9,7 @@ export const earthquakeModule = {
   activeLessonId: "kenali-gempa",
 } satisfies Module;
 
-export const lessonNodes = [
+export const lessonNodes: LessonNode[] = [
   // PRA-BENCANA (2 Activities)
   {
     id: "kenali-gempa",
@@ -93,7 +93,7 @@ export const lessonNodes = [
     },
     motionPreset: "locked-wiggle",
   },
-] satisfies LessonNode[];
+];
 
 export const mockActivities: Activity[] = [
   {
