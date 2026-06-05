@@ -11,6 +11,7 @@ import type {
   AuthenticatedUser,
 } from "../types";
 import { gempaLessonsCh2to7, gempaActivitiesCh2to7 } from "./gempaContent";
+import { gempaTestsCh1to7, gempaTestQuestions as gempaQuestions } from "./gempaTestsData";
 
 // ─── Schools & Auth ───────────────────────────────────────────────────────────
 
@@ -438,32 +439,5 @@ export const gempaActivitiesChapter2to7 = gempaActivitiesCh2to7;
 
 // ─── Tests (typed stubs) ──────────────────────────────────────────────────────
 
-export const gempaTests = [
-  {
-    id: "post-test-pengetahuan-umum",
-    moduleGroupId: "gempa-bumi" as const,
-    chapterId: "gempa-pengetahuan-umum",
-    kind: "post-test" as const,
-    title: "Kuis: Pengetahuan Umum Gempa",
-    requiredScore: undefined,
-    questionIds: ["q-pu-1", "q-pu-2", "q-pu-3"],
-  },
-  {
-    id: "pre-test-penyebab",
-    moduleGroupId: "gempa-bumi" as const,
-    chapterId: "gempa-penyebab",
-    kind: "pre-test" as const,
-    title: "Pre-Test: Penyebab Gempa",
-    requiredScore: undefined,
-    questionIds: ["q-py-pre-1", "q-py-pre-2"],
-  },
-  {
-    id: "final-quiz-gempa",
-    moduleGroupId: "gempa-bumi" as const,
-    chapterId: "gempa-sertifikasi",
-    kind: "final-quiz" as const,
-    title: "Kuis Final: Siaga Gempa Bumi",
-    requiredScore: 80,
-    questionIds: [],
-  },
-] satisfies LearningTest[];
+export const gempaTests = gempaTestsCh1to7;
+export const gempaTestQuestions = gempaQuestions;
