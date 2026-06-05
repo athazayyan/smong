@@ -69,7 +69,7 @@ export function HeroSection() {
 
           <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-center">
             <Link
-              href="/dashboard/siswa"
+              href="/siswa"
               className="flex items-center justify-center gap-2 rounded-full bg-purple-700 px-8 py-3.5 font-heading text-base font-bold text-white shadow-[0_6px_0_0_#2F176E] transition-all hover:-translate-y-1 hover:bg-purple-500 active:translate-y-1.5 active:shadow-none"
             >
               Mulai Misi Gempa <ArrowRight className="h-5 w-5" />

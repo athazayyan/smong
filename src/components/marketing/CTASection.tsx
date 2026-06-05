@@ -46,7 +46,7 @@ export function CTASection() {
           </p>
 
           <Link
-            href="/dashboard/siswa"
+            href="/siswa"
             className="inline-flex items-center gap-3 rounded-full bg-yellow-200 px-10 py-4 font-heading text-lg font-bold text-purple-900 shadow-[0_6px_0_0_#6B4E00] transition-all hover:-translate-y-1 hover:bg-yellow-200/90 active:translate-y-1.5 active:shadow-none"
           >
             Masuk ke Dashboard Siswa <ArrowRight className="h-6 w-6" />

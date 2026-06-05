@@ -281,7 +281,7 @@ export function ModulePreviewSection() {
           className="relative z-20 text-center"
         >
           <Link
-            href="/dashboard/siswa"
+            href="/siswa"
             className="inline-flex items-center justify-center gap-2 rounded-full bg-purple-700 px-10 py-4 font-heading text-base font-bold text-white shadow-[0_6px_0_0_#2F176E] transition-all hover:-translate-y-1 hover:bg-purple-500 active:translate-y-1.5 active:shadow-none"
           >
             Mulai Belajar Sekarang <ArrowRight className="ml-1 h-5 w-5" />

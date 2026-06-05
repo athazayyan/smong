@@ -61,7 +61,7 @@ export function Navbar() {
 
         {/* CTA */}
         <Link
-          href="/dashboard/siswa"
+          href="/siswa"
           className="bg-purple-700 text-white font-heading font-bold text-sm px-6 py-2.5 rounded-full shadow-[0_4px_0_0_#2F176E] hover:bg-purple-500 hover:-translate-y-0.5 active:translate-y-1 active:shadow-none transition-all"
         >
           Mulai Misi
