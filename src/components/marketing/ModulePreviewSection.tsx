@@ -15,6 +15,7 @@ import {
 import { clsx } from "clsx";
 
 type PathNodeStatus = "completed" | "active" | "locked";
+type PathNodeLabelPosition = "right" | "left" | "top" | "bottom";
 
 type PathNode = {
   id: string;
@@ -22,7 +23,7 @@ type PathNode = {
   status: PathNodeStatus;
   phase: string;
   desktopPosition: string;
-  labelPosition: "right" | "left" | "top" | "bottom";
+  labelPosition: PathNodeLabelPosition;
   icon: LucideIcon;
 };
 
@@ -58,7 +59,7 @@ const PHASE_ZONES = [
   },
 ] satisfies PhaseZone[];
 
-const PATH_NODES = [
+const PATH_NODES: PathNode[] = [
   {
     id: "kenali",
     label: "Kenali Gempa",
