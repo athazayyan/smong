@@ -59,7 +59,7 @@ export function ModuleTeaserSection() {
             return (
               <motion.div
                 key={zone.title}
-                initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                initial={{ opacity: 1, y: 12, scale: 0.96 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: i * 0.2, type: "spring", stiffness: 200, damping: 20 }}

@@ -26,13 +26,45 @@ type PathNode = {
   icon: LucideIcon;
 };
 
+type PhaseZone = {
+  id: string;
+  label: string;
+  description: string;
+  className: string;
+  labelClassName: string;
+};
+
+const PHASE_ZONES = [
+  {
+    id: "pra",
+    label: "Pra-Bencana",
+    description: "Kenali dan siapkan diri.",
+    className: "left-[3%] top-[13%] h-[72%] w-[31%] rounded-[46%_54%_45%_55%/28%_36%_64%_72%] bg-mint-100/38",
+    labelClassName: "text-teal-700",
+  },
+  {
+    id: "saat",
+    label: "Saat Bencana",
+    description: "Pilih aksi aman.",
+    className: "left-[34.5%] top-[18%] h-[70%] w-[31%] rounded-[42%_58%_46%_54%/34%_42%_58%_66%] bg-lavender-200/40",
+    labelClassName: "text-purple-700",
+  },
+  {
+    id: "pasca",
+    label: "Pascabencana",
+    description: "Pulih bersama.",
+    className: "right-[3%] top-[13%] h-[72%] w-[31%] rounded-[54%_46%_58%_42%/32%_44%_56%_68%] bg-peach-200/42",
+    labelClassName: "text-coral-700",
+  },
+] satisfies PhaseZone[];
+
 const PATH_NODES = [
   {
     id: "kenali",
     label: "Kenali Gempa",
     status: "completed",
     phase: "Pra-Bencana",
-    desktopPosition: "left-[8%] top-[46%]",
+    desktopPosition: "left-[12%] top-[65.5%]",
     labelPosition: "right",
     icon: CheckCircle2,
   },
@@ -41,8 +73,8 @@ const PATH_NODES = [
     label: "Tas Siaga",
     status: "completed",
     phase: "Pra-Bencana",
-    desktopPosition: "left-[27%] top-[20%]",
-    labelPosition: "right",
+    desktopPosition: "left-[30%] top-[52%]",
+    labelPosition: "top",
     icon: Backpack,
   },
   {
@@ -50,7 +82,7 @@ const PATH_NODES = [
     label: "Berlindung Dulu",
     status: "active",
     phase: "Saat Bencana",
-    desktopPosition: "left-[46%] top-[56%]",
+    desktopPosition: "left-[50%] top-[60%]",
     labelPosition: "bottom",
     icon: Shield,
   },
@@ -59,7 +91,7 @@ const PATH_NODES = [
     label: "Jalur Evakuasi",
     status: "locked",
     phase: "Saat Bencana",
-    desktopPosition: "right-[17%] top-[26%]",
+    desktopPosition: "left-[66%] top-[42%]",
     labelPosition: "right",
     icon: Route,
   },
@@ -68,7 +100,7 @@ const PATH_NODES = [
     label: "Gotong Royong",
     status: "locked",
     phase: "Pascabencana",
-    desktopPosition: "right-[8%] top-[62%]",
+    desktopPosition: "left-[86%] top-[57%]",
     labelPosition: "top",
     icon: HeartHandshake,
   },
@@ -114,13 +146,29 @@ export function ModulePreviewSection() {
 
         <div className="relative mx-auto mb-14 hidden min-h-[620px] max-w-5xl md:block">
           <div className="absolute inset-8 rounded-[44%_56%_53%_47%/20%_28%_72%_80%] bg-white/45 shadow-[inset_0_0_70px_rgba(124,91,219,0.12)]" />
-          <svg className="absolute inset-0 h-full w-full overflow-visible" viewBox="0 0 900 560" fill="none" aria-hidden="true">
+          {PHASE_ZONES.map((zone) => (
+            <div
+              key={zone.id}
+              className={clsx("absolute z-[1] border border-white/45 px-8 py-7 shadow-[inset_0_0_42px_rgba(255,255,255,0.48)]", zone.className)}
+            >
+              <div className={clsx("max-w-[180px]", zone.labelClassName)}>
+                <p className="font-heading text-[11px] font-bold uppercase tracking-widest">
+                  {zone.label}
+                </p>
+                <p className="mt-1 font-sans text-xs font-semibold text-ink-500">
+                  {zone.description}
+                </p>
+              </div>
+            </div>
+          ))}
+
+          <svg className="absolute inset-0 z-[3] h-full w-full overflow-visible" viewBox="0 0 900 560" fill="none" aria-hidden="true">
             <motion.path
               initial={{ pathLength: 0 }}
               whileInView={{ pathLength: 1 }}
               viewport={{ once: true, margin: "-20%" }}
               transition={{ duration: 1.8, ease: "easeInOut" }}
-              d="M80 335 C160 185 270 190 335 292 C400 392 510 390 560 250 C622 88 760 150 820 286"
+              d="M108 367 C158 244 244 228 270 291 C336 434 414 384 450 336 C518 246 560 210 594 235 C668 289 724 296 774 319"
               fill="none"
               stroke="#7C5BDB"
               strokeWidth="26"
@@ -133,7 +181,7 @@ export function ModulePreviewSection() {
               whileInView={{ pathLength: 1 }}
               viewport={{ once: true, margin: "-20%" }}
               transition={{ duration: 1.8, ease: "easeInOut", delay: 0.08 }}
-              d="M80 335 C160 185 270 190 335 292 C400 392 510 390 560 250 C622 88 760 150 820 286"
+              d="M108 367 C158 244 244 228 270 291 C336 434 414 384 450 336 C518 246 560 210 594 235 C668 289 724 296 774 319"
               fill="none"
               stroke="#5B3BB5"
               strokeWidth="5"
@@ -155,7 +203,7 @@ export function ModulePreviewSection() {
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: i * 0.15, type: "spring", stiffness: 240, damping: 20 }}
                 className={clsx(
-                  "absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-4",
+                  "absolute z-[4] flex -translate-x-1/2 -translate-y-1/2 items-center gap-4",
                   node.labelPosition === "left" && "flex-row-reverse",
                   node.labelPosition === "top" && "flex-col-reverse",
                   node.labelPosition === "bottom" && "flex-col",

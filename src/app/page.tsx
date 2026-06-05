@@ -8,10 +8,12 @@ import { TestimonialsSection } from "@/components/marketing/TestimonialsSection"
 import { TrustSafetyNote } from "@/components/marketing/TrustSafetyNote";
 import { CTASection } from "@/components/marketing/CTASection";
 import { Footer } from "@/components/marketing/Footer";
+import { LandingPreloader } from "@/components/marketing/LandingPreloader";
 
 export default function Home() {
   return (
     <>
+      <LandingPreloader />
       <Navbar />
       <main>
         <HeroSection />
