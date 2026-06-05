@@ -1,11 +1,13 @@
 "use client";
 
-import { Activity } from "@/features/student-learning/types";
+import type { Activity } from "@/features/student-learning/types";
 import { VisualQuiz } from "./activities/VisualQuiz";
 import { DecisionSimulation } from "./activities/DecisionSimulation";
 import { DragAndDrop } from "./activities/DragAndDrop";
 import { Checklist } from "./activities/Checklist";
 import { ReflectionChoice } from "./activities/ReflectionChoice";
+import { Flashcard } from "./activities/Flashcard";
+import { TrueFalse } from "./activities/TrueFalse";
 
 export interface ActivityRendererProps {
   activity: Activity;
@@ -14,6 +16,10 @@ export interface ActivityRendererProps {
 
 export function ActivityRenderer({ activity, onComplete }: ActivityRendererProps) {
   switch (activity.type) {
+    case "flashcard":
+      return <Flashcard activity={activity} onComplete={onComplete} />;
+    case "true-false":
+      return <TrueFalse activity={activity} onComplete={onComplete} />;
     case "visual-quiz":
       return <VisualQuiz activity={activity} onComplete={onComplete} />;
     case "decision-simulation":
@@ -25,8 +31,8 @@ export function ActivityRenderer({ activity, onComplete }: ActivityRendererProps
     case "reflection-choice":
       return <ReflectionChoice activity={activity} onComplete={onComplete} />;
     default: {
-      // exhaustive type check
       const _never: never = activity;
+      void _never;
       return (
         <div className="font-sans text-sm text-coral-500 p-4 bg-coral-500/10 rounded-2xl">
           Aktivitas tidak dikenal. Silakan hubungi admin.

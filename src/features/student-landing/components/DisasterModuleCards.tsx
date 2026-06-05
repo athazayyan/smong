@@ -7,6 +7,7 @@ interface DisasterModuleCardsProps {
 }
 
 export function DisasterModuleCards({ moduleGroupIds }: DisasterModuleCardsProps) {
+  void moduleGroupIds;
   // Mock data for available modules
   const modules = [
     {

@@ -3,8 +3,8 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { BadgeId } from "@/features/student-learning/types";
-import { Star, Shield, Users, Trophy } from "lucide-react";
+import type { BadgeId } from "@/features/student-learning/types";
+import { Star, Shield, Award, Globe } from "lucide-react";
 
 export interface BadgeIconProps {
   badgeId: BadgeId;
@@ -17,27 +17,27 @@ const BADGE_CONFIG: Record<
   BadgeId,
   { label: string; icon: React.ElementType; bg: string; ring: string }
 > = {
-  "siaga-pemula": {
-    label: "Siaga Pemula",
+  "siaga-gempa": {
+    label: "Siaga Gempa",
     icon: Star,
     bg: "bg-yellow-200",
     ring: "ring-yellow-200",
   },
-  "penjaga-kepala": {
-    label: "Penjaga Kepala",
+  "ahli-evakuasi": {
+    label: "Ahli Evakuasi",
     icon: Shield,
     bg: "bg-lavender-200",
     ring: "ring-lavender-200",
   },
-  "teman-tangguh": {
-    label: "Teman Tangguh",
-    icon: Users,
+  "mitigator-muda": {
+    label: "Mitigator Muda",
+    icon: Award,
     bg: "bg-mint-100",
     ring: "ring-mint-100",
   },
-  "pahlawan-evakuasi": {
-    label: "Pahlawan Evakuasi",
-    icon: Trophy,
+  "penjelajah-nusantara": {
+    label: "Penjelajah Nusantara",
+    icon: Globe,
     bg: "bg-peach-200",
     ring: "ring-peach-200",
   },

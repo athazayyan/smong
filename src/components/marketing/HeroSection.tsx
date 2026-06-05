@@ -30,9 +30,9 @@ export function HeroSection() {
         />
       </motion.div>
 
-      <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_42%,rgba(255,248,240,0.78),rgba(255,248,240,0.42)_34%,rgba(255,248,240,0.18)_60%,rgba(255,248,240,0.78)_100%)]" />
-      <div className="absolute inset-x-0 bottom-0 z-[2] h-1/2 bg-gradient-to-t from-cream-50 via-cream-50/55 to-transparent" />
-      <div className="absolute inset-x-0 top-0 z-[2] h-48 bg-gradient-to-b from-cream-50/75 to-transparent" />
+      <div className="absolute inset-0 z-1 bg-[radial-gradient(circle_at_50%_42%,rgba(255,248,240,0.78),rgba(255,248,240,0.42)_34%,rgba(255,248,240,0.18)_60%,rgba(255,248,240,0.78)_100%)]" />
+      <div className="absolute inset-x-0 bottom-0 z-2 h-1/2 bg-linear-to-t from-cream-50 via-cream-50/55 to-transparent" />
+      <div className="absolute inset-x-0 top-0 z-2 h-48 bg-linear-to-b from-cream-50/75 to-transparent" />
       <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
         <motion.div
           animate={{ x: [0, -30, 0] }}

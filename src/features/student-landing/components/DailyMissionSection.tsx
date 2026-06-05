@@ -6,6 +6,7 @@ interface DailyMissionSectionProps {
 }
 
 export function DailyMissionSection({ activityId }: DailyMissionSectionProps) {
+  void activityId;
   return (
     <div className="w-full relative bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex flex-col md:flex-row items-center gap-6 justify-between">

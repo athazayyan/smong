@@ -9,6 +9,7 @@ interface StudentModulePathPreviewProps {
 }
 
 export function StudentModulePathPreview({ moduleGroupId }: StudentModulePathPreviewProps) {
+  void moduleGroupId;
   // Mock nodes for visual preview
   const nodes = [
     { id: 1, status: "completed", type: "lesson", label: "Kenali Gempa" },

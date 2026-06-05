@@ -43,7 +43,6 @@ export function VisualQuiz({ activity, onComplete }: VisualQuizProps) {
       <div className="grid grid-cols-1 gap-3">
         {activity.options.map((opt) => {
           const isSelected = selected === opt.id;
-          const isCorrectOption = opt.isCorrect;
 
           let optStyle = "bg-white ring-lavender-200/60 text-ink-900 hover:ring-purple-500";
           if (isSelected && answerState === "correct") optStyle = "bg-mint-100 ring-teal-500 text-teal-700";
