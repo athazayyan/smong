@@ -1,26 +1,79 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Fonts */
+  --font-sans: var(--font-nunito-sans), sans-serif;
+  --font-heading: var(--font-baloo-2), sans-serif;
+
+  /* Cream — main page background */
+  --color-cream-50: #FFF8F0;
+  --color-cream-100: #FBEFE3;
+
+  /* Ink — text */
+  --color-ink-900: #2F2454;
+  --color-ink-700: #514172;
+  --color-ink-400: #9D8FBF;
+
+  /* Purple — brand, path, magic */
+  --color-purple-900: #2F176E;
+  --color-purple-700: #5B3BB5;
+  --color-purple-500: #7C5BDB;
+
+  /* Lavender — cards, inactive, soft panels */
+  --color-lavender-100: #EEE8FF;
+  --color-lavender-200: #DDD2FF;
+
+  /* Sky — calm, dashboard surfaces */
+  --color-sky-100: #D8F1FF;
+
+  /* Mint — safe, completed, positive */
+  --color-mint-100: #D7F7E7;
+
+  /* Teal — correct, complete, safety action */
+  --color-teal-700: #1A9278;
+  --color-teal-600: #1EA98A;
+  --color-teal-500: #22B99A;
+  --color-teal-100: #C4F2E8;
+
+  /* Yellow — reward, star, badge glow */
+  --color-yellow-200: #FFE89A;
+  --color-yellow-700: #8C6600;
+  --color-yellow-800: #6B4E00;
+  --color-yellow-500: #F5C400;
+
+  /* Peach — warm decorative */
+  --color-peach-200: #FFD6B8;
+  --color-peach-300: #FFBB8A;
+
+  /* Coral — retry, friendly urgency */
+  --color-coral-50: #FFF0F2;
+  --color-coral-200: #FFAAB2;
+  --color-coral-500: #FF7180;
+  --color-coral-600: #E85A6A;
+  --color-coral-700: #C43A4A;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Base */
+body {
+  background-color: var(--color-cream-50);
+  color: var(--color-ink-900);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Focus visible — accessible keyboard focus for all interactive elements */
+:focus-visible {
+  outline: 3px solid var(--color-purple-500);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
