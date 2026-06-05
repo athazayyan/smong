@@ -10,6 +10,7 @@ import {
   gempaLessonsChapter1,
   gempaLessonsStub,
   gempaActivitiesChapter1,
+  gempaActivitiesChapter2to7,
 } from "@/features/student-learning/data/mockData";
 import type { LessonNode, Activity } from "@/features/student-learning/types";
 
@@ -22,7 +23,7 @@ interface LessonPageProps {
 }
 
 const allLessons: LessonNode[] = [...gempaLessonsChapter1, ...gempaLessonsStub];
-const allActivities: Activity[] = [...gempaActivitiesChapter1];
+const allActivities: Activity[] = [...gempaActivitiesChapter1, ...gempaActivitiesChapter2to7];
 
 export default function LessonPage({ params }: LessonPageProps) {
   const { chapterId, lessonId } = use(params);

@@ -10,6 +10,7 @@ import type {
   StudentSchoolMembership,
   AuthenticatedUser,
 } from "../types";
+import { gempaLessonsCh2to7, gempaActivitiesCh2to7 } from "./gempaContent";
 
 // ─── Schools & Auth ───────────────────────────────────────────────────────────
 
@@ -155,7 +156,7 @@ export const gempaChapters = [
     preTestId: "pre-test-penyebab",
     postTestId: "post-test-penyebab",
     requiredScore: undefined,
-    status: "locked" as const,
+    status: "active" as const,
     reward: {
       id: "reward-penyebab",
       type: "xp" as const,
@@ -185,7 +186,7 @@ export const gempaChapters = [
     preTestId: "pre-test-siap-sebelum",
     postTestId: "post-test-siap-sebelum",
     requiredScore: undefined,
-    status: "locked" as const,
+    status: "active" as const,
     reward: {
       id: "reward-siap-sebelum",
       type: "badge" as const,
@@ -214,7 +215,7 @@ export const gempaChapters = [
     preTestId: "pre-test-ketika-terjadi",
     postTestId: "post-test-ketika-terjadi",
     requiredScore: undefined,
-    status: "locked" as const,
+    status: "active" as const,
     reward: {
       id: "reward-ketika-terjadi",
       type: "badge" as const,
@@ -245,7 +246,7 @@ export const gempaChapters = [
     preTestId: "pre-test-setelah-terjadi",
     postTestId: "post-test-setelah-terjadi",
     requiredScore: undefined,
-    status: "locked" as const,
+    status: "active" as const,
     reward: {
       id: "reward-setelah-terjadi",
       type: "xp" as const,
@@ -275,7 +276,7 @@ export const gempaChapters = [
     preTestId: undefined,
     postTestId: "post-test-dampak",
     requiredScore: undefined,
-    status: "locked" as const,
+    status: "active" as const,
     reward: {
       id: "reward-dampak",
       type: "unlock" as const,
@@ -303,7 +304,7 @@ export const gempaChapters = [
     preTestId: undefined,
     postTestId: "final-quiz-gempa",
     requiredScore: 80,
-    status: "locked" as const,
+    status: "active" as const,
     reward: {
       id: "reward-sertifikasi",
       type: "certificate-preview" as const,
@@ -341,7 +342,7 @@ export const gempaLessonsChapter1 = [
     title: "Jenis-Jenis Gempa",
     shortDescription: "Pelajari berbagai jenis gempa di Indonesia.",
     activityIds: ["quiz-jenis-gempa"],
-    status: "locked" as const,
+    status: "active" as const,
     estimatedMinutes: 3,
     reward: {
       id: "reward-jenis-gempa",
@@ -358,7 +359,7 @@ export const gempaLessonsChapter1 = [
     title: "Fakta dan Mitos Gempa",
     shortDescription: "Bedakan mana yang benar dan mana yang salah tentang gempa.",
     activityIds: ["truefalse-mitos-1", "truefalse-mitos-2"],
-    status: "locked" as const,
+    status: "active" as const,
     estimatedMinutes: 3,
     reward: {
       id: "reward-fakta-mitos",
@@ -370,81 +371,8 @@ export const gempaLessonsChapter1 = [
   },
 ] satisfies LessonNode[];
 
-// Stub lessons for Chapters 2-7 (used for map display only)
-export const gempaLessonsStub = [
-  {
-    id: "lempeng-tektonik",
-    chapterId: "gempa-penyebab",
-    moduleGroupId: "gempa-bumi" as const,
-    title: "Pergerakan Lempeng",
-    shortDescription: "Pelajari bagaimana lempeng tektonik bergerak.",
-    activityIds: [],
-    status: "locked" as const,
-    estimatedMinutes: 3,
-    reward: { id: "r-lempeng", type: "xp" as const, label: "20 XP", xpAmount: 20 },
-    mascotPrompt: "Lempeng bumi selalu bergerak. Penasaran mengapa bisa menyebabkan gempa?",
-  },
-  {
-    id: "tas-siaga",
-    chapterId: "gempa-siap-sebelum",
-    moduleGroupId: "gempa-bumi" as const,
-    title: "Tas Siaga Bencana",
-    shortDescription: "Bantu siapkan tas siaga yang lengkap.",
-    activityIds: [],
-    status: "locked" as const,
-    estimatedMinutes: 3,
-    reward: { id: "r-tas", type: "xp" as const, label: "20 XP", xpAmount: 20 },
-    mascotPrompt: "Tas siaga yang tepat bisa jadi penyelamat. Ayo siapkan bersama!",
-  },
-  {
-    id: "berlindung-dulu",
-    chapterId: "gempa-ketika-terjadi",
-    moduleGroupId: "gempa-bumi" as const,
-    title: "Berlindung Dulu",
-    shortDescription: "Pilih tindakan paling aman saat guncangan terjadi.",
-    activityIds: [],
-    status: "locked" as const,
-    estimatedMinutes: 3,
-    reward: { id: "r-berlindung", type: "xp" as const, label: "25 XP", xpAmount: 25 },
-    mascotPrompt: "Saat gempa terjadi, setiap detik sangat penting. Berlindung dulu!",
-  },
-  {
-    id: "periksa-diri",
-    chapterId: "gempa-setelah-terjadi",
-    moduleGroupId: "gempa-bumi" as const,
-    title: "Periksa Diri Sendiri",
-    shortDescription: "Langkah pertama setelah guncangan berhenti.",
-    activityIds: [],
-    status: "locked" as const,
-    estimatedMinutes: 3,
-    reward: { id: "r-periksa", type: "xp" as const, label: "20 XP", xpAmount: 20 },
-    mascotPrompt: "Setelah gempa berhenti, periksa dirimu terlebih dahulu dengan tenang.",
-  },
-  {
-    id: "dampak-gempa",
-    chapterId: "gempa-dampak-lanjutan",
-    moduleGroupId: "gempa-bumi" as const,
-    title: "Dampak Gempa Bumi",
-    shortDescription: "Kenali dampak fisik, sosial, dan psikologis gempa.",
-    activityIds: [],
-    status: "locked" as const,
-    estimatedMinutes: 3,
-    reward: { id: "r-dampak", type: "xp" as const, label: "20 XP", xpAmount: 20 },
-    mascotPrompt: "Gempa membawa dampak yang luas. Memahaminya membuat kita lebih bijak.",
-  },
-  {
-    id: "kuis-final-gempa",
-    chapterId: "gempa-sertifikasi",
-    moduleGroupId: "gempa-bumi" as const,
-    title: "Kuis Final Gempa",
-    shortDescription: "Uji semua yang sudah kamu pelajari tentang gempa bumi.",
-    activityIds: [],
-    status: "locked" as const,
-    estimatedMinutes: 10,
-    reward: { id: "r-final", type: "certificate-preview" as const, label: "Sertifikat", xpAmount: 100 },
-    mascotPrompt: "Ini ujian terakhirmu! Tunjukkan bahwa kamu sudah siaga gempa.",
-  },
-] satisfies LessonNode[];
+// Stub lessons replaced with full content
+export const gempaLessonsStub = gempaLessonsCh2to7;
 
 // ─── Activities for Chapter 1 ─────────────────────────────────────────────────
 
@@ -505,6 +433,8 @@ export const gempaActivitiesChapter1 = [
     retryFeedback: "Coba lagi. Kusen pintu modern tidak lebih kuat dari meja yang kokoh.",
   },
 ] satisfies Activity[];
+
+export const gempaActivitiesChapter2to7 = gempaActivitiesCh2to7;
 
 // ─── Tests (typed stubs) ──────────────────────────────────────────────────────
 
