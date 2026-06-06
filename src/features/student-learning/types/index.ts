@@ -362,3 +362,16 @@ export type MascotMood =
   | "thinking"
   | "encouraging"
   | "celebrating";
+
+export type ChapterMapPhase = "pra-bencana" | "saat-bencana" | "pascabencana" | "sertifikasi";
+
+export type ChapterMapTone = "teal" | "yellow" | "purple" | "peach" | "sky";
+
+export type ChapterMapVisual = {
+  chapterKind: ChapterKind;
+  phase: ChapterMapPhase;
+  phaseLabel: "Pra-Bencana" | "Saat Bencana" | "Pascabencana" | "Sertifikasi";
+  desktopClassName: string;
+  mobileOrder: number;
+  tone: ChapterMapTone;
+};

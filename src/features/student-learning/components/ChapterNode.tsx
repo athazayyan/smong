@@ -4,147 +4,137 @@ import React from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import {
-  Lock,
-  BookOpen,
-  Shield,
-  Zap,
-  Heart,
-  BarChart2,
   Award,
-  Trophy,
+  BarChart2,
+  BookOpen,
   CheckCircle2,
+  Heart,
+  Lock,
+  Shield,
+  Trophy,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ModuleChapter, ChapterStatus } from "@/features/student-learning/types";
+import type {
+  ChapterMapVisual,
+  ChapterStatus,
+  ModuleChapter,
+} from "@/features/student-learning/types";
 
 interface ChapterNodeProps {
   chapter: ModuleChapter;
+  displayStatus: ChapterStatus;
   index: number;
+  visual: ChapterMapVisual;
 }
 
-const KIND_ICON: Record<ModuleChapter["kind"], React.ElementType> = {
-  knowledge: BookOpen,
-  cause: Zap,
-  preparedness: Shield,
-  "during-disaster": Shield,
-  "after-disaster": Heart,
-  "impact-and-reflection": BarChart2,
-  certification: Trophy,
-  "regional-exploration": Award,
-};
-
-const STATUS_STYLES: Record<
-  ChapterStatus,
-  { bg: string; ring: string; text: string; labelText: string }
-> = {
-  locked: {
-    bg: "bg-lavender-200/40",
-    ring: "ring-2 ring-lavender-200",
-    text: "text-ink-700/40",
-    labelText: "text-ink-700/50",
-  },
-  available: {
-    bg: "bg-white",
-    ring: "ring-2 ring-purple-400",
-    text: "text-purple-600",
-    labelText: "text-ink-900",
-  },
-  active: {
-    bg: "bg-purple-700",
-    ring: "ring-4 ring-purple-300",
-    text: "text-white",
-    labelText: "text-ink-900",
-  },
-  completed: {
-    bg: "bg-teal-500",
-    ring: "ring-2 ring-teal-300",
-    text: "text-white",
-    labelText: "text-ink-900",
-  },
-};
-
-export function ChapterNode({ chapter, index }: ChapterNodeProps) {
+export function ChapterNode({ chapter, displayStatus, index, visual }: ChapterNodeProps) {
   const shouldReduceMotion = useReducedMotion();
-  const styles = STATUS_STYLES[chapter.status];
-  const Icon = chapter.status === "completed" ? CheckCircle2 : KIND_ICON[chapter.kind];
-  const isLocked = chapter.status === "locked";
-  const isActive = chapter.status === "active";
-  const isCertification = chapter.kind === "certification";
+  const isLocked = displayStatus === "locked";
+  const isActive = displayStatus === "active";
 
-  // Alternate left/right for storybook path feel
-  const alignRight = index % 2 === 1;
-
-  const nodeSize = isCertification ? "w-24 h-24" : "w-18 h-18";
-  const iconSize = isCertification ? "w-10 h-10" : "w-7 h-7";
-
-  const nodeEl = (
+  const content = (
     <motion.div
-      animate={
-        isActive && !shouldReduceMotion
-          ? {
-              boxShadow: [
-                "0 0 0 0px rgba(91,59,181,0.4)",
-                "0 0 0 14px rgba(91,59,181,0)",
-                "0 0 0 0px rgba(91,59,181,0)",
-              ],
-            }
-          : {}
-      }
-      transition={isActive ? { duration: 2, repeat: Infinity } : {}}
+      animate={isActive && !shouldReduceMotion ? { x: [0, 3, 0] } : {}}
+      transition={isActive ? { duration: 2.4, repeat: Infinity, ease: "easeInOut" } : {}}
       className={cn(
-        "flex items-center justify-center rounded-full shadow-lg transition-colors",
-        nodeSize,
-        styles.bg,
-        styles.ring
+        "group relative grid items-center gap-4 border bg-white/68 p-4 shadow-sm backdrop-blur transition md:grid-cols-[72px_1fr_auto]",
+        "smong-slab-soft",
+        isActive ? "border-purple-700/22" : "border-purple-700/8",
+        isLocked ? "opacity-58" : "hover:bg-white/86"
       )}
     >
-      <Icon className={cn(iconSize, styles.text)} />
-    </motion.div>
-  );
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08, duration: 0.5 }}
-      className={cn(
-        "flex flex-col items-center gap-3",
-        alignRight ? "lg:self-end lg:mr-12" : "lg:self-start lg:ml-12"
-      )}
-    >
-      {/* Number badge */}
-      <div className="w-6 h-6 rounded-full bg-lavender-200 flex items-center justify-center">
-        <span className="font-heading text-xs font-bold text-purple-700">{index + 1}</span>
+      <div className="relative flex items-center gap-3 md:block">
+        <div
+          className={cn(
+            "flex h-14 w-14 shrink-0 items-center justify-center rounded-[1.1rem] border border-white/80",
+            getNodeClassName(displayStatus, visual.tone)
+          )}
+        >
+          {displayStatus === "completed" ? (
+            <CheckCircle2 className="h-7 w-7" />
+          ) : isLocked ? (
+            <Lock className="h-6 w-6" />
+          ) : (
+            renderChapterIcon(chapter.kind)
+          )}
+        </div>
+        <span className="absolute -right-1 -top-2 hidden h-6 w-6 items-center justify-center rounded-full bg-white font-heading text-xs font-black text-purple-700 shadow-sm md:flex">
+          {index + 1}
+        </span>
       </div>
 
-      {/* Node — locked = div, others = Link */}
-      {isLocked ? (
-        <div>{nodeEl}</div>
-      ) : (
-        <Link href={`/siswa/modul/${chapter.id}`}>
-          <motion.div whileHover={{ scale: 1.07 }} whileTap={{ scale: 0.95 }} className="cursor-pointer">
-            {nodeEl}
-          </motion.div>
-        </Link>
-      )}
-
-      {/* Label */}
-      <div className="text-center max-w-[160px] bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl border border-lavender-200/60 shadow-sm">
-        <p className={cn("font-heading text-xs font-bold leading-tight", styles.labelText)}>
+      <div className="min-w-0">
+        <div className="mb-1 flex flex-wrap items-center gap-2">
+          <p className="text-[0.65rem] font-black uppercase tracking-[0.15em] text-purple-700">
+            {visual.phaseLabel}
+          </p>
+          {chapter.preTestId ? <TinyFlag label="Pre-test" /> : null}
+          {chapter.postTestId ? <TinyFlag label="Post-test" /> : null}
+        </div>
+        <p className={cn("font-heading text-2xl font-black leading-tight", isLocked ? "text-ink-400" : "text-ink-900")}>
           {chapter.shortLabel}
         </p>
-        {!isLocked && (
-          <p className="font-sans text-[10px] text-purple-600 font-semibold mt-0.5">
-            {chapter.reward.label}
-          </p>
-        )}
-        {isLocked && (
-          <p className="font-sans text-[10px] text-ink-700/40 flex items-center justify-center gap-1 mt-0.5">
-            <Lock className="w-2.5 h-2.5" />
-            Terkunci
-          </p>
-        )}
+        <p className={cn("mt-1 text-sm font-semibold leading-6", isLocked ? "text-ink-400" : "text-ink-700")}>
+          {getChapterActionText(chapter, displayStatus)}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 md:justify-end">
+        <p className={cn("font-heading text-sm font-black", isLocked ? "text-ink-400" : "text-purple-700")}>
+          {chapter.reward.label}
+        </p>
+        {!isLocked ? (
+          <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-purple-900 text-white transition group-hover:translate-x-0.5">
+            <BookOpen className="h-5 w-5" />
+          </span>
+        ) : null}
       </div>
     </motion.div>
   );
+
+  if (isLocked) {
+    return <div data-chapter-node>{content}</div>;
+  }
+
+  return (
+    <Link data-chapter-node href={`/siswa/modul/${chapter.id}`} className="block">
+      {content}
+    </Link>
+  );
+}
+
+function TinyFlag({ label }: { label: string }) {
+  return (
+    <span className="rounded-full bg-lavender-100/72 px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-purple-700">
+      {label}
+    </span>
+  );
+}
+
+function renderChapterIcon(kind: ModuleChapter["kind"]) {
+  const className = "h-7 w-7";
+  if (kind === "knowledge") return <BookOpen className={className} />;
+  if (kind === "cause") return <Zap className={className} />;
+  if (kind === "preparedness") return <Shield className={className} />;
+  if (kind === "during-disaster") return <Shield className={className} />;
+  if (kind === "after-disaster") return <Heart className={className} />;
+  if (kind === "impact-and-reflection") return <BarChart2 className={className} />;
+  if (kind === "certification") return <Trophy className={className} />;
+  return <Award className={className} />;
+}
+
+function getNodeClassName(status: ChapterStatus, tone: ChapterMapVisual["tone"]) {
+  if (status === "completed") return "bg-purple-900 text-white";
+  if (status === "active") return "bg-purple-900 text-white shadow-[0_8px_0_#20104f]";
+  if (status === "available") return tone === "teal" ? "bg-mint-100 text-teal-700" : "bg-lavender-100 text-purple-700";
+  return "bg-lavender-100/70 text-ink-400";
+}
+
+function getChapterActionText(chapter: ModuleChapter, status: ChapterStatus) {
+  if (status === "completed") return "Selesai dan tersimpan di progressmu.";
+  if (status === "active" && chapter.preTestId) return "Mulai dengan cek awal, lalu lanjut ke misi pendek.";
+  if (status === "active") return "Bab aktif. Pilih misi pertama untuk lanjut.";
+  if (status === "available") return "Sudah bisa dibuka setelah bab aktif selesai.";
+  return "Selesaikan jalur sebelumnya untuk membuka bab ini.";
 }

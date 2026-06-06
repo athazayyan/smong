@@ -42,7 +42,12 @@ export function SchoolCodeDialog({ isOpen, onClose }: SchoolCodeDialogProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="school-code-dialog-title"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+    >
       <div 
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
         onClick={handleClose}
@@ -61,7 +66,7 @@ export function SchoolCodeDialog({ isOpen, onClose }: SchoolCodeDialogProps) {
             <KeyRound className="w-8 h-8" />
           </div>
 
-          <h2 className="text-2xl font-bold text-center text-slate-800 mb-2">
+          <h2 id="school-code-dialog-title" className="text-2xl font-bold text-center text-slate-800 mb-2">
             Masukkan Kode Sekolah
           </h2>
           <p className="text-center text-slate-500 mb-8 px-4">

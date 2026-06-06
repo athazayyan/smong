@@ -17,7 +17,7 @@ export type SchoolSummary = {
   province: string;
 };
 
-export type ModuleGroupId = "gempa-bumi" | "banjir" | "tsunami" | "mitigasi-nusantara" | string;
+export type ModuleGroupId = "gempa-bumi" | "banjir" | "tsunami" | "mitigasi-nusantara";
 
 export type StudentNavbarItem = {
   id: string;
@@ -96,4 +96,68 @@ export type StudentLandingState = {
   progress: ModuleProgress;
   navbarItems: StudentNavbarItem[];
   sections: StudentLandingSection[];
+};
+
+export type StudentVisualAsset = {
+  src: string;
+  alt: string;
+  width: number;
+  height: number;
+  sizes: string;
+  priority?: boolean;
+};
+
+export type StudentHeroStat = {
+  id: "xp" | "streak" | "lessons";
+  label: string;
+  value: string;
+  iconName: "Zap" | "Flame" | "Route";
+};
+
+export type StudentPreviewNodeStatus = "completed" | "active" | "locked";
+
+export type StudentPreviewNodeKind =
+  | "intro"
+  | "pre-test"
+  | "lesson"
+  | "activity"
+  | "checkpoint"
+  | "post-test";
+
+export type StudentModulePreviewNode = {
+  id: string;
+  label: string;
+  phaseLabel: "Pra-Bencana" | "Saat Bencana" | "Pascabencana";
+  kind: StudentPreviewNodeKind;
+  status: StudentPreviewNodeStatus;
+  iconName: "BookOpen" | "ShieldCheck" | "PackageCheck" | "MousePointerClick" | "HeartHandshake" | "Award";
+  desktopClassName: string;
+  mobileOrder: number;
+};
+
+export type StudentDisasterModuleCard = {
+  id: ModuleGroupId;
+  title: string;
+  description: string;
+  status: "active" | "coming-soon";
+  iconName: "ShieldCheck" | "Waves" | "MapPinned" | "Lock";
+  tone: "purple" | "sky" | "teal" | "yellow";
+  progressPercent: number;
+};
+
+export type StudentActivityPreviewItem = {
+  id: "quick-quiz" | "sort-bag" | "safe-check";
+  title: string;
+  description: string;
+  iconName: "CircleHelp" | "PackageCheck" | "ListChecks";
+  tone: "sky" | "peach" | "mint";
+};
+
+export type StudentRewardShelfItem = {
+  id: "xp" | "streak" | "lesson-progress";
+  label: string;
+  value: string;
+  helper: string;
+  iconName: "Zap" | "Flame" | "ChartNoAxesColumnIncreasing";
+  tone: "sky" | "peach" | "purple";
 };

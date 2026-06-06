@@ -2,7 +2,6 @@ import type {
   LearningModuleGroup,
   ModuleChapter,
   LessonNode,
-  LearningTest,
   Activity,
   BadgeId,
   SchoolSummary,

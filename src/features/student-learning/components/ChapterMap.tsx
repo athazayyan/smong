@@ -1,71 +1,86 @@
 "use client";
 
-import React from "react";
-import { motion, useReducedMotion } from "framer-motion";
-import { Trophy } from "lucide-react";
-import type { ModuleChapter } from "@/features/student-learning/types";
+import React, { useEffect, useRef } from "react";
+import { useReducedMotion } from "framer-motion";
+import gsap from "gsap";
+import type { ChapterStatus, ModuleChapter, ModuleProgress } from "@/features/student-learning/types";
+import { getChapterMapVisual } from "@/features/student-learning/data/visualConfig";
 import { ChapterNode } from "./ChapterNode";
 
 interface ChapterMapProps {
   chapters: ModuleChapter[];
+  progress: ModuleProgress;
 }
 
-// Wavy path connector between nodes
-function PathConnector({ index }: { index: number }) {
-  const flip = index % 2 === 0;
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.2 + index * 0.07 }}
-      className="flex justify-center w-full my-1"
-    >
-      <svg
-        width="96"
-        height="40"
-        viewBox="0 0 96 40"
-        fill="none"
-        className={flip ? "scale-x-[-1]" : ""}
-      >
-        <path
-          d="M 8 5 Q 48 5 48 20 Q 48 35 88 35"
-          stroke="#DDD2FF"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray="6 4"
-          fill="none"
-        />
-      </svg>
-    </motion.div>
-  );
-}
-
-export function ChapterMap({ chapters }: ChapterMapProps) {
+export function ChapterMap({ chapters, progress }: ChapterMapProps) {
+  const sectionRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
-  return (
-    <div className="relative flex flex-col items-center w-full max-w-sm mx-auto py-6 px-2 gap-2">
-      {chapters.map((chapter, i) => (
-        <React.Fragment key={chapter.id}>
-          <ChapterNode chapter={chapter} index={i} />
-          {i < chapters.length - 1 && <PathConnector index={i} />}
-        </React.Fragment>
-      ))}
+  useEffect(() => {
+    if (shouldReduceMotion || !sectionRef.current) return;
 
-      {/* End of path — Certificate node visual indicator */}
-      <motion.div
-        initial={{ opacity: 0, scale: shouldReduceMotion ? 1 : 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: chapters.length * 0.08 + 0.3 }}
-        className="flex flex-col items-center gap-3 mt-6"
-      >
-        <div className="w-16 h-16 rounded-full bg-yellow-200/40 ring-4 ring-yellow-200 flex items-center justify-center shadow-sm">
-          <Trophy className="w-8 h-8 text-yellow-700" />
-        </div>
-        <p className="font-sans text-xs font-semibold text-ink-700/60 text-center max-w-[160px]">
-          Selesaikan semua bab untuk meraih Sertifikat Siaga Gempa
+    const root = sectionRef.current;
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        "[data-chapter-node]",
+        { opacity: 0, y: 18 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power2.out", stagger: 0.06 }
+      );
+      gsap.fromTo(
+        "[data-map-thread]",
+        { scaleY: 0, transformOrigin: "top center" },
+        { scaleY: 1, duration: 1.1, ease: "power3.out", delay: 0.12 }
+      );
+    }, root);
+
+    return () => ctx.revert();
+  }, [shouldReduceMotion]);
+
+  return (
+    <div
+      ref={sectionRef}
+      className="relative overflow-hidden rounded-[2rem] border border-purple-700/8 bg-white/58 p-5 shadow-[0_28px_80px_rgba(47,23,110,0.08)] md:rounded-[2.75rem] md:p-8"
+    >
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-br from-white/70 via-lavender-100/30 to-mint-100/36" />
+      <div className="pointer-events-none absolute -right-20 top-16 h-64 w-[52%] smong-veil bg-mint-100/35" />
+      <div className="pointer-events-none absolute -bottom-24 -left-12 h-72 w-[60%] smong-river bg-lavender-100/32" />
+      <div className="relative mb-8 max-w-2xl">
+        <p className="inline-flex rounded-full border border-purple-700/10 bg-white/72 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-purple-700">
+          Peta Misi Gempa
         </p>
-      </motion.div>
+        <h2 className="mt-4 font-heading text-4xl font-black leading-tight text-ink-900 md:text-5xl">
+          Jalur belajar yang rapi
+        </h2>
+        <p className="mt-2 text-sm font-semibold leading-7 text-ink-700">
+          Selesaikan bab dari atas ke bawah. Setiap fase tetap terlihat, tanpa node yang saling menumpuk.
+        </p>
+      </div>
+
+      <div className="relative">
+        <div data-map-thread className="pointer-events-none absolute bottom-10 left-8 top-6 hidden w-1 rounded-full bg-purple-900/16 md:block" />
+        <div className="grid gap-4">
+          {chapters.map((chapter, index) => (
+            <ChapterNode
+              key={chapter.id}
+              chapter={chapter}
+              displayStatus={getChapterDisplayStatus(chapter, index, progress)}
+              index={index}
+              visual={getChapterMapVisual(chapter.kind)}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
+}
+
+function getChapterDisplayStatus(
+  chapter: ModuleChapter,
+  index: number,
+  progress: ModuleProgress
+): ChapterStatus {
+  if (progress.completedChapterIds.includes(chapter.id)) return "completed";
+  if (index === progress.completedChapterIds.length) return "active";
+  if (index === progress.completedChapterIds.length + 1) return "available";
+  return "locked";
 }

@@ -11,15 +11,13 @@ export default function SiswaLayout({
   const { navbarItems, schoolSyncStatus, school } = mockStudentLandingState;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
+    <div className="min-h-screen overflow-x-clip bg-cream-50 font-sans">
       <StudentNavbar 
         items={navbarItems} 
         schoolSyncStatus={schoolSyncStatus} 
         schoolName={school?.name} 
       />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
+      {children}
     </div>
   );
 }

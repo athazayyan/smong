@@ -1,142 +1,152 @@
 import React from "react";
 import Link from "next/link";
-import { Lock, ChevronRight, Clock } from "lucide-react";
+import { BookOpen, CheckCircle2, ChevronRight, Clock, FileCheck2, Lock, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ModuleChapter, LessonNode, ChapterStatus } from "@/features/student-learning/types";
+import type { ModuleChapter, LessonNode } from "@/features/student-learning/types";
 
 interface ChapterDetailProps {
   chapter: ModuleChapter;
   lessons: LessonNode[];
 }
 
-const STATUS_DOT: Record<ChapterStatus, string> = {
-  locked: "bg-lavender-200",
-  available: "bg-purple-400",
-  active: "bg-purple-700",
-  completed: "bg-teal-500",
-};
-
 export function ChapterDetail({ chapter, lessons }: ChapterDetailProps) {
   return (
-    <div className="flex flex-col gap-6">
-      {/* Chapter Header */}
-      <div className="bg-white rounded-3xl ring-2 ring-lavender-200/60 p-6 shadow-sm">
-        <p className="font-sans text-xs font-bold text-purple-500 uppercase tracking-wider mb-2">
-          Tujuan Pembelajaran
+    <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr]">
+      <section className="smong-slab-soft h-fit border border-purple-700/8 bg-white/58 p-6 shadow-sm backdrop-blur">
+        <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-purple-700">
+          <Target className="h-4 w-4" />
+          Tujuan
         </p>
-        <ul className="flex flex-col gap-2">
+        <ul className="grid gap-4">
           {chapter.learningGoals.map((goal) => (
-            <li key={goal} className="flex items-start gap-2 font-sans text-sm text-ink-700">
-              <ChevronRight className="w-4 h-4 text-purple-400 shrink-0 mt-0.5" />
+            <li key={goal} className="flex items-start gap-3 text-sm font-semibold leading-7 text-ink-700">
+              <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-purple-700" />
               {goal}
             </li>
           ))}
         </ul>
-      </div>
+      </section>
 
-      {/* Pre-test entry — if chapter has one */}
-      {chapter.preTestId && (
-        <div className="bg-sky-100 rounded-2xl p-4 border border-sky-200 flex items-center justify-between">
-          <div>
-            <p className="font-heading text-sm font-bold text-ink-900">Pre-Test</p>
-            <p className="font-sans text-xs text-ink-700 mt-0.5">
-              Ukur pengetahuan awalmu sebelum belajar
-            </p>
-          </div>
-          <Link
+      <section className="flex flex-col gap-4">
+        {chapter.preTestId ? (
+          <TestGate
+            title="Pre-Test"
+            body="Cek pengetahuan awal sebelum masuk misi."
             href={`/siswa/modul/${chapter.id}/pre-test`}
-            className="px-4 py-2 bg-purple-700 text-white font-bold text-sm rounded-xl shadow hover:bg-purple-600 transition-colors"
-          >
-            Mulai
-          </Link>
+            actionLabel="Mulai"
+            state="ready"
+          />
+        ) : null}
+
+        <div>
+          <p className="mb-4 font-heading text-2xl font-black text-ink-900">Misi dalam bab ini</p>
+          <div className="grid gap-3">
+            {lessons.map((lesson, index) => (
+              <LessonRow key={lesson.id} lesson={lesson} chapterId={chapter.id} index={index} />
+            ))}
+          </div>
         </div>
+
+        {chapter.postTestId ? (
+          <TestGate
+            title="Post-Test"
+            body="Uji pemahamanmu setelah semua misi selesai."
+            actionLabel="Selesaikan misi dulu"
+            state="locked"
+          />
+        ) : null}
+      </section>
+    </div>
+  );
+}
+
+function LessonRow({ lesson, chapterId, index }: { lesson: LessonNode; chapterId: string; index: number }) {
+  const isLocked = lesson.status === "locked";
+  const isActive = lesson.status === "active";
+
+  const content = (
+    <div
+      className={cn(
+        "group grid items-center gap-4 border bg-white/66 p-4 shadow-sm backdrop-blur transition md:grid-cols-[56px_1fr_auto]",
+        "smong-slab-soft",
+        isActive ? "border-purple-700/20" : "border-purple-700/8",
+        isLocked ? "opacity-55" : "hover:bg-white/86"
       )}
-
-      {/* Lessons */}
-      <div className="flex flex-col gap-3">
-        <p className="font-heading text-base font-bold text-ink-900 px-1">Misi dalam Bab Ini</p>
-        {lessons.map((lesson, i) => {
-          const isLocked = lesson.status === "locked";
-          const isActive = lesson.status === "active";
-          return (
-            <div
-              key={lesson.id}
-              className={cn(
-                "flex items-center gap-4 bg-white rounded-2xl p-4 border transition-all",
-                isLocked
-                  ? "border-lavender-200/60 opacity-70"
-                  : "border-lavender-200 shadow-sm hover:shadow-md"
-              )}
-            >
-              {/* Node number */}
-              <div
-                className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-heading font-bold text-sm",
-                  isLocked
-                    ? "bg-lavender-200/40 text-ink-700/40"
-                    : isActive
-                    ? "bg-purple-700 text-white"
-                    : "bg-teal-500 text-white"
-                )}
-              >
-                {isLocked ? <Lock className="w-4 h-4" /> : i + 1}
-              </div>
-
-              {/* Lesson info */}
-              <div className="flex-1 min-w-0">
-                <p
-                  className={cn(
-                    "font-heading text-sm font-bold truncate",
-                    isLocked ? "text-ink-700/50" : "text-ink-900"
-                  )}
-                >
-                  {lesson.title}
-                </p>
-                <div className="flex items-center gap-3 mt-0.5">
-                  <div className="flex items-center gap-1 font-sans text-[10px] text-ink-700/60">
-                    <Clock className="w-3 h-3" />
-                    {lesson.estimatedMinutes} menit
-                  </div>
-                  <div className="flex items-center gap-1 font-sans text-[10px] font-semibold text-purple-600">
-                    <div className={cn("w-1.5 h-1.5 rounded-full", STATUS_DOT[lesson.status])} />
-                    {lesson.reward.label}
-                  </div>
-                </div>
-              </div>
-
-              {/* Action */}
-              {!isLocked && (
-                <Link
-                  href={`/siswa/modul/${chapter.id}/${lesson.id}`}
-                  className={cn(
-                    "shrink-0 p-2 rounded-xl transition-colors",
-                    isActive
-                      ? "bg-purple-700 text-white hover:bg-purple-600"
-                      : "bg-lavender-200/40 text-purple-600 hover:bg-lavender-200"
-                  )}
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </Link>
-              )}
-            </div>
-          );
-        })}
+    >
+      <div className={cn("flex h-12 w-12 items-center justify-center rounded-[1rem]", isLocked ? "bg-lavender-100 text-ink-400" : "bg-purple-900 text-white")}>
+        {isLocked ? <Lock className="h-5 w-5" /> : <span className="font-heading text-lg font-black">{index + 1}</span>}
       </div>
 
-      {/* Post-test entry */}
-      {chapter.postTestId && (
-        <div className="bg-mint-100 rounded-2xl p-4 border border-teal-200 flex items-center justify-between">
-          <div>
-            <p className="font-heading text-sm font-bold text-ink-900">Post-Test</p>
-            <p className="font-sans text-xs text-ink-700 mt-0.5">
-              Uji pemahamanmu setelah menyelesaikan semua misi
-            </p>
-          </div>
-          <div className="px-4 py-2 bg-teal-200/60 text-teal-700 font-bold text-sm rounded-xl border border-teal-300">
-            Selesaikan misi dulu
-          </div>
+      <div className="min-w-0">
+        <p className={cn("font-heading text-xl font-black leading-tight", isLocked ? "text-ink-400" : "text-ink-900")}>
+          {lesson.title}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-3 text-xs font-extrabold text-ink-400">
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5" />
+            {lesson.estimatedMinutes} menit
+          </span>
+          <span>{lesson.reward.label}</span>
         </div>
-      )}
+      </div>
+
+      {!isLocked ? (
+        <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-purple-900 text-white transition group-hover:translate-x-0.5">
+          <ChevronRight className="h-5 w-5" />
+        </span>
+      ) : null}
     </div>
+  );
+
+  if (isLocked) return content;
+
+  return (
+    <Link href={`/siswa/modul/${chapterId}/${lesson.id}`} className="block">
+      {content}
+    </Link>
+  );
+}
+
+function TestGate({
+  title,
+  body,
+  href,
+  actionLabel,
+  state,
+}: {
+  title: string;
+  body: string;
+  href?: string;
+  actionLabel: string;
+  state: "ready" | "locked";
+}) {
+  const content = (
+    <div
+      className={cn(
+        "smong-slab-soft flex flex-col gap-4 border bg-white/62 p-5 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between",
+        state === "ready" ? "border-purple-700/14" : "border-teal-700/14 opacity-82"
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-[1rem]", state === "ready" ? "bg-purple-900 text-white" : "bg-mint-100 text-teal-700")}>
+          {state === "ready" ? <BookOpen className="h-5 w-5" /> : <FileCheck2 className="h-5 w-5" />}
+        </div>
+        <div>
+          <p className="font-heading text-xl font-black text-ink-900">{title}</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-ink-700">{body}</p>
+        </div>
+      </div>
+      <span className={cn("inline-flex justify-center rounded-full px-5 py-3 font-heading text-sm font-black", state === "ready" ? "bg-purple-900 text-white" : "bg-mint-100 text-teal-700")}>
+        {actionLabel}
+      </span>
+    </div>
+  );
+
+  if (!href || state === "locked") return content;
+
+  return (
+    <Link href={href} className="block">
+      {content}
+    </Link>
   );
 }

@@ -11,6 +11,7 @@ import {
   Camera,
   KeyRound,
   User,
+  Shield,
   LucideIcon,
 } from "lucide-react";
 import { StudentNavbarItem } from "../types";
@@ -35,23 +36,22 @@ export function StudentNavbar({ items, schoolSyncStatus, schoolName }: StudentNa
   const pathname = usePathname();
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-purple-100/50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-8">
+    <nav className="sticky top-0 z-50 w-full px-3 py-3">
+      <div className="mx-auto max-w-7xl rounded-full border border-white/75 bg-cream-50/82 px-3 shadow-[0_14px_42px_rgba(47,23,110,0.1)] backdrop-blur-xl sm:px-5">
+        <div className="flex min-h-16 items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4 lg:gap-8">
             <Link href="/siswa" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-linear-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
-                <span className="text-white font-bold text-sm">SM</span>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-700 text-white shadow-[0_7px_0_#32146f]">
+                <Shield className="h-5 w-5" />
               </div>
-              <span className="text-lg font-bold bg-clip-text text-transparent bg-linear-to-r from-purple-600 to-indigo-600">
+              <span className="font-heading text-2xl font-black text-purple-900">
                 Smong
               </span>
             </Link>
 
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden items-center gap-1 md:flex">
               {items.map((item) => {
                 if (!item.isVisible) return null;
-                // Conditionally hide "Masukkan Kode" if already synced
                 if (item.id === "school-code" && schoolSyncStatus === "synced") {
                   return null;
                 }
@@ -63,13 +63,13 @@ export function StudentNavbar({ items, schoolSyncStatus, schoolName }: StudentNa
                   <Link
                     key={item.id}
                     href={item.href}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-extrabold transition-all duration-200 ${
                       isActive
-                        ? "bg-purple-100 text-purple-700"
-                        : "text-slate-600 hover:bg-purple-50 hover:text-purple-600"
+                        ? "bg-lavender-100 text-purple-700 shadow-inner"
+                        : "text-ink-700/70 hover:bg-white/75 hover:text-purple-700"
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? "text-purple-600" : "text-slate-400"}`} />
+                    <Icon className={`h-4 w-4 ${isActive ? "text-purple-600" : "text-ink-400"}`} />
                     <span>{item.label}</span>
                   </Link>
                 );
@@ -77,16 +77,17 @@ export function StudentNavbar({ items, schoolSyncStatus, schoolName }: StudentNa
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-3">
             {schoolSyncStatus === "synced" && schoolName ? (
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-mint-50/50 text-teal-700 rounded-full border border-teal-100">
-                <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                <span className="text-xs font-semibold">{schoolName}</span>
+              <div className="hidden items-center gap-2 rounded-full border border-teal-100 bg-mint-100/70 px-3 py-2 text-teal-700 sm:flex">
+                <span className="h-2 w-2 rounded-full bg-teal-500" />
+                <span className="text-xs font-extrabold">{schoolName}</span>
               </div>
             ) : null}
             {schoolSyncStatus === "not-synced" ? (
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-500 rounded-full border border-slate-200">
-                <span className="text-xs font-medium">Belum tersinkron sekolah</span>
+              <div className="hidden items-center gap-2 rounded-full border border-lavender-200 bg-white/70 px-3 py-2 text-ink-400 sm:flex">
+                <span className="h-2 w-2 rounded-full bg-yellow-500" />
+                <span className="text-xs font-extrabold">Belum tersinkron sekolah</span>
               </div>
             ) : null}
           </div>

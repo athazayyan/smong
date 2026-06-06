@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Route, ShieldCheck } from "lucide-react";
 import { ChapterDetail } from "@/features/student-learning/components/ChapterDetail";
 import {
   gempaChapters,
@@ -13,7 +13,6 @@ interface ChapterPageProps {
   params: Promise<{ chapterId: string }>;
 }
 
-// All lessons across both chapter1 deep and stubs
 const allLessons: LessonNode[] = [...gempaLessonsChapter1, ...gempaLessonsStub];
 
 export default async function ChapterPage({ params }: ChapterPageProps) {
@@ -24,35 +23,43 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
   const lessons = allLessons.filter((l) => l.chapterId === chapterId);
 
   return (
-    <main className="min-h-screen bg-cream-50 pb-16">
-      {/* Back nav */}
-      <div className="bg-white border-b border-lavender-200/60 px-4 pt-4 pb-3">
-        <div className="max-w-2xl mx-auto">
+    <main className="min-h-screen overflow-hidden bg-cream-50 pb-20">
+      <section className="relative px-4 pb-12 pt-8 sm:px-6 lg:px-8">
+        <div className="pointer-events-none absolute inset-0 -z-20 smong-quiet-field" />
+        <div className="mx-auto max-w-4xl">
           <Link
             href="/siswa/modul"
-            className="inline-flex items-center gap-1.5 text-purple-600 font-sans text-sm font-semibold hover:text-purple-800 transition-colors"
+            className="mb-8 inline-flex items-center gap-2 rounded-full border border-purple-700/10 bg-white/70 px-4 py-2 font-heading text-sm font-black text-purple-700 shadow-sm transition hover:bg-white"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="h-4 w-4" />
             Peta Modul
           </Link>
-        </div>
-      </div>
 
-      {/* Chapter header */}
-      <div className="bg-white px-4 pt-5 pb-6 border-b border-lavender-200/40">
-        <div className="max-w-2xl mx-auto">
-          <p className="font-sans text-xs font-bold text-purple-500 uppercase tracking-widest mb-1">
-            Gempa Bumi
-          </p>
-          <h1 className="font-heading text-2xl font-bold text-ink-900">{chapter.title}</h1>
-          <p className="font-sans text-sm text-ink-700 mt-1">
-            {chapter.contentTopics.length} topik &middot; {chapter.reward.label}
-          </p>
+          <div className="relative overflow-hidden rounded-[2rem] border border-purple-700/8 bg-white/58 p-6 shadow-[0_22px_70px_rgba(47,23,110,0.08)] md:rounded-[2.75rem] md:p-8">
+            <div className="pointer-events-none absolute -right-20 -top-12 h-48 w-[48%] smong-veil bg-lavender-100/36" />
+            <div className="pointer-events-none absolute -bottom-20 left-6 h-48 w-[58%] smong-river bg-mint-100/28" />
+            <div className="pointer-events-none absolute right-8 top-10 hidden h-24 w-56 smong-thread opacity-55 md:block" />
+            <p className="mb-3 inline-flex items-center gap-2 rounded-full bg-lavender-100/70 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-purple-700">
+              <ShieldCheck className="h-4 w-4" />
+              Gempa Bumi
+            </p>
+            <h1 className="max-w-3xl font-heading text-4xl font-black leading-tight text-ink-900 md:text-6xl">
+              {chapter.title}
+            </h1>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/72 px-4 py-2 text-sm font-extrabold text-ink-700">
+                <Route className="h-4 w-4 text-purple-700" />
+                {chapter.contentTopics.length} topik
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/72 px-4 py-2 text-sm font-extrabold text-ink-700">
+                {chapter.reward.label}
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Chapter detail */}
-      <div className="max-w-2xl mx-auto px-4 pt-6">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         <ChapterDetail chapter={chapter} lessons={lessons} />
       </div>
     </main>

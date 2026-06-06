@@ -1,6 +1,10 @@
 import React from "react";
 import { Metadata } from "next";
 import { mockStudentLandingState } from "@/features/student-landing/data/mock-landing";
+import {
+  studentHeroStats,
+} from "@/features/student-landing/data/visual-config";
+import type { StudentLandingSection } from "@/features/student-landing/types";
 
 import { StudentHero } from "@/features/student-landing/components/StudentHero";
 import { SchoolSyncPrompt } from "@/features/student-landing/components/SchoolSyncPrompt";
@@ -20,50 +24,56 @@ export const metadata: Metadata = {
 
 export default function StudentLandingPage() {
   const state = mockStudentLandingState;
+  const heroSection = state.sections.find(
+    (section): section is Extract<StudentLandingSection, { type: "hero" }> =>
+      section.type === "hero"
+  );
+  const heroStats = studentHeroStats.map((stat) => {
+    if (stat.id === "xp") {
+      return { ...stat, value: state.progress.xp.toLocaleString("id-ID") };
+    }
+    if (stat.id === "streak") {
+      return { ...stat, value: `${state.progress.streakDays}` };
+    }
+    return { ...stat, value: `${state.progress.completedLessons}/${state.progress.totalLessons}` };
+  });
 
   return (
-    <div className="flex flex-col gap-12 pb-24">
-      {/* 1. Hero Section */}
+    <main className="relative overflow-hidden pb-24">
       <StudentHero 
-        title={state.sections[0].type === "hero" ? state.sections[0].title : "Mulai Misi Siaga Hari Ini"}
-        subtitle={state.sections[0].type === "hero" ? state.sections[0].subtitle : ""}
-        primaryCtaLabel={state.sections[0].type === "hero" ? state.sections[0].primaryCtaLabel : "Lanjutkan Misi"}
-        secondaryCtaLabel={state.sections[0].type === "hero" ? state.sections[0].secondaryCtaLabel : "Lihat Modul"}
+        title={heroSection?.title ?? "Mulai Misi Siaga Hari Ini"}
+        subtitle={heroSection?.subtitle ?? "Belajar langkah aman lewat jalur misi, pilihan cepat, dan cerita yang mudah dipahami."}
+        primaryCtaLabel={heroSection?.primaryCtaLabel ?? "Lanjutkan Misi"}
+        secondaryCtaLabel={heroSection?.secondaryCtaLabel ?? "Lihat Modul"}
+        stats={heroStats}
       />
 
-      {/* 2. Optional School Sync Prompt */}
-      {state.schoolSyncStatus === "not-synced" && (
-        <SchoolSyncPrompt 
-          isVisible={true}
-          title="Punya kode dari guru?"
-          body="Masukkan kode sekolah agar progresmu tersambung dengan guru. Kamu tetap bisa belajar tanpa kode."
-          ctaLabel="Masukkan Kode"
-        />
-      )}
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-16 px-4 sm:px-6 lg:px-8">
+        {state.schoolSyncStatus === "not-synced" && (
+          <SchoolSyncPrompt 
+            isVisible={true}
+            title="Punya kode dari guru?"
+            body="Masukkan kode sekolah agar progresmu tersambung dengan guru. Kamu tetap bisa belajar tanpa kode."
+            ctaLabel="Masukkan Kode"
+          />
+        )}
 
-      {/* 3. Mascot Guide */}
-      <StudentMascotGuide />
+        <StudentMascotGuide />
 
-      {/* 4. Daily Mission */}
-      <DailyMissionSection activityId="daily-1" />
+        <DailyMissionSection activityId="daily-1" />
 
-      {/* 5. Active Module Learning Path */}
-      <StudentModulePathPreview moduleGroupId={state.activeModuleId} />
+        <StudentModulePathPreview moduleGroupId={state.activeModuleId} />
 
-      {/* 6. Disaster Module Cards */}
-      <DisasterModuleCards moduleGroupIds={["gempa-bumi", "banjir", "tsunami"]} />
+        <DisasterModuleCards moduleGroupIds={["gempa-bumi", "banjir", "tsunami"]} />
 
-      {/* 7. Activity Preview */}
-      <StudentActivityPreview />
+        <StudentActivityPreview />
 
-      {/* 8. AR Safety Lens Preview */}
-      <StudentArPreview />
+        <StudentArPreview />
 
-      {/* 9. Progress & Rewards */}
-      <StudentProgressReward progress={state.progress} />
+        <StudentProgressReward progress={state.progress} />
 
-      {/* 10. Final CTA */}
-      <StudentFinalCta />
-    </div>
+        <StudentFinalCta />
+      </div>
+    </main>
   );
 }
