@@ -42,13 +42,11 @@ export function StudentModulePathPreview({ moduleGroupId }: StudentModulePathPre
   return (
     <section
       ref={sectionRef}
-      className="relative overflow-hidden rounded-[2rem] border border-purple-700/8 bg-white/58 p-6 shadow-[0_24px_70px_rgba(47,23,110,0.08)] md:rounded-[2.75rem] md:p-8"
+      className="relative overflow-hidden rounded-[2rem] border border-purple-700/8 bg-white/62 p-6 shadow-[0_14px_42px_rgba(47,23,110,0.06)] md:p-8"
     >
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-br from-white/70 via-lavender-100/30 to-mint-100/34" />
-      <div className="pointer-events-none absolute -left-20 top-20 h-52 w-[48%] smong-veil bg-mint-100/34" />
-      <div className="pointer-events-none absolute -right-24 bottom-8 h-60 w-[54%] smong-river bg-lavender-100/34" />
+      <div className="pointer-events-none absolute -right-24 top-10 h-56 w-[48%] smong-river bg-lavender-100/28" />
       <div className="relative mx-auto max-w-3xl text-center">
-        <p className="inline-flex items-center gap-2 rounded-full border border-purple-700/10 bg-white/70 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-purple-700">
+        <p className="inline-flex items-center gap-2 rounded-full bg-lavender-100/70 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-purple-700">
           <MapIcon className="h-4 w-4" />
           Modul aktif
         </p>
@@ -86,7 +84,7 @@ export function StudentModulePathPreview({ moduleGroupId }: StudentModulePathPre
 
 function PreviewNode({ node }: { node: StudentModulePreviewNode }) {
   return (
-    <div data-preview-node className="relative z-10 smong-slab-soft border border-purple-700/8 bg-white/68 p-4 text-center shadow-sm backdrop-blur">
+    <div data-preview-node className="relative z-10 rounded-[1.5rem] border border-purple-700/8 bg-white/72 p-4 text-center shadow-sm backdrop-blur">
       <NodeButton node={node} />
       <p className="mt-4 text-[0.62rem] font-black uppercase tracking-[0.14em] text-purple-700">
         {node.phaseLabel}

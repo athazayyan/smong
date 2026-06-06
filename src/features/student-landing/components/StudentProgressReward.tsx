@@ -18,13 +18,11 @@ export function StudentProgressReward({ progress }: StudentProgressRewardProps) 
   const progressPercent = Math.round((progress.completedLessons / progress.totalLessons) * 100);
 
   return (
-    <section className="relative overflow-hidden rounded-[3rem] border border-yellow-200/60 bg-linear-to-br from-cream-100 via-white to-yellow-200/35 p-6 shadow-[0_26px_80px_rgba(47,23,110,0.1)] md:p-8">
-      <div className="absolute -right-16 top-2 h-56 w-56 rounded-full bg-yellow-200/55 blur-3xl" />
-      <div className="absolute -left-12 bottom-0 h-56 w-56 rounded-full bg-lavender-100/70 blur-3xl" />
-
+    <section className="relative overflow-hidden rounded-[2rem] border border-purple-700/8 bg-white/64 p-6 shadow-[0_14px_42px_rgba(47,23,110,0.06)] md:p-8">
+      <div className="pointer-events-none absolute -right-20 top-4 h-52 w-[44%] smong-river bg-yellow-200/24" />
       <div className="relative mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <p className="inline-flex items-center gap-2 rounded-full bg-white/75 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-yellow-800">
+          <p className="inline-flex items-center gap-2 rounded-full bg-yellow-200/58 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-yellow-800">
             <Sparkles className="h-4 w-4 text-yellow-500" />
             Rak hadiahmu
           </p>
@@ -33,7 +31,7 @@ export function StudentProgressReward({ progress }: StudentProgressRewardProps) 
             Siswa melihat langkah yang sudah terbuka, badge yang didapat, dan jarak menuju sertifikat.
           </p>
         </div>
-        <div className="inline-flex items-center justify-center rounded-full bg-white px-5 py-3 font-heading text-sm font-black text-purple-700 shadow-sm">
+        <div className="inline-flex items-center justify-center rounded-full bg-white/76 px-5 py-3 font-heading text-sm font-black text-purple-700 shadow-sm">
           Ringkasan badge
         </div>
       </div>
@@ -45,7 +43,7 @@ export function StudentProgressReward({ progress }: StudentProgressRewardProps) 
           ))}
         </div>
 
-        <div className="rounded-[2.2rem] border border-white/70 bg-white/78 p-5 shadow-[0_18px_50px_rgba(47,23,110,0.08)]">
+        <div className="rounded-[1.8rem] border border-purple-700/8 bg-white/76 p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h3 className="font-heading text-2xl font-black text-ink-900">Koleksi Badge</h3>
@@ -58,21 +56,21 @@ export function StudentProgressReward({ progress }: StudentProgressRewardProps) 
 
           <div className="mb-6 h-3 overflow-hidden rounded-full bg-lavender-100">
             <div
-              className="h-full rounded-full bg-linear-to-r from-purple-500 via-yellow-500 to-teal-500"
+              className="h-full rounded-full bg-purple-900"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {progress.earnedBadges.map((badge) => (
-              <div key={badge.id} className="rounded-[1.6rem] bg-yellow-200/50 p-4 text-center">
+              <div key={badge.id} className="rounded-[1.35rem] bg-yellow-200/42 p-4 text-center">
                 <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-yellow-200 text-yellow-800 shadow-sm">
                   <Award className="h-8 w-8" />
                 </div>
                 <p className="font-heading text-sm font-black leading-tight text-ink-900">{badge.name}</p>
               </div>
             ))}
-            <div className="rounded-[1.6rem] border border-dashed border-lavender-200 bg-lavender-100/45 p-4 text-center">
+            <div className="rounded-[1.35rem] border border-dashed border-lavender-200 bg-lavender-100/38 p-4 text-center">
               <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-white text-ink-400 shadow-sm">
                 <Lock className="h-7 w-7" />
               </div>
@@ -90,7 +88,7 @@ function RewardMetric({ item, progress }: { item: StudentRewardShelfItem; progre
   const value = getRewardValue(item.id, progress);
 
   return (
-    <div className="rounded-[1.8rem] border border-white/70 bg-white/78 p-5 shadow-sm">
+    <div className="rounded-[1.5rem] border border-purple-700/8 bg-white/76 p-5 shadow-sm">
       <div className="mb-4 flex items-center gap-3">
         <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${toneClassName}`}>
           {renderRewardIcon(item.iconName)}
@@ -118,7 +116,7 @@ function renderRewardIcon(iconName: StudentRewardShelfItem["iconName"]) {
 }
 
 function getRewardToneClassName(tone: StudentRewardShelfItem["tone"]) {
-  if (tone === "peach") return "bg-peach-200 text-coral-700";
+  if (tone === "peach") return "bg-yellow-200 text-yellow-800";
   if (tone === "purple") return "bg-lavender-100 text-purple-700";
-  return "bg-sky-100 text-purple-700";
+  return "bg-mint-100 text-teal-700";
 }

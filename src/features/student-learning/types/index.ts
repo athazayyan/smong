@@ -141,6 +141,12 @@ export type LearningTest = {
   questionIds: string[];
 };
 
+export type TestAnswerOption = {
+  id: string;
+  label: string;
+  isCorrect: boolean;
+};
+
 export type TestQuestion = {
   id: string;
   testId: string;
@@ -148,6 +154,7 @@ export type TestQuestion = {
   prompt: string;
   points: number;
   explanation: string;
+  answerOptions: TestAnswerOption[];
 };
 
 // ─── Activities ───────────────────────────────────────────────────────────────

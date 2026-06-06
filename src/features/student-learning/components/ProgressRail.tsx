@@ -42,9 +42,8 @@ export function ProgressRail({ progress, totalLessons }: ProgressRailProps) {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="relative overflow-hidden smong-slab-soft border border-purple-700/10 bg-white/66 p-5 text-ink-900 shadow-[0_20px_58px_rgba(47,23,110,0.08)] backdrop-blur"
+        className="relative overflow-hidden rounded-[1.6rem] border border-purple-700/8 bg-white/70 p-5 text-ink-900 shadow-sm backdrop-blur"
       >
-        <div className="absolute inset-x-4 top-20 h-8 smong-thread opacity-45" />
         <div className="relative">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-purple-900 text-white">
@@ -56,7 +55,7 @@ export function ProgressRail({ progress, totalLessons }: ProgressRailProps) {
             </div>
           </div>
 
-          <div className="smong-slab-soft bg-white/62 p-4">
+          <div className="rounded-[1.2rem] bg-white/68 p-4">
             <div className="mb-3 flex items-center justify-between text-sm font-extrabold text-ink-700">
               <span>Progress modul</span>
               <span className="text-purple-700">{pct}%</span>
@@ -83,7 +82,7 @@ export function ProgressRail({ progress, totalLessons }: ProgressRailProps) {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="rounded-[2rem] border border-lavender-200/70 bg-white/86 p-5 shadow-[0_16px_44px_rgba(47,23,110,0.08)]"
+        className="rounded-[1.6rem] border border-purple-700/8 bg-white/70 p-5 shadow-sm"
       >
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-mint-100 text-teal-700">
@@ -103,7 +102,7 @@ export function ProgressRail({ progress, totalLessons }: ProgressRailProps) {
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="rounded-[2rem] border border-lavender-200/70 bg-white/86 p-5 shadow-[0_16px_44px_rgba(47,23,110,0.08)]"
+        className="rounded-[1.6rem] border border-purple-700/8 bg-white/70 p-5 shadow-sm"
       >
         <div className="mb-4 flex items-center justify-between">
           <p className="font-heading text-base font-black text-ink-900">Badge Map</p>
@@ -138,8 +137,7 @@ export function ProgressSummaryStrip({ progress, totalLessons }: ProgressRailPro
   const pct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-purple-700/8 bg-white/70 p-4 shadow-[0_18px_48px_rgba(47,23,110,0.08)] backdrop-blur md:p-5">
-      <div className="pointer-events-none absolute -right-10 top-0 h-24 w-40 smong-river bg-lavender-100/38" />
+    <section className="relative overflow-hidden rounded-[1.6rem] border border-purple-700/8 bg-white/72 p-4 shadow-sm backdrop-blur md:p-5">
       <div className="relative grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
         <div>
           <div className="mb-3 flex items-center gap-3">
@@ -170,7 +168,7 @@ function MiniStat({ icon, label, value }: { icon: "xp" | "streak" | "lesson"; la
   const Icon = icon === "xp" ? Zap : icon === "streak" ? Flame : CheckCircle2;
 
   return (
-    <div className="smong-slab-soft bg-white/56 p-3 text-center">
+    <div className="rounded-[1rem] bg-white/60 p-3 text-center">
       <Icon className="mx-auto mb-2 h-4 w-4 text-purple-700" />
       <p className="font-heading text-lg font-black leading-none text-ink-900">{value}</p>
       <p className="mt-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-ink-400">{label}</p>

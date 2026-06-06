@@ -39,13 +39,11 @@ export function ChapterMap({ chapters, progress }: ChapterMapProps) {
   return (
     <div
       ref={sectionRef}
-      className="relative overflow-hidden rounded-[2rem] border border-purple-700/8 bg-white/58 p-5 shadow-[0_28px_80px_rgba(47,23,110,0.08)] md:rounded-[2.75rem] md:p-8"
+      className="relative overflow-hidden rounded-[2rem] border border-purple-700/8 bg-white/62 p-5 shadow-[0_14px_42px_rgba(47,23,110,0.06)] md:p-8"
     >
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-br from-white/70 via-lavender-100/30 to-mint-100/36" />
-      <div className="pointer-events-none absolute -right-20 top-16 h-64 w-[52%] smong-veil bg-mint-100/35" />
-      <div className="pointer-events-none absolute -bottom-24 -left-12 h-72 w-[60%] smong-river bg-lavender-100/32" />
+      <div className="pointer-events-none absolute -right-24 top-16 h-64 w-[48%] smong-river bg-lavender-100/26" />
       <div className="relative mb-8 max-w-2xl">
-        <p className="inline-flex rounded-full border border-purple-700/10 bg-white/72 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-purple-700">
+        <p className="inline-flex rounded-full bg-lavender-100/70 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-purple-700">
           Peta Misi Gempa
         </p>
         <h2 className="mt-4 font-heading text-4xl font-black leading-tight text-ink-900 md:text-5xl">

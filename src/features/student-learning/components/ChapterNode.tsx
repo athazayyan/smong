@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Award,
   BarChart2,
@@ -29,17 +29,13 @@ interface ChapterNodeProps {
 }
 
 export function ChapterNode({ chapter, displayStatus, index, visual }: ChapterNodeProps) {
-  const shouldReduceMotion = useReducedMotion();
   const isLocked = displayStatus === "locked";
   const isActive = displayStatus === "active";
 
   const content = (
     <motion.div
-      animate={isActive && !shouldReduceMotion ? { x: [0, 3, 0] } : {}}
-      transition={isActive ? { duration: 2.4, repeat: Infinity, ease: "easeInOut" } : {}}
       className={cn(
-        "group relative grid items-center gap-4 border bg-white/68 p-4 shadow-sm backdrop-blur transition md:grid-cols-[72px_1fr_auto]",
-        "smong-slab-soft",
+        "group relative grid items-center gap-4 rounded-[1.4rem] border bg-white/68 p-4 shadow-sm backdrop-blur transition md:grid-cols-[72px_1fr_auto]",
         isActive ? "border-purple-700/22" : "border-purple-700/8",
         isLocked ? "opacity-58" : "hover:bg-white/86"
       )}
@@ -106,7 +102,7 @@ export function ChapterNode({ chapter, displayStatus, index, visual }: ChapterNo
 
 function TinyFlag({ label }: { label: string }) {
   return (
-    <span className="rounded-full bg-lavender-100/72 px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-purple-700">
+    <span className="rounded-full bg-lavender-100/46 px-2 py-1 text-[0.62rem] font-black uppercase tracking-[0.1em] text-ink-400">
       {label}
     </span>
   );

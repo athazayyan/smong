@@ -33,7 +33,7 @@ export function ChapterDetail({ chapter, lessons }: ChapterDetailProps) {
             title="Pre-Test"
             body="Cek pengetahuan awal sebelum masuk misi."
             href={`/siswa/modul/${chapter.id}/pre-test`}
-            actionLabel="Mulai"
+            actionLabel="Mulai Pre-Test"
             state="ready"
           />
         ) : null}
@@ -51,8 +51,9 @@ export function ChapterDetail({ chapter, lessons }: ChapterDetailProps) {
           <TestGate
             title="Post-Test"
             body="Uji pemahamanmu setelah semua misi selesai."
-            actionLabel="Selesaikan misi dulu"
-            state="locked"
+            href={`/siswa/modul/${chapter.id}/post-test`}
+            actionLabel="Mulai Post-Test"
+            state="ready"
           />
         ) : null}
       </section>

@@ -123,7 +123,7 @@ export const gempaChapters = [
       "Fakta dan mitos tentang gempa bumi",
     ],
     lessonIds: ["apa-itu-gempa", "jenis-gempa", "fakta-mitos-gempa"],
-    preTestId: undefined,
+    preTestId: "pre-test-pengetahuan-umum",
     postTestId: "post-test-pengetahuan-umum",
     requiredScore: undefined,
     status: "active" as const,

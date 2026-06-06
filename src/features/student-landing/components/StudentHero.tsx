@@ -99,11 +99,10 @@ export function StudentHero({
         </div>
 
         <div className="relative min-h-[300px] sm:min-h-[340px] md:min-h-[420px] lg:min-h-[540px]">
-          <div className="pointer-events-none absolute inset-x-4 top-1/2 h-28 -translate-y-1/2 smong-thread opacity-80" data-abstract-thread />
-          <div className="pointer-events-none absolute left-[8%] top-[16%] h-64 w-[78%] smong-river bg-purple-900/8" />
-          <div className="pointer-events-none absolute bottom-[12%] right-[4%] h-56 w-[72%] smong-veil bg-mint-100/55" />
+          <div className="pointer-events-none absolute inset-x-6 top-1/2 h-20 -translate-y-1/2 smong-thread opacity-55" data-abstract-thread />
+          <div className="pointer-events-none absolute left-[8%] top-[18%] h-72 w-[82%] smong-river bg-purple-900/7" />
 
-          <div data-abstract-float className="absolute left-[4%] top-[32%] max-w-[230px] smong-slab border border-purple-700/10 bg-white/78 p-4 shadow-[0_20px_50px_rgba(47,23,110,0.1)] backdrop-blur sm:left-[10%] sm:p-5">
+          <div data-abstract-float className="absolute left-[4%] top-[34%] max-w-[230px] smong-slab border border-purple-700/8 bg-white/78 p-4 shadow-sm backdrop-blur sm:left-[10%] sm:p-5">
             <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-[1.2rem] bg-purple-900 text-white">
               <ShieldCheck className="h-7 w-7" />
             </div>
@@ -111,16 +110,10 @@ export function StudentHero({
             <p className="mt-2 max-w-[220px] text-xs font-semibold leading-5 text-ink-700 sm:text-sm sm:leading-6">Pilih misi, ikuti langkah, buka checkpoint baru.</p>
           </div>
 
-          <div data-abstract-float className="absolute right-[2%] top-[12%] w-36 smong-slab-soft border border-purple-700/10 bg-white/70 p-3 text-center shadow-sm backdrop-blur sm:right-[6%] sm:top-[18%] sm:w-44 sm:p-4">
+          <div data-abstract-float className="absolute right-[2%] top-[14%] w-36 smong-slab-soft border border-yellow-200/55 bg-white/72 p-3 text-center shadow-sm backdrop-blur sm:right-[6%] sm:w-44 sm:p-4">
             <Zap className="mx-auto h-7 w-7 text-yellow-700" />
             <p className="mt-2 font-heading text-xl font-black text-ink-900">+50 XP</p>
             <p className="text-xs font-bold text-ink-400">Misi harian</p>
-          </div>
-
-          <div data-abstract-float className="absolute bottom-[8%] left-[35%] w-44 smong-slab-soft border border-teal-700/10 bg-white/64 p-3 shadow-sm backdrop-blur sm:bottom-[18%] sm:left-[42%] sm:w-52 sm:p-4">
-            <Route className="mb-3 h-6 w-6 text-teal-700" />
-            <p className="font-heading text-lg font-black text-ink-900">Pra, Saat, Pasca</p>
-            <p className="mt-1 text-xs font-bold leading-5 text-ink-700">Belajar bencana lewat alur yang pendek dan aman.</p>
           </div>
         </div>
       </div>

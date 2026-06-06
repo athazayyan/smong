@@ -3,6 +3,15 @@ import type { LearningTest, TestQuestion } from "../types";
 export const gempaTestsCh1to7: LearningTest[] = [
   // CHAPTER 1
   {
+    id: "pre-test-pengetahuan-umum",
+    moduleGroupId: "gempa-bumi",
+    chapterId: "gempa-pengetahuan-umum",
+    kind: "pre-test",
+    title: "Pre-Test: Pengetahuan Umum Gempa",
+    requiredScore: undefined,
+    questionIds: ["q-pre-pu-1", "q-pre-pu-2"],
+  },
+  {
     id: "post-test-pengetahuan-umum",
     moduleGroupId: "gempa-bumi",
     chapterId: "gempa-pengetahuan-umum",
@@ -110,7 +119,32 @@ export const gempaTestsCh1to7: LearningTest[] = [
 ];
 
 export const gempaTestQuestions: TestQuestion[] = [
-  // ─── CHAPTER 1: PENGETAHUAN UMUM (POST-TEST) ────────────────────────────────
+  // ─── CHAPTER 1: PENGETAHUAN UMUM ───────────────────────────────────────────
+  {
+    id: "q-pre-pu-1",
+    testId: "pre-test-pengetahuan-umum",
+    type: "multiple-choice",
+    prompt: "Apa yang kamu ketahui tentang gempa bumi?",
+    points: 0,
+    explanation: "Gempa bumi adalah guncangan pada permukaan bumi akibat pelepasan energi dari dalam bumi.",
+    answerOptions: [
+      { id: "a", label: "Guncangan pada permukaan bumi", isCorrect: true },
+      { id: "b", label: "Hujan deras yang turun lama", isCorrect: false },
+      { id: "c", label: "Angin kencang dari laut", isCorrect: false },
+    ],
+  },
+  {
+    id: "q-pre-pu-2",
+    testId: "pre-test-pengetahuan-umum",
+    type: "true-false",
+    prompt: "Gempa bumi selalu dapat diprediksi jam terjadinya.",
+    points: 0,
+    explanation: "Salah. Gempa belum bisa diprediksi waktu tepatnya, jadi kita belajar agar selalu siap.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: false },
+      { id: "false", label: "Salah", isCorrect: true },
+    ],
+  },
   {
     id: "q-pu-1",
     testId: "post-test-pengetahuan-umum",
@@ -118,6 +152,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Apa definisi yang paling tepat tentang gempa bumi?",
     points: 10,
     explanation: "Gempa bumi adalah getaran atau guncangan yang terjadi di permukaan bumi akibat pelepasan energi dari bawah permukaan secara tiba-tiba yang menciptakan gelombang seismik.",
+    answerOptions: [
+      { id: "a", label: "Guncangan akibat pelepasan energi dari bawah permukaan bumi", isCorrect: true },
+      { id: "b", label: "Naiknya air sungai ke jalan", isCorrect: false },
+      { id: "c", label: "Awan gelap yang menutup matahari", isCorrect: false },
+    ],
   },
   {
     id: "q-pu-2",
@@ -126,6 +165,10 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Gempa yang terjadi karena aktivitas gunung berapi disebut gempa tektonik.",
     points: 10,
     explanation: "Salah. Gempa yang disebabkan aktivitas gunung berapi disebut gempa vulkanik, bukan tektonik.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: false },
+      { id: "false", label: "Salah", isCorrect: true },
+    ],
   },
   {
     id: "q-pu-3",
@@ -134,6 +177,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Manakah pernyataan yang merupakan mitos tentang gempa?",
     points: 10,
     explanation: "Mitos sering beredar, salah satunya adalah gempa bisa diprediksi waktu tepatnya. Gempa bumi belum bisa diprediksi waktunya secara pasti.",
+    answerOptions: [
+      { id: "a", label: "Gempa bisa diprediksi jam dan menit tepatnya", isCorrect: true },
+      { id: "b", label: "Gempa bisa terjadi karena pergerakan lempeng", isCorrect: false },
+      { id: "c", label: "Kita perlu belajar langkah aman saat gempa", isCorrect: false },
+    ],
   },
 
   // ─── CHAPTER 2: PENYEBAB GEMPA ──────────────────────────────────────────────
@@ -144,6 +192,10 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Indonesia aman dari gempa bumi karena tidak memiliki gunung berapi.",
     points: 0,
     explanation: "Salah. Indonesia memiliki banyak gunung berapi dan terletak di pertemuan lempeng, sehingga sangat rawan gempa.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: false },
+      { id: "false", label: "Salah", isCorrect: true },
+    ],
   },
   {
     id: "q-pre-penyebab-2",
@@ -152,6 +204,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Apa yang menyebabkan lempeng bumi bergerak?",
     points: 0,
     explanation: "Lempeng bergerak karena arus konveksi dari mantel bumi yang panas di bawah kerak bumi.",
+    answerOptions: [
+      { id: "a", label: "Arus panas di mantel bumi", isCorrect: true },
+      { id: "b", label: "Arah angin harian", isCorrect: false },
+      { id: "c", label: "Jumlah hujan di permukaan", isCorrect: false },
+    ],
   },
   {
     id: "q-post-penyebab-1",
@@ -160,6 +217,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Pertemuan tiga lempeng tektonik utama di Indonesia adalah...",
     points: 10,
     explanation: "Indonesia diapit oleh Lempeng Eurasia, Indo-Australia, dan Pasifik.",
+    answerOptions: [
+      { id: "a", label: "Eurasia, Indo-Australia, dan Pasifik", isCorrect: true },
+      { id: "b", label: "Asia, Afrika, dan Amerika", isCorrect: false },
+      { id: "c", label: "Sunda, Jawa, dan Bali", isCorrect: false },
+    ],
   },
   {
     id: "q-post-penyebab-2",
@@ -168,6 +230,10 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Semua gempa bumi bawah laut pasti menyebabkan gelombang tsunami.",
     points: 10,
     explanation: "Salah. Hanya gempa kuat dengan patahan vertikal yang dapat memicu tsunami.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: false },
+      { id: "false", label: "Salah", isCorrect: true },
+    ],
   },
 
   // ─── CHAPTER 3: SIAP SEBELUM GEMPA ──────────────────────────────────────────
@@ -178,6 +244,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Apa fungsi utama dari Tas Siaga Bencana?",
     points: 0,
     explanation: "Untuk bertahan hidup selama tiga hari pertama setelah bencana sebelum bantuan datang.",
+    answerOptions: [
+      { id: "a", label: "Membantu kebutuhan penting saat darurat", isCorrect: true },
+      { id: "b", label: "Menyimpan semua mainan favorit", isCorrect: false },
+      { id: "c", label: "Mengganti tas sekolah harian", isCorrect: false },
+    ],
   },
   {
     id: "q-pre-siap-2",
@@ -186,6 +257,10 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Titik kumpul keluarga tidak perlu direncanakan sebelum gempa terjadi.",
     points: 0,
     explanation: "Salah. Sangat penting memiliki rencana titik kumpul agar keluarga yang terpisah mudah bertemu.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: false },
+      { id: "false", label: "Salah", isCorrect: true },
+    ],
   },
   {
     id: "q-post-siap-1",
@@ -194,6 +269,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Pilih barang yang BUKAN merupakan isi prioritas Tas Siaga Bencana.",
     points: 10,
     explanation: "Mainan besar atau laptop bukan prioritas. Air, makanan tahan lama, P3K, dan senter adalah prioritas.",
+    answerOptions: [
+      { id: "a", label: "Mainan besar", isCorrect: true },
+      { id: "b", label: "Senter dan baterai", isCorrect: false },
+      { id: "c", label: "Kotak P3K", isCorrect: false },
+    ],
   },
   {
     id: "q-post-siap-2",
@@ -202,6 +282,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Saat mengecek keamanan kamar, apa yang paling berbahaya saat gempa?",
     points: 10,
     explanation: "Lemari tinggi yang tidak dipaku ke dinding sangat berbahaya karena bisa menimpa saat berguncang.",
+    answerOptions: [
+      { id: "a", label: "Lemari tinggi yang tidak dipaku ke dinding", isCorrect: true },
+      { id: "b", label: "Bantal di atas kasur", isCorrect: false },
+      { id: "c", label: "Senter di dalam laci", isCorrect: false },
+    ],
   },
 
   // ─── CHAPTER 4: KETIKA TERJADI GEMPA ────────────────────────────────────────
@@ -212,6 +297,10 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Jika gempa terjadi saat kamu di lantai dua, segeralah berlari turun tangga.",
     points: 0,
     explanation: "Salah. Berlari saat guncangan sangat berbahaya. Lakukan Drop, Cover, Hold On terlebih dahulu.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: false },
+      { id: "false", label: "Salah", isCorrect: true },
+    ],
   },
   {
     id: "q-pre-saat-2",
@@ -220,6 +309,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Apa arti dari 'Drop, Cover, Hold On'?",
     points: 0,
     explanation: "Merunduk, berlindung (misal di bawah meja), dan berpegangan kuat hingga guncangan reda.",
+    answerOptions: [
+      { id: "a", label: "Merunduk, berlindung, dan berpegangan", isCorrect: true },
+      { id: "b", label: "Berlari, berteriak, dan mendorong pintu", isCorrect: false },
+      { id: "c", label: "Melompat, melihat kaca, dan keluar lift", isCorrect: false },
+    ],
   },
   {
     id: "q-post-saat-1",
@@ -228,6 +322,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Kamu sedang berbelanja di minimarket dan gempa terjadi. Apa yang harus dihindari?",
     points: 10,
     explanation: "Berada dekat rak kaca dan rak barang berat sangat berbahaya karena barang bisa berjatuhan.",
+    answerOptions: [
+      { id: "a", label: "Berdiri dekat rak kaca dan barang berat", isCorrect: true },
+      { id: "b", label: "Melindungi kepala dari benda jatuh", isCorrect: false },
+      { id: "c", label: "Menunggu guncangan reda sebelum evakuasi", isCorrect: false },
+    ],
   },
   {
     id: "q-post-saat-2",
@@ -236,6 +335,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Setelah guncangan reda di gedung tinggi, jangan pernah menggunakan...",
     points: 10,
     explanation: "Lift. Listrik bisa mati kapan saja dan kamu bisa terjebak.",
+    answerOptions: [
+      { id: "a", label: "Lift", isCorrect: true },
+      { id: "b", label: "Tangga darurat", isCorrect: false },
+      { id: "c", label: "Jalur evakuasi", isCorrect: false },
+    ],
   },
   {
     id: "q-post-saat-3",
@@ -244,6 +348,10 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Jika kamu di pantai dan merasakan gempa sangat kuat, kamu harus segera menjauhi pantai.",
     points: 10,
     explanation: "Benar! Menjauhi pantai dan mencari tempat tinggi adalah langkah pencegahan utama tsunami.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: true },
+      { id: "false", label: "Salah", isCorrect: false },
+    ],
   },
 
   // ─── CHAPTER 5: SETELAH TERJADI GEMPA ───────────────────────────────────────
@@ -254,6 +362,10 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Setelah gempa utama selesai, keadaan pasti 100% aman.",
     points: 0,
     explanation: "Salah. Selalu waspada terhadap gempa susulan yang bisa meruntuhkan bangunan yang sudah retak.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: false },
+      { id: "false", label: "Salah", isCorrect: true },
+    ],
   },
   {
     id: "q-pre-pasca-2",
@@ -262,6 +374,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Informasi paling akurat setelah gempa berasal dari...",
     points: 0,
     explanation: "Lembaga resmi pemerintah seperti BMKG atau BPBD, bukan pesan berantai.",
+    answerOptions: [
+      { id: "a", label: "BMKG, BPBD, atau sumber resmi", isCorrect: true },
+      { id: "b", label: "Pesan berantai tanpa sumber", isCorrect: false },
+      { id: "c", label: "Komentar acak di media sosial", isCorrect: false },
+    ],
   },
   {
     id: "q-post-pasca-1",
@@ -270,6 +387,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Mengapa kita disarankan memakai alas kaki setelah gempa?",
     points: 10,
     explanation: "Untuk melindungi kaki dari pecahan kaca, paku, atau puing-puing tajam berserakan.",
+    answerOptions: [
+      { id: "a", label: "Melindungi kaki dari benda tajam", isCorrect: true },
+      { id: "b", label: "Agar bisa berlari lebih cepat dari teman", isCorrect: false },
+      { id: "c", label: "Supaya tas siaga terasa ringan", isCorrect: false },
+    ],
   },
   {
     id: "q-post-pasca-2",
@@ -278,6 +400,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Temanmu mengirim pesan bahwa gempa lebih besar akan terjadi jam 8 malam. Apa tindakanmu?",
     points: 10,
     explanation: "Abaikan dan cek sumber resmi BMKG. Gempa bumi tidak bisa diprediksi waktu tepatnya.",
+    answerOptions: [
+      { id: "a", label: "Cek sumber resmi dan tidak menyebarkan hoaks", isCorrect: true },
+      { id: "b", label: "Langsung teruskan ke semua grup", isCorrect: false },
+      { id: "c", label: "Panik dan keluar rumah tanpa rencana", isCorrect: false },
+    ],
   },
 
   // ─── CHAPTER 6: DAMPAK & PEMBELAJARAN ───────────────────────────────────────
@@ -288,6 +415,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Salah satu dampak psikologis dari gempa bumi adalah...",
     points: 10,
     explanation: "Rasa trauma, cemas, dan ketakutan akan gempa susulan.",
+    answerOptions: [
+      { id: "a", label: "Cemas atau takut terhadap gempa susulan", isCorrect: true },
+      { id: "b", label: "Membuat semua bangunan langsung aman", isCorrect: false },
+      { id: "c", label: "Menghilangkan kebutuhan titik kumpul", isCorrect: false },
+    ],
   },
   {
     id: "q-post-dampak-2",
@@ -296,6 +428,10 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Belajar dari gempa masa lalu membuat kita bisa menyalahkan alam.",
     points: 10,
     explanation: "Salah. Belajar dari gempa masa lalu membuat kita lebih siap dan tangguh dalam memitigasi bencana.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: false },
+      { id: "false", label: "Salah", isCorrect: true },
+    ],
   },
 
   // ─── CHAPTER 7: FINAL QUIZ ──────────────────────────────────────────────────
@@ -306,6 +442,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Secara geografis, mengapa wilayah Indonesia sangat aktif gempanya?",
     points: 20,
     explanation: "Karena letaknya berada pada Cincin Api Pasifik dan titik pertemuan tiga lempeng tektonik utama.",
+    answerOptions: [
+      { id: "a", label: "Berada di Cincin Api dan pertemuan lempeng", isCorrect: true },
+      { id: "b", label: "Tidak memiliki gunung berapi aktif", isCorrect: false },
+      { id: "c", label: "Seluruh wilayahnya jauh dari patahan", isCorrect: false },
+    ],
   },
   {
     id: "q-final-2",
@@ -314,6 +455,10 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Tas Siaga Bencana hanya disiapkan oleh orang dewasa.",
     points: 20,
     explanation: "Salah. Anak-anak juga bisa dan harus membantu mempersiapkan serta mengenali isi tas siaga.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: false },
+      { id: "false", label: "Salah", isCorrect: true },
+    ],
   },
   {
     id: "q-final-3",
@@ -322,6 +467,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Guncangan kuat terjadi saat kamu tidur. Apa langkah paling tepat?",
     points: 20,
     explanation: "Lindungi kepalamu dengan bantal dan bergelung jika tidak sempat merunduk di bawah meja kokoh terdekat.",
+    answerOptions: [
+      { id: "a", label: "Lindungi kepala dan tunggu guncangan reda", isCorrect: true },
+      { id: "b", label: "Langsung berlari tanpa melihat sekitar", isCorrect: false },
+      { id: "c", label: "Berdiri di dekat kaca jendela", isCorrect: false },
+    ],
   },
   {
     id: "q-final-4",
@@ -330,6 +480,11 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Urutkan tindakan evakuasi yang benar pasca guncangan berhenti:",
     points: 20,
     explanation: "1) Periksa luka diri sendiri. 2) Ambil tas siaga. 3) Berjalan tenang keluar bangunan menuju titik kumpul.",
+    answerOptions: [
+      { id: "a", label: "Periksa diri, ambil tas siaga, lalu ke titik kumpul", isCorrect: true },
+      { id: "b", label: "Masuk kembali untuk mencari barang, lalu menunggu", isCorrect: false },
+      { id: "c", label: "Berlari ke lift, lalu turun secepat mungkin", isCorrect: false },
+    ],
   },
   {
     id: "q-final-5",
@@ -338,5 +493,9 @@ export const gempaTestQuestions: TestQuestion[] = [
     prompt: "Setelah gempa, tidak masalah langsung kembali ke dalam rumah untuk mengambil mainan yang tertinggal.",
     points: 20,
     explanation: "Sangat Salah. Gempa susulan sangat berbahaya bagi bangunan yang sudah mengalami retak.",
+    answerOptions: [
+      { id: "true", label: "Benar", isCorrect: false },
+      { id: "false", label: "Salah", isCorrect: true },
+    ],
   },
 ];

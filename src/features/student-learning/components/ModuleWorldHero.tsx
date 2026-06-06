@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, CheckCircle2, Route, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
 import type { ModuleChapter, ModuleProgress } from "@/features/student-learning/types";
 
 interface ModuleWorldHeroProps {
@@ -49,11 +49,10 @@ export function ModuleWorldHero({ title, description, chapters, progress }: Modu
         </div>
 
         <div className="relative min-h-[280px] sm:min-h-[320px] md:min-h-[360px]">
-          <div className="pointer-events-none absolute left-4 right-0 top-1/2 h-24 -translate-y-1/2 smong-thread opacity-75" />
-          <div className="pointer-events-none absolute left-[6%] top-[12%] h-64 w-[82%] smong-river bg-purple-900/8" />
-          <div className="pointer-events-none absolute bottom-[6%] right-[2%] h-56 w-[70%] smong-veil bg-mint-100/52" />
+          <div className="pointer-events-none absolute left-4 right-0 top-1/2 h-20 -translate-y-1/2 smong-thread opacity-55" />
+          <div className="pointer-events-none absolute left-[8%] top-[16%] h-64 w-[82%] smong-river bg-purple-900/7" />
 
-          <div className="absolute left-[2%] top-[26%] max-w-[230px] smong-slab border border-purple-700/10 bg-white/76 p-4 shadow-[0_20px_54px_rgba(47,23,110,0.1)] backdrop-blur sm:left-[8%] sm:p-5">
+          <div className="absolute left-[2%] top-[30%] max-w-[230px] smong-slab border border-purple-700/8 bg-white/76 p-4 shadow-sm backdrop-blur sm:left-[8%] sm:p-5">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-[1.2rem] bg-purple-900 text-white">
               <ShieldCheck className="h-7 w-7" />
             </div>
@@ -61,18 +60,10 @@ export function ModuleWorldHero({ title, description, chapters, progress }: Modu
             <p className="mt-1 text-sm font-bold text-ink-400">Bab aktif</p>
           </div>
 
-          <div className="absolute right-[1%] top-[12%] w-32 smong-slab-soft border border-purple-700/10 bg-white/70 p-3 text-center shadow-sm backdrop-blur sm:right-[8%] sm:top-[18%] sm:w-40 sm:p-4">
+          <div className="absolute right-[1%] top-[14%] w-32 smong-slab-soft border border-purple-700/8 bg-white/70 p-3 text-center shadow-sm backdrop-blur sm:right-[8%] sm:w-40 sm:p-4">
             <CheckCircle2 className="mx-auto h-7 w-7 text-teal-700" />
             <p className="mt-2 font-heading text-2xl font-black text-ink-900">{percent}%</p>
             <p className="text-xs font-bold text-ink-400">Progress</p>
-          </div>
-
-          <div className="absolute bottom-[6%] left-[34%] w-44 smong-slab-soft border border-purple-700/10 bg-white/66 p-3 shadow-sm backdrop-blur sm:bottom-[14%] sm:left-[40%] sm:w-52 sm:p-4">
-            <Route className="mb-3 h-6 w-6 text-purple-700" />
-            <div className="h-2 overflow-hidden rounded-full bg-lavender-100">
-              <div className="h-full rounded-full bg-purple-900" style={{ width: `${Math.max(percent, 8)}%` }} />
-            </div>
-            <p className="mt-3 text-xs font-bold leading-5 text-ink-700">Buka checkpoint lewat pre-test, misi, dan post-test.</p>
           </div>
         </div>
       </div>
