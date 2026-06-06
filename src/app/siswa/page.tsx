@@ -48,7 +48,7 @@ export default function StudentLandingPage() {
         stats={heroStats}
       />
 
-      <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-16 px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-10 px-4 sm:gap-12 sm:px-6 lg:gap-16 lg:px-8">
         {state.schoolSyncStatus === "not-synced" && (
           <SchoolSyncPrompt 
             isVisible={true}

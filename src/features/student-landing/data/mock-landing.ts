@@ -11,6 +11,8 @@ export const studentNavbarItems = [
     href: "/siswa",
     iconName: "Home",
     isVisible: true,
+    placement: "primary",
+    mobileSlot: "bottom",
   },
   {
     id: "modules",
@@ -18,6 +20,8 @@ export const studentNavbarItems = [
     href: "/siswa/modul",
     iconName: "BookOpen",
     isVisible: true,
+    placement: "primary",
+    mobileSlot: "bottom",
   },
   {
     id: "missions",
@@ -25,6 +29,8 @@ export const studentNavbarItems = [
     href: "/siswa/misi",
     iconName: "Map",
     isVisible: true,
+    placement: "primary",
+    mobileSlot: "bottom",
   },
   {
     id: "badges",
@@ -32,6 +38,8 @@ export const studentNavbarItems = [
     href: "/siswa/badge",
     iconName: "Award",
     isVisible: true,
+    placement: "primary",
+    mobileSlot: "bottom",
   },
   {
     id: "ar-lens",
@@ -39,6 +47,8 @@ export const studentNavbarItems = [
     href: "/siswa/ar",
     iconName: "Camera",
     isVisible: true,
+    placement: "secondary",
+    mobileSlot: "sheet",
   },
   {
     id: "school-code",
@@ -46,6 +56,8 @@ export const studentNavbarItems = [
     href: "/siswa/kode-sekolah",
     iconName: "KeyRound",
     isVisible: true, // Will be controlled conditionally based on state later
+    placement: "status-action",
+    mobileSlot: "hidden-when-synced",
   },
   {
     id: "profile",
@@ -53,6 +65,8 @@ export const studentNavbarItems = [
     href: "/siswa/profil",
     iconName: "User",
     isVisible: true,
+    placement: "primary",
+    mobileSlot: "bottom",
   },
 ] satisfies StudentNavbarItem[];
 

@@ -29,7 +29,7 @@ export default async function ChapterPage({ params }: ChapterPageProps) {
         <div className="mx-auto max-w-4xl">
           <Link
             href="/siswa/modul"
-            className="mb-8 inline-flex items-center gap-2 rounded-full border border-purple-700/10 bg-white/70 px-4 py-2 font-heading text-sm font-black text-purple-700 shadow-sm transition hover:bg-white"
+            className="mb-8 inline-flex min-h-11 items-center gap-2 rounded-full border border-purple-700/10 bg-white/70 px-4 py-2 font-heading text-sm font-black text-purple-700 shadow-sm transition hover:bg-white"
           >
             <ChevronLeft className="h-4 w-4" />
             Peta Modul

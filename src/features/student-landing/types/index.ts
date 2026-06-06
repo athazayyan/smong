@@ -25,6 +25,8 @@ export type StudentNavbarItem = {
   href: string;
   iconName: "Home" | "BookOpen" | "Map" | "Award" | "Camera" | "KeyRound" | "User";
   isVisible: boolean;
+  placement: "primary" | "secondary" | "status-action";
+  mobileSlot: "bottom" | "sheet" | "hidden-when-synced";
 };
 
 export type StudentNextAction =

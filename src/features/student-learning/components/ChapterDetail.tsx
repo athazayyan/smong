@@ -11,8 +11,8 @@ interface ChapterDetailProps {
 
 export function ChapterDetail({ chapter, lessons }: ChapterDetailProps) {
   return (
-    <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr]">
-      <section className="smong-slab-soft h-fit border border-purple-700/8 bg-white/58 p-6 shadow-sm backdrop-blur">
+    <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:gap-8">
+      <section className="rounded-[2rem] border border-purple-700/8 bg-white/58 p-5 shadow-sm backdrop-blur smong-slab-soft sm:p-6">
         <p className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-purple-700">
           <Target className="h-4 w-4" />
           Tujuan
@@ -67,7 +67,7 @@ function LessonRow({ lesson, chapterId, index }: { lesson: LessonNode; chapterId
   const content = (
     <div
       className={cn(
-        "group grid items-center gap-4 border bg-white/66 p-4 shadow-sm backdrop-blur transition md:grid-cols-[56px_1fr_auto]",
+        "group grid min-h-24 items-center gap-4 border bg-white/66 p-4 shadow-sm backdrop-blur transition sm:min-h-0 md:grid-cols-[56px_1fr_auto]",
         "smong-slab-soft",
         isActive ? "border-purple-700/20" : "border-purple-700/8",
         isLocked ? "opacity-55" : "hover:bg-white/86"
@@ -78,7 +78,7 @@ function LessonRow({ lesson, chapterId, index }: { lesson: LessonNode; chapterId
       </div>
 
       <div className="min-w-0">
-        <p className={cn("font-heading text-xl font-black leading-tight", isLocked ? "text-ink-400" : "text-ink-900")}>
+        <p className={cn("font-heading text-lg font-black leading-tight sm:text-xl", isLocked ? "text-ink-400" : "text-ink-900")}>
           {lesson.title}
         </p>
         <div className="mt-2 flex flex-wrap gap-3 text-xs font-extrabold text-ink-400">
@@ -91,7 +91,7 @@ function LessonRow({ lesson, chapterId, index }: { lesson: LessonNode; chapterId
       </div>
 
       {!isLocked ? (
-        <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-purple-900 text-white transition group-hover:translate-x-0.5">
+          <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-purple-900 text-white transition group-hover:translate-x-0.5">
           <ChevronRight className="h-5 w-5" />
         </span>
       ) : null}
@@ -123,7 +123,7 @@ function TestGate({
   const content = (
     <div
       className={cn(
-        "smong-slab-soft flex flex-col gap-4 border bg-white/62 p-5 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between",
+        "flex min-h-24 flex-col gap-4 rounded-[2rem] border bg-white/62 p-5 shadow-sm backdrop-blur sm:min-h-0 sm:flex-row sm:items-center sm:justify-between smong-slab-soft",
         state === "ready" ? "border-purple-700/14" : "border-teal-700/14 opacity-82"
       )}
     >
@@ -136,7 +136,7 @@ function TestGate({
           <p className="mt-1 text-sm font-semibold leading-6 text-ink-700">{body}</p>
         </div>
       </div>
-      <span className={cn("inline-flex justify-center rounded-full px-5 py-3 font-heading text-sm font-black", state === "ready" ? "bg-purple-900 text-white" : "bg-mint-100 text-teal-700")}>
+      <span className={cn("inline-flex min-h-11 justify-center rounded-full px-5 py-3 font-heading text-sm font-black", state === "ready" ? "bg-purple-900 text-white" : "bg-mint-100 text-teal-700")}>
         {actionLabel}
       </span>
     </div>

@@ -133,6 +133,39 @@ export function ProgressRail({ progress, totalLessons }: ProgressRailProps) {
   );
 }
 
+export function ProgressSummaryStrip({ progress, totalLessons }: ProgressRailProps) {
+  const completedCount = progress.completedLessonIds.length;
+  const pct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+  return (
+    <section className="relative overflow-hidden rounded-[2rem] border border-purple-700/8 bg-white/70 p-4 shadow-[0_18px_48px_rgba(47,23,110,0.08)] backdrop-blur md:p-5">
+      <div className="pointer-events-none absolute -right-10 top-0 h-24 w-40 smong-river bg-lavender-100/38" />
+      <div className="relative grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+        <div>
+          <div className="mb-3 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-purple-900 text-white">
+              <PackageCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-heading text-xl font-black text-ink-900">Progress Modul</p>
+              <p className="text-xs font-bold text-ink-400">Bekal misi hari ini</p>
+            </div>
+          </div>
+          <div className="h-3 overflow-hidden rounded-full bg-lavender-100">
+            <div className="h-full rounded-full bg-purple-900 transition-[width] duration-700" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 md:min-w-[300px]">
+          <MiniStat icon="xp" label="XP" value={`${progress.xpTotal}`} />
+          <MiniStat icon="streak" label="Hari" value={`${progress.streakDays}`} />
+          <MiniStat icon="lesson" label="Misi" value={`${completedCount}`} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function MiniStat({ icon, label, value }: { icon: "xp" | "streak" | "lesson"; label: string; value: string }) {
   const Icon = icon === "xp" ? Zap : icon === "streak" ? Flame : CheckCircle2;
 

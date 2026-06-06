@@ -46,15 +46,15 @@ export function SchoolCodeDialog({ isOpen, onClose }: SchoolCodeDialogProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="school-code-dialog-title"
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] flex items-end justify-center p-3 sm:items-center sm:p-4"
     >
       <div 
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity"
         onClick={handleClose}
       />
       
-      <div className="relative bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden transform transition-all duration-300 scale-100 opacity-100">
-        <div className="p-6 sm:p-8">
+      <div className="relative max-h-[88vh] w-full max-w-md overflow-y-auto rounded-[2rem] bg-white shadow-2xl transition-all duration-300 sm:rounded-3xl">
+        <div className="p-5 sm:p-8">
           <button 
             onClick={handleClose}
             className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
@@ -66,7 +66,7 @@ export function SchoolCodeDialog({ isOpen, onClose }: SchoolCodeDialogProps) {
             <KeyRound className="w-8 h-8" />
           </div>
 
-          <h2 id="school-code-dialog-title" className="text-2xl font-bold text-center text-slate-800 mb-2">
+          <h2 id="school-code-dialog-title" className="text-center text-2xl font-bold text-slate-800 mb-2">
             Masukkan Kode Sekolah
           </h2>
           <p className="text-center text-slate-500 mb-8 px-4">
@@ -81,7 +81,7 @@ export function SchoolCodeDialog({ isOpen, onClose }: SchoolCodeDialogProps) {
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
                 placeholder="Contoh: SMG-7K2P"
                 disabled={status === "checking" || status === "success"}
-                className={`w-full text-center text-2xl font-bold tracking-widest p-4 rounded-xl border-2 transition-all outline-none ${
+              className={`min-h-14 w-full rounded-xl border-2 p-4 text-center text-xl font-bold tracking-widest outline-none transition-all sm:text-2xl ${
                   status === "error" 
                     ? "border-red-300 bg-red-50 text-red-900 placeholder:text-red-300"
                     : status === "success"
@@ -106,7 +106,7 @@ export function SchoolCodeDialog({ isOpen, onClose }: SchoolCodeDialogProps) {
             <button
               type="submit"
               disabled={status === "checking" || status === "success" || !code.trim()}
-              className="w-full py-4 px-6 bg-purple-600 hover:bg-purple-700 disabled:bg-slate-300 disabled:text-slate-500 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all active:scale-95 disabled:active:scale-100 flex items-center justify-center gap-2"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-purple-600 px-6 py-4 font-bold text-white shadow-lg shadow-purple-200 transition-all hover:bg-purple-700 active:scale-95 disabled:bg-slate-300 disabled:text-slate-500 disabled:active:scale-100"
             >
               {status === "checking" ? "Memeriksa..." : 
                status === "success" ? "Tersambung!" : 

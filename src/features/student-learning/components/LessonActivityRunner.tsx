@@ -39,12 +39,12 @@ export function LessonActivityRunner({
   };
 
   return (
-    <main className="min-h-screen bg-cream-50 pb-16">
-      <div className="border-b border-lavender-200/60 bg-white px-4 pb-3 pt-4">
+    <main className="min-h-screen bg-cream-50 pb-28 md:pb-16">
+      <div className="sticky top-[82px] z-40 border-b border-lavender-200/60 bg-white/92 px-4 pb-3 pt-3 backdrop-blur md:top-0 md:pt-4">
         <div className="mx-auto flex max-w-lg items-center justify-between">
           <Link
             href={`/siswa/modul/${chapterId}`}
-            className="inline-flex items-center gap-1.5 font-sans text-sm font-semibold text-purple-600 transition-colors hover:text-purple-800"
+            className="inline-flex min-h-11 items-center gap-1.5 font-sans text-sm font-semibold text-purple-600 transition-colors hover:text-purple-800"
           >
             <ChevronLeft className="h-4 w-4" />
             {chapterShortLabel}
@@ -65,8 +65,8 @@ export function LessonActivityRunner({
         </div>
       </div>
 
-      <div className="mx-auto max-w-lg px-4 pb-4 pt-6">
-        <h1 className="font-heading text-xl font-bold text-ink-900">{lessonTitle}</h1>
+      <div className="mx-auto max-w-lg px-4 pb-4 pt-5 sm:pt-6">
+        <h1 className="font-heading text-xl font-bold leading-tight text-ink-900 sm:text-2xl">{lessonTitle}</h1>
         <p className="mt-1 font-sans text-sm text-ink-700">{lessonShortDescription}</p>
       </div>
 

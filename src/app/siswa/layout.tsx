@@ -11,7 +11,7 @@ export default function SiswaLayout({
   const { navbarItems, schoolSyncStatus, school } = mockStudentLandingState;
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-cream-50 font-sans">
+    <div className="min-h-screen overflow-x-clip bg-cream-50 pb-24 font-sans md:pb-0">
       <StudentNavbar 
         items={navbarItems} 
         schoolSyncStatus={schoolSyncStatus} 
