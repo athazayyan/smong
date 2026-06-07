@@ -23,7 +23,7 @@ export type StudentNavbarItem = {
   id: string;
   label: string;
   href: string;
-  iconName: "Home" | "BookOpen" | "Map" | "Award" | "Camera" | "KeyRound" | "User";
+  iconName: "Home" | "BookOpen" | "Map" | "Award" | "Camera" | "KeyRound" | "User" | "Activity";
   isVisible: boolean;
   placement: "primary" | "secondary" | "status-action";
   mobileSlot: "bottom" | "sheet" | "hidden-when-synced";
