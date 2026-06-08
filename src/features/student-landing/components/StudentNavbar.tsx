@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useReducedMotion } from "framer-motion";
 import gsap from "gsap";
 import {
+  Activity,
   Award,
   BookOpen,
   Camera,
@@ -408,5 +409,6 @@ function renderStudentNavIcon(iconName: StudentNavbarItem["iconName"], className
   if (iconName === "Award") return <Award className={className} />;
   if (iconName === "Camera") return <Camera className={className} />;
   if (iconName === "KeyRound") return <KeyRound className={className} />;
+  if (iconName === "Activity") return <Activity className={className} />;
   return <User className={className} />;
 }
