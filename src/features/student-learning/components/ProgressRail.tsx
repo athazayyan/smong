@@ -1,104 +1,177 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { BadgeIcon } from "@/components/ui/BadgeIcon";
-import { ProgressBar } from "@/components/ui/ProgressBar";
-import { MascotGuide } from "@/components/ui/MascotGuide";
-import { StudentProgress, Badge } from "@/features/student-learning/types";
-import { Target, Zap, Flame, CheckCircle2 } from "lucide-react";
+import { Award, CheckCircle2, Flame, Lock, MapPinned, PackageCheck, Target, Zap } from "lucide-react";
+import type { BadgeId, ModuleProgress } from "@/features/student-learning/types";
 
-const ALL_BADGES: Badge[] = [
-  { id: "siaga-pemula", label: "Siaga Pemula", description: "Selesaikan fase Pra-Bencana", unlocked: false },
-  { id: "penjaga-kepala", label: "Penjaga Kepala", description: "Selesaikan fase Saat Bencana", unlocked: false },
-  { id: "teman-tangguh", label: "Teman Tangguh", description: "Selesaikan fase Pascabencana", unlocked: false },
-  { id: "pahlawan-evakuasi", label: "Pahlawan Evakuasi", description: "Selesaikan seluruh modul", unlocked: false },
-];
+const BADGE_META = [
+  {
+    id: "siaga-gempa",
+    label: "Siaga Gempa",
+    description: "Selesaikan semua materi Gempa Bumi",
+  },
+  {
+    id: "ahli-evakuasi",
+    label: "Ahli Evakuasi",
+    description: "Kuasai respons darurat dan simulasi akhir",
+  },
+  {
+    id: "mitigator-muda",
+    label: "Mitigator Muda",
+    description: "Selesaikan beberapa modul siaga",
+  },
+  {
+    id: "penjelajah-nusantara",
+    label: "Penjelajah Nusantara",
+    description: "Selesaikan Mitigasi Nusantara",
+  },
+] satisfies { id: BadgeId; label: string; description: string }[];
 
 export interface ProgressRailProps {
-  progress: StudentProgress;
+  progress: ModuleProgress;
   totalLessons: number;
 }
 
 export function ProgressRail({ progress, totalLessons }: ProgressRailProps) {
   const completedCount = progress.completedLessonIds.length;
-  const pct = Math.round((completedCount / totalLessons) * 100);
-
-  const badgesWithState: Badge[] = ALL_BADGES.map((b) => ({
-    ...b,
-    unlocked: progress.unlockedBadgeIds.includes(b.id),
-  }));
+  const pct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* Daily mission card */}
+    <aside className="flex flex-col gap-5">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="bg-purple-700 rounded-3xl p-5 flex flex-col gap-4"
+        className="relative overflow-hidden rounded-[1.6rem] border border-purple-700/8 bg-white/70 p-5 text-ink-900 shadow-sm backdrop-blur"
       >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
-            <Target className="w-5 h-5 text-white" />
+        <div className="relative">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[1rem] bg-purple-900 text-white">
+              <PackageCheck className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="font-heading text-xl font-black">Mission Backpack</p>
+              <p className="text-xs font-bold text-ink-400">Bekal misi hari ini</p>
+            </div>
           </div>
-          <p className="font-heading text-base font-bold text-white">Misi Harian</p>
-        </div>
-        <p className="font-sans text-xs text-lavender-200 leading-relaxed">
-          Selesaikan 1 misi hari ini untuk menjaga streakmu!
-        </p>
-        <div className="bg-white/10 rounded-2xl px-4 py-3 flex items-center justify-between">
-          <span className="font-sans text-xs text-lavender-200">Progress hari ini</span>
-          <span className="font-heading text-sm font-bold text-yellow-200">
-            {completedCount}/{totalLessons}
-          </span>
+
+          <div className="rounded-[1.2rem] bg-white/68 p-4">
+            <div className="mb-3 flex items-center justify-between text-sm font-extrabold text-ink-700">
+              <span>Progress modul</span>
+              <span className="text-purple-700">{pct}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-lavender-100">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="h-full rounded-full bg-purple-900"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            <MiniStat icon="xp" label="XP" value={`${progress.xpTotal}`} />
+            <MiniStat icon="streak" label="Hari" value={`${progress.streakDays}`} />
+            <MiniStat icon="lesson" label="Misi" value={`${completedCount}`} />
+          </div>
         </div>
       </motion.div>
 
-      {/* Overall progress */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        className="bg-white rounded-3xl p-5 ring-2 ring-lavender-200/50 flex flex-col gap-4"
+        className="rounded-[1.6rem] border border-purple-700/8 bg-white/70 p-5 shadow-sm"
       >
-        <div className="flex items-center justify-between">
-          <p className="font-heading text-sm font-bold text-ink-900">Progres Modul</p>
-          <span className="font-heading text-sm font-bold text-purple-700">{pct}%</span>
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-mint-100 text-teal-700">
+            <Target className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-heading text-base font-black text-ink-900">Misi Harian</p>
+            <p className="text-xs font-bold text-ink-400">Selesaikan 1 misi</p>
+          </div>
         </div>
-        <ProgressBar value={pct} variant="default" size="md" />
-        <div className="flex items-center justify-between text-xs font-sans text-ink-700 mt-2">
-          <div className="flex items-center gap-1.5"><Zap className="w-3 h-3 text-yellow-500 fill-yellow-500" /> {progress.xpTotal} XP</div>
-          <div className="flex items-center gap-1.5"><Flame className="w-3 h-3 text-coral-500 fill-coral-500" /> {progress.streakDays} hari</div>
-          <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3 h-3 text-teal-500" /> {completedCount} misi</div>
-        </div>
+        <p className="text-sm font-semibold leading-6 text-ink-700">
+          Buka satu node hari ini untuk menjaga ritme belajar siagamu.
+        </p>
       </motion.div>
 
-      {/* Badge collection */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="bg-white rounded-3xl p-5 ring-2 ring-lavender-200/50 flex flex-col gap-4"
+        className="rounded-[1.6rem] border border-purple-700/8 bg-white/70 p-5 shadow-sm"
       >
-        <p className="font-heading text-sm font-bold text-ink-900">Koleksi Badge</p>
-        <div className="grid grid-cols-2 gap-4">
-          {badgesWithState.map((badge) => (
-            <div key={badge.id} className="flex flex-col items-center gap-2">
-              <BadgeIcon badgeId={badge.id} unlocked={badge.unlocked} size="md" />
-              <p className="font-sans text-[10px] font-medium text-ink-700 text-center leading-tight">
-                {badge.label}
-              </p>
-            </div>
-          ))}
+        <div className="mb-4 flex items-center justify-between">
+          <p className="font-heading text-base font-black text-ink-900">Badge Map</p>
+          <MapPinned className="h-5 w-5 text-purple-500" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {BADGE_META.map((badge) => {
+            const unlocked = progress.unlockedBadgeIds.includes(badge.id);
+            return (
+              <div key={badge.id} className="rounded-[1.35rem] bg-lavender-100/45 p-3 text-center">
+                <div
+                  className={`mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full border-2 border-white ${
+                    unlocked ? "bg-yellow-200 text-yellow-800" : "bg-white text-ink-400"
+                  }`}
+                >
+                  {unlocked ? <Award className="h-6 w-6" /> : <Lock className="h-5 w-5" />}
+                </div>
+                <p className={`font-heading text-xs font-black leading-tight ${unlocked ? "text-ink-900" : "text-ink-400"}`}>
+                  {badge.label}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </motion.div>
+    </aside>
+  );
+}
 
-      {/* Mascot prompt */}
-      <MascotGuide
-        message="Ayo selesaikan misi berikutnya. Kamu hampir sampai!"
-        mood="encouraging"
-        size="sm"
-      />
+export function ProgressSummaryStrip({ progress, totalLessons }: ProgressRailProps) {
+  const completedCount = progress.completedLessonIds.length;
+  const pct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+
+  return (
+    <section className="relative overflow-hidden rounded-[1.6rem] border border-purple-700/8 bg-white/72 p-4 shadow-sm backdrop-blur md:p-5">
+      <div className="relative grid gap-4 md:grid-cols-[1fr_auto] md:items-center">
+        <div>
+          <div className="mb-3 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-purple-900 text-white">
+              <PackageCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="font-heading text-xl font-black text-ink-900">Progress Modul</p>
+              <p className="text-xs font-bold text-ink-400">Bekal misi hari ini</p>
+            </div>
+          </div>
+          <div className="h-3 overflow-hidden rounded-full bg-lavender-100">
+            <div className="h-full rounded-full bg-purple-900 transition-[width] duration-700" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 md:min-w-[300px]">
+          <MiniStat icon="xp" label="XP" value={`${progress.xpTotal}`} />
+          <MiniStat icon="streak" label="Hari" value={`${progress.streakDays}`} />
+          <MiniStat icon="lesson" label="Misi" value={`${completedCount}`} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function MiniStat({ icon, label, value }: { icon: "xp" | "streak" | "lesson"; label: string; value: string }) {
+  const Icon = icon === "xp" ? Zap : icon === "streak" ? Flame : CheckCircle2;
+
+  return (
+    <div className="rounded-[1rem] bg-white/60 p-3 text-center">
+      <Icon className="mx-auto mb-2 h-4 w-4 text-purple-700" />
+      <p className="font-heading text-lg font-black leading-none text-ink-900">{value}</p>
+      <p className="mt-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-ink-400">{label}</p>
     </div>
   );
 }

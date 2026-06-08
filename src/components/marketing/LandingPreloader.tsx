@@ -47,55 +47,93 @@ export function LandingPreloader() {
     const dot = dotRef.current;
     const progress = progressRef.current;
 
+    // Safety fallback: always hide preloader after 4s max, placed at the very top to ensure it runs even if SVG methods crash
+    const safetyTimeoutId = window.setTimeout(() => {
+      setIsVisible(false);
+    }, 4000);
+
     if (root === null || topCurtain === null || bottomCurtain === null || brand === null || headline === null || subline === null || path === null || dot === null || progress === null) {
-      return;
+      return () => window.clearTimeout(safetyTimeoutId);
     }
 
-    if (getReducedMotionPreference()) {
-      const reducedTimeoutId = window.setTimeout(() => setIsVisible(false), 650);
-
-      return () => window.clearTimeout(reducedTimeoutId);
+    try {
+      if (getReducedMotionPreference()) {
+        const reducedTimeoutId = window.setTimeout(() => setIsVisible(false), 650);
+        return () => {
+          window.clearTimeout(safetyTimeoutId);
+          window.clearTimeout(reducedTimeoutId);
+        };
+      }
+    } catch {
+      // Ignore matchMedia errors
     }
 
-    const pathLength = path.getTotalLength();
+    let pathLength = 0;
+    try {
+      pathLength = path.getTotalLength();
+    } catch {
+      // Fallback
+    }
     const cursor: MutableNumber = { value: 0 };
     const updateDot = () => {
-      const point = path.getPointAtLength(pathLength * cursor.value);
-      dot.setAttribute("cx", point.x.toFixed(2));
-      dot.setAttribute("cy", point.y.toFixed(2));
+      if (pathLength === 0) return;
+      try {
+        const point = path.getPointAtLength(pathLength * cursor.value);
+        dot.setAttribute("cx", point.x.toFixed(2));
+        dot.setAttribute("cy", point.y.toFixed(2));
+      } catch {
+        // Fallback for browsers that might fail on getPointAtLength
+      }
     };
 
-    gsap.set(path, {
-      strokeDasharray: pathLength,
-      strokeDashoffset: pathLength,
-    });
-    gsap.set(dot, { autoAlpha: 0 });
-    gsap.set(progress, { scaleX: 0, transformOrigin: "left center" });
-    gsap.set([brand, headline, subline], { y: 18, autoAlpha: 0 });
-    gsap.set(topCurtain, { yPercent: 0 });
-    gsap.set(bottomCurtain, { yPercent: 0 });
-    updateDot();
+    let timeline: gsap.core.Timeline | undefined;
+    let immediateHideTimeoutId: number | undefined;
 
-    const timeline = gsap.timeline({
-      defaults: { ease: "power3.out" },
-      onComplete: () => setIsVisible(false),
-    });
+    try {
+      gsap.set(path, {
+        strokeDasharray: pathLength,
+        strokeDashoffset: pathLength,
+      });
+      gsap.set(dot, { autoAlpha: 0 });
+      gsap.set(progress, { scaleX: 0, transformOrigin: "left center" });
+      gsap.set([brand, headline, subline], { y: 18, autoAlpha: 0 });
+      gsap.set(topCurtain, { yPercent: 0 });
+      gsap.set(bottomCurtain, { yPercent: 0 });
+      updateDot();
 
-    timeline
-      .to(brand, { y: 0, autoAlpha: 1, duration: 0.42 })
-      .to(headline, { y: 0, autoAlpha: 1, duration: 0.48 }, "-=0.24")
-      .to(subline, { y: 0, autoAlpha: 1, duration: 0.38 }, "-=0.26")
-      .to(path, { strokeDashoffset: 0, duration: 0.86, ease: "power2.inOut" }, "-=0.12")
-      .to(dot, { autoAlpha: 1, duration: 0.12 }, "<")
-      .to(cursor, { value: 1, duration: 0.86, ease: "power2.inOut", onUpdate: updateDot }, "<")
-      .to(progress, { scaleX: 1, duration: 0.74, ease: "power2.inOut" }, "<")
-      .to([brand, headline, subline], { y: -16, autoAlpha: 0, duration: 0.32, stagger: 0.025, ease: "power2.in" }, "+=0.18")
-      .to(topCurtain, { yPercent: -102, duration: 0.62, ease: "expo.inOut" }, "-=0.05")
-      .to(bottomCurtain, { yPercent: 102, duration: 0.62, ease: "expo.inOut" }, "<")
-      .to(root, { autoAlpha: 0, duration: 0.12 }, "-=0.08");
+      timeline = gsap.timeline({
+        defaults: { ease: "power3.out" },
+        onComplete: () => {
+          window.clearTimeout(safetyTimeoutId);
+          setIsVisible(false);
+        },
+      });
+
+      timeline
+        .to(brand, { y: 0, autoAlpha: 1, duration: 0.42 })
+        .to(headline, { y: 0, autoAlpha: 1, duration: 0.48 }, "-=0.24")
+        .to(subline, { y: 0, autoAlpha: 1, duration: 0.38 }, "-=0.26")
+        .to(path, { strokeDashoffset: 0, duration: 0.86, ease: "power2.inOut" }, "-=0.12")
+        .to(dot, { autoAlpha: 1, duration: 0.12 }, "<")
+        .to(cursor, { value: 1, duration: 0.86, ease: "power2.inOut", onUpdate: updateDot }, "<")
+        .to(progress, { scaleX: 1, duration: 0.74, ease: "power2.inOut" }, "<")
+        .to([brand, headline, subline], { y: -16, autoAlpha: 0, duration: 0.32, stagger: 0.025, ease: "power2.in" }, "+=0.18")
+        .to(topCurtain, { yPercent: -102, duration: 0.62, ease: "expo.inOut" }, "-=0.05")
+        .to(bottomCurtain, { yPercent: 102, duration: 0.62, ease: "expo.inOut" }, "<")
+        .to(root, { autoAlpha: 0, duration: 0.12 }, "-=0.08");
+    } catch (error) {
+      console.error("GSAP Animation failed to run", error);
+      immediateHideTimeoutId = window.setTimeout(() => setIsVisible(false), 0);
+    }
 
     return () => {
-      timeline.kill();
+      window.clearTimeout(safetyTimeoutId);
+      if (immediateHideTimeoutId !== undefined) {
+        window.clearTimeout(immediateHideTimeoutId);
+      }
+      if (timeline) {
+        timeline.kill();
+      }
     };
   }, []);
 
@@ -109,7 +147,7 @@ export function LandingPreloader() {
       role="status"
       aria-live="polite"
       aria-label="Menyiapkan halaman Smong"
-      className="fixed inset-0 z-[100] overflow-hidden bg-cream-50 text-purple-950"
+      className="fixed inset-0 z-[100] overflow-hidden bg-cream-50 text-purple-950 smong-preloader-fallback"
     >
       <div ref={topCurtainRef} className="absolute inset-x-0 top-0 h-1/2 origin-bottom bg-purple-950" />
       <div ref={bottomCurtainRef} className="absolute inset-x-0 bottom-0 h-1/2 origin-top bg-purple-950" />

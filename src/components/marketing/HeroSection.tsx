@@ -30,9 +30,9 @@ export function HeroSection() {
         />
       </motion.div>
 
-      <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_50%_42%,rgba(255,248,240,0.78),rgba(255,248,240,0.42)_34%,rgba(255,248,240,0.18)_60%,rgba(255,248,240,0.78)_100%)]" />
-      <div className="absolute inset-x-0 bottom-0 z-[2] h-1/2 bg-gradient-to-t from-cream-50 via-cream-50/55 to-transparent" />
-      <div className="absolute inset-x-0 top-0 z-[2] h-48 bg-gradient-to-b from-cream-50/75 to-transparent" />
+      <div className="absolute inset-0 z-1 bg-[radial-gradient(circle_at_50%_42%,rgba(255,248,240,0.78),rgba(255,248,240,0.42)_34%,rgba(255,248,240,0.18)_60%,rgba(255,248,240,0.78)_100%)]" />
+      <div className="absolute inset-x-0 bottom-0 z-2 h-1/2 bg-linear-to-t from-cream-50 via-cream-50/55 to-transparent" />
+      <div className="absolute inset-x-0 top-0 z-2 h-48 bg-linear-to-b from-cream-50/75 to-transparent" />
       <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
         <motion.div
           animate={{ x: [0, -30, 0] }}
@@ -69,7 +69,7 @@ export function HeroSection() {
 
           <div className="flex flex-col items-stretch gap-4 sm:flex-row sm:items-center sm:justify-center">
             <Link
-              href="/dashboard/siswa"
+              href="/siswa"
               className="flex items-center justify-center gap-2 rounded-full bg-purple-700 px-8 py-3.5 font-heading text-base font-bold text-white shadow-[0_6px_0_0_#2F176E] transition-all hover:-translate-y-1 hover:bg-purple-500 active:translate-y-1.5 active:shadow-none"
             >
               Mulai Misi Gempa <ArrowRight className="h-5 w-5" />

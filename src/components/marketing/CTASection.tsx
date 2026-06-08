@@ -7,10 +7,10 @@ import { ArrowRight, Sparkles } from "lucide-react";
 export function CTASection() {
   return (
     <section className="relative -mt-10 overflow-hidden bg-purple-900 pb-28 pt-32">
-      <div className="absolute inset-x-[-8vw] top-[-5.5rem] z-0 h-28 rounded-[0_0_48%_52%/0_0_100%_100%] bg-cream-50 md:h-36" />
+      <div className="absolute inset-x-[-8vw] -top-22 z-0 h-28 rounded-[0_0_48%_52%/0_0_100%_100%] bg-cream-50 md:h-36" />
       <div className="absolute left-1/2 top-1/2 z-0 h-72 w-[145vw] -translate-x-1/2 -translate-y-1/2 rotate-[-7deg] rounded-[48%_52%_44%_56%/42%_48%_52%_58%] bg-purple-600 shadow-[0_30px_90px_rgba(47,23,110,0.35)] md:h-96" />
       <div className="absolute left-[-18vw] top-[38%] z-0 h-52 w-[84vw] rotate-[-20deg] rounded-full bg-lavender-200/45 blur-sm" />
-      <div className="absolute bottom-[-7rem] right-[-16vw] z-0 h-72 w-[88vw] rotate-[10deg] rounded-full bg-purple-950" />
+      <div className="absolute -bottom-28 right-[-16vw] z-0 h-72 w-[88vw] rotate-10 rounded-full bg-purple-950" />
 
       <div className="pointer-events-none absolute inset-0 z-10">
         <motion.div
@@ -46,7 +46,7 @@ export function CTASection() {
           </p>
 
           <Link
-            href="/dashboard/siswa"
+            href="/siswa"
             className="inline-flex items-center gap-3 rounded-full bg-yellow-200 px-10 py-4 font-heading text-lg font-bold text-purple-900 shadow-[0_6px_0_0_#6B4E00] transition-all hover:-translate-y-1 hover:bg-yellow-200/90 active:translate-y-1.5 active:shadow-none"
           >
             Masuk ke Dashboard Siswa <ArrowRight className="h-6 w-6" />

@@ -1,7 +1,7 @@
 "use client";
 
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { mockProgress } from "@/features/student-learning/data/mockProgress";
+import { mockStudentProgress } from "@/features/student-learning/data/mockProgress";
 import { Zap, Flame, Settings } from "lucide-react";
 
 export function TopBar() {
@@ -16,11 +16,11 @@ export function TopBar() {
       <div className="flex items-center gap-4 flex-1">
         <div className="flex items-center gap-1.5">
           <Zap className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-          <span className="font-heading text-sm font-bold text-ink-900">{mockProgress.xpTotal} XP</span>
+          <span className="font-heading text-sm font-bold text-ink-900">{mockStudentProgress.xpTotal} XP</span>
         </div>
         <div className="flex items-center gap-1.5">
           <Flame className="w-4 h-4 text-coral-500 fill-coral-500" />
-          <span className="font-heading text-sm font-bold text-ink-900">{mockProgress.streakDays} hari</span>
+          <span className="font-heading text-sm font-bold text-ink-900">{mockStudentProgress.streakDays} hari</span>
         </div>
       </div>
 
@@ -28,7 +28,7 @@ export function TopBar() {
       <div className="hidden sm:flex flex-col gap-1 min-w-[140px]">
         <p className="font-sans text-[10px] font-semibold text-ink-700 uppercase tracking-wide">Misi Gempa Bumi</p>
         <ProgressBar
-          value={Math.round((mockProgress.completedLessonIds.length / 5) * 100)}
+          value={Math.round((mockStudentProgress.completedLessonIds.length / 18) * 100)}
           variant="default"
           size="sm"
         />

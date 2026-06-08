@@ -16,7 +16,7 @@ export function Footer() {
         <nav className="flex items-center gap-6 text-sm font-sans font-medium text-lavender-200/60">
           <Link href="#fitur" className="hover:text-lavender-200 transition-colors">Fitur</Link>
           <Link href="#modul" className="hover:text-lavender-200 transition-colors">Modul</Link>
-          <Link href="/dashboard/siswa" className="hover:text-lavender-200 transition-colors">Dashboard</Link>
+          <Link href="/siswa" className="hover:text-lavender-200 transition-colors">Dashboard</Link>
         </nav>
       </div>
     </footer>

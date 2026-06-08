@@ -150,7 +150,7 @@ export function ModulePreviewSection() {
           {PHASE_ZONES.map((zone) => (
             <div
               key={zone.id}
-              className={clsx("absolute z-[1] border border-white/45 px-8 py-7 shadow-[inset_0_0_42px_rgba(255,255,255,0.48)]", zone.className)}
+              className={clsx("absolute z-1 border border-white/45 px-8 py-7 shadow-[inset_0_0_42px_rgba(255,255,255,0.48)]", zone.className)}
             >
               <div className={clsx("max-w-[180px]", zone.labelClassName)}>
                 <p className="font-heading text-[11px] font-bold uppercase tracking-widest">
@@ -163,7 +163,7 @@ export function ModulePreviewSection() {
             </div>
           ))}
 
-          <svg className="absolute inset-0 z-[3] h-full w-full overflow-visible" viewBox="0 0 900 560" fill="none" aria-hidden="true">
+          <svg className="absolute inset-0 z-3 h-full w-full overflow-visible" viewBox="0 0 900 560" fill="none" aria-hidden="true">
             <motion.path
               initial={{ pathLength: 0 }}
               whileInView={{ pathLength: 1 }}
@@ -204,7 +204,7 @@ export function ModulePreviewSection() {
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: i * 0.15, type: "spring", stiffness: 240, damping: 20 }}
                 className={clsx(
-                  "absolute z-[4] flex -translate-x-1/2 -translate-y-1/2 items-center gap-4",
+                  "absolute z-4 flex -translate-x-1/2 -translate-y-1/2 items-center gap-4",
                   node.labelPosition === "left" && "flex-row-reverse",
                   node.labelPosition === "top" && "flex-col-reverse",
                   node.labelPosition === "bottom" && "flex-col",
@@ -240,7 +240,7 @@ export function ModulePreviewSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.7 }}
-            className="absolute bottom-16 right-[24%] max-w-xs rounded-[2rem] bg-white/90 px-5 py-4 text-sm font-semibold text-ink-700 shadow-sm"
+            className="absolute bottom-16 right-[24%] max-w-xs rounded-4xl bg-white/90 px-5 py-4 text-sm font-semibold text-ink-700 shadow-sm"
           >
             Buka checkpoint untuk lanjut ke misi berikutnya.
           </motion.div>
@@ -281,7 +281,7 @@ export function ModulePreviewSection() {
           className="relative z-20 text-center"
         >
           <Link
-            href="/dashboard/siswa"
+            href="/siswa"
             className="inline-flex items-center justify-center gap-2 rounded-full bg-purple-700 px-10 py-4 font-heading text-base font-bold text-white shadow-[0_6px_0_0_#2F176E] transition-all hover:-translate-y-1 hover:bg-purple-500 active:translate-y-1.5 active:shadow-none"
           >
             Mulai Belajar Sekarang <ArrowRight className="ml-1 h-5 w-5" />
