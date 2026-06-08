@@ -291,6 +291,117 @@ export type ReflectionChoiceActivity = {
   retryFeedback: string;
 };
 
+// ── AR Safety Lens ───────────────────────────────────────────────────────────
+
+export type ArSafetyLensMode =
+  | "live-warning"
+  | "manual-risk-marking"
+  | "simulation-fallback"
+  | "marker-checkpoint";
+
+export type RiskObjectClass =
+  | "glass-zone"
+  | "tall-object"
+  | "blocked-path"
+  | "crowded-area"
+  | "floor-item"
+  | "person"
+  | "chair"
+  | "table"
+  | "backpack"
+  | "bottle"
+  | "book"
+  | "monitor"
+  | "door"
+  | "window"
+  | "stairs"
+  | "shelf"
+  | "exit-sign"
+  | "unknown";
+
+export type RiskLevel = "low" | "medium" | "high";
+
+export type DetectionSource = "manual" | "simulated" | "pretrained" | "marker";
+
+export type ArDetectorStatus =
+  | "idle"
+  | "loading"
+  | "ready"
+  | "running"
+  | "error"
+  | "disabled";
+
+export type ArWarningRule = {
+  id: string;
+  targetClass: RiskObjectClass;
+  riskLevel: RiskLevel;
+  title: string;
+  message: string;
+  actionLabel: string;
+};
+
+export type ArWarning = {
+  id: string;
+  ruleId: string;
+  riskClass: RiskObjectClass;
+  riskLevel: RiskLevel;
+  title: string;
+  message: string;
+  actionLabel: string;
+  xPercent: number;
+  yPercent: number;
+  source: DetectionSource;
+};
+
+export type RiskMarkerOption = {
+  className: RiskObjectClass;
+  label: string;
+  hint: string;
+};
+
+export type ObjectDetectionResult = {
+  id: string;
+  className: RiskObjectClass;
+  source: DetectionSource;
+  confidence: number;
+  box: {
+    xPercent: number;
+    yPercent: number;
+    widthPercent: number;
+    heightPercent: number;
+  };
+};
+
+export type ArSafetyLensState =
+  | "idle"
+  | "requesting-camera"
+  | "camera-ready"
+  | "detecting"
+  | "awaiting-selection"
+  | "correct"
+  | "retry"
+  | "unsupported"
+  | "permission-denied"
+  | "camera-error"
+  | "simulation";
+
+export type ArSafetyLensActivity = {
+  id: string;
+  type: "ar-safety-lens";
+  lessonId: string;
+  title: string;
+  prompt: string;
+  safetyDisclaimer: string;
+  cameraPurposeCopy: string;
+  mode: ArSafetyLensMode;
+  riskOptions: RiskMarkerOption[];
+  warningRules: ArWarningRule[];
+  simulatedDetections: ObjectDetectionResult[];
+  successFeedback: string;
+  fallbackActivityId: string;
+  rewardXp: number;
+};
+
 // ── Activity Discriminated Union ──────────────────────────────────────────────
 
 export type Activity =
@@ -300,7 +411,8 @@ export type Activity =
   | DecisionSimulationActivity
   | DragAndDropActivity
   | ChecklistActivity
-  | ReflectionChoiceActivity;
+  | ReflectionChoiceActivity
+  | ArSafetyLensActivity;
 
 // ─── Rewards ─────────────────────────────────────────────────────────────────
 

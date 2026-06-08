@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { Scan, ShieldCheck, Sparkles } from "lucide-react";
 
 export function StudentArPreview() {
@@ -23,10 +24,13 @@ export function StudentArPreview() {
             Latihan kamera simulasi untuk mengenali benda, pintu, dan area yang perlu diperhatikan di sekitar sekolah.
           </p>
 
-          <div className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-teal-500 px-7 py-4 font-heading text-base font-extrabold text-purple-900 shadow-[0_8px_0_#157761]">
+          <Link
+            href="/siswa/ar"
+            className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-teal-500 px-7 py-4 font-heading text-base font-extrabold text-purple-900 shadow-[0_8px_0_#157761] transition hover:-translate-y-0.5 active:translate-y-0.5 active:shadow-[0_4px_0_#157761]"
+          >
             <ShieldCheck className="h-5 w-5" />
-            Simulasi disiapkan
-          </div>
+            Coba Safety Lens
+          </Link>
         </div>
 
         <div className="relative mx-auto w-full max-w-sm">

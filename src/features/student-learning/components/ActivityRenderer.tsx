@@ -8,6 +8,7 @@ import { Checklist } from "./activities/Checklist";
 import { ReflectionChoice } from "./activities/ReflectionChoice";
 import { Flashcard } from "./activities/Flashcard";
 import { TrueFalse } from "./activities/TrueFalse";
+import { ArSafetyLensActivity } from "./activities/ar/ArSafetyLensActivity";
 
 export interface ActivityRendererProps {
   activity: Activity;
@@ -30,6 +31,8 @@ export function ActivityRenderer({ activity, onComplete }: ActivityRendererProps
       return <Checklist activity={activity} onComplete={onComplete} />;
     case "reflection-choice":
       return <ReflectionChoice activity={activity} onComplete={onComplete} />;
+    case "ar-safety-lens":
+      return <ArSafetyLensActivity activity={activity} onComplete={onComplete} />;
     default: {
       const _never: never = activity;
       void _never;

@@ -11,6 +11,7 @@ import type {
 } from "../types";
 import { gempaLessonsCh2to7, gempaActivitiesCh2to7 } from "./gempaContent";
 import { gempaTestsCh1to7, gempaTestQuestions as gempaQuestions } from "./gempaTestsData";
+import { arSafetyLensActivities } from "./arSafetyLensData";
 
 // ─── Schools & Auth ───────────────────────────────────────────────────────────
 
@@ -434,7 +435,7 @@ export const gempaActivitiesChapter1 = [
   },
 ] satisfies Activity[];
 
-export const gempaActivitiesChapter2to7 = gempaActivitiesCh2to7;
+export const gempaActivitiesChapter2to7 = [...gempaActivitiesCh2to7, ...arSafetyLensActivities] satisfies Activity[];
 
 // ─── Tests (typed stubs) ──────────────────────────────────────────────────────
 

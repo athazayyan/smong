@@ -96,10 +96,10 @@ export const gempaLessonsCh2to7: LessonNode[] = [
     moduleGroupId: "gempa-bumi",
     title: "Evakuasi Tenang",
     shortDescription: "Cara keluar bangunan setelah guncangan berhenti.",
-    activityIds: ["quiz-evakuasi"],
+    activityIds: ["quiz-evakuasi", "ar-safety-lens-evakuasi"],
     status: "active",
-    estimatedMinutes: 3,
-    reward: { id: "r-evakuasi", type: "xp", label: "20 XP", xpAmount: 20 },
+    estimatedMinutes: 5,
+    reward: { id: "r-evakuasi", type: "xp", label: "45 XP", xpAmount: 45 },
     mascotPrompt: "Guncangan sudah reda? Waktunya evakuasi keluar ruangan dengan aman.",
   },
   {
