@@ -10,6 +10,7 @@ import {
   Award,
   BookOpen,
   Camera,
+  Gamepad2,
   Home,
   KeyRound,
   Map as MapIcon,
@@ -408,6 +409,7 @@ function renderStudentNavIcon(iconName: StudentNavbarItem["iconName"], className
   if (iconName === "Map") return <MapIcon className={className} />;
   if (iconName === "Award") return <Award className={className} />;
   if (iconName === "Camera") return <Camera className={className} />;
+  if (iconName === "Gamepad2") return <Gamepad2 className={className} />;
   if (iconName === "KeyRound") return <KeyRound className={className} />;
   if (iconName === "Activity") return <Activity className={className} />;
   return <User className={className} />;
