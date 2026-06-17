@@ -124,3 +124,7 @@ body.gameplay-active .min-h-screen.pb-24 {
   padding-bottom: 0 !important;
 }
 
+/* Hide bottom nav when AR is active on mobile */
+body.ar-active [data-bottom-nav] {
+  display: none !important;
+}

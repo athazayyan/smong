@@ -1,35 +1,59 @@
+"use client";
+
 import React from "react";
 import { Camera, MonitorPlay } from "lucide-react";
 import type { ArSafetyLensState } from "@/features/student-learning/types";
+import type { CameraFacingMode } from "@/features/student-learning/lib/ar/camera";
 
 interface CameraPreviewProps {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   lensState: ArSafetyLensState;
   isSimulationMode: boolean;
+  facingMode: CameraFacingMode;
 }
 
-export function CameraPreview({ videoRef, lensState, isSimulationMode }: CameraPreviewProps) {
+export function CameraPreview({
+  videoRef,
+  lensState,
+  isSimulationMode,
+  facingMode,
+}: CameraPreviewProps) {
   return (
     <div className="absolute inset-0 overflow-hidden bg-purple-950">
-      <video
-        ref={videoRef}
-        className={`h-full w-full object-cover transition-opacity duration-500 ${isSimulationMode ? "opacity-0" : "opacity-100"}`}
-        playsInline
-        muted
-      />
+      {/* Video wrapper — mirror only the video, not overlays */}
+      <div className="absolute inset-0 overflow-hidden">
+        <video
+          ref={videoRef}
+          className={`h-full w-full object-cover transition-opacity duration-500 ${
+            isSimulationMode ? "opacity-0" : "opacity-100"
+          }`}
+          style={facingMode === "user" ? { transform: "scaleX(-1)" } : undefined}
+          playsInline
+          muted
+        />
+      </div>
 
-      <div className={`absolute inset-0 transition-opacity duration-500 ${isSimulationMode ? "opacity-100" : "opacity-0"}`}>
+      {/* Simulation scene */}
+      <div
+        className={`absolute inset-0 transition-opacity duration-500 ${
+          isSimulationMode ? "opacity-100" : "opacity-0"
+        }`}
+      >
         <SimulatedClassroomScene />
       </div>
 
+      {/* Vignette overlay */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(255,255,255,0.08),transparent_38%),linear-gradient(180deg,rgba(41,15,97,0.08),rgba(25,10,62,0.36))]" />
 
+      {/* Requesting camera state */}
       {lensState === "requesting-camera" ? (
         <div className="absolute inset-0 flex items-center justify-center bg-purple-950/76 backdrop-blur">
           <div className="rounded-[1.5rem] border border-white/14 bg-white/10 px-5 py-4 text-center text-white">
             <Camera className="mx-auto mb-3 h-8 w-8 text-yellow-200" />
             <p className="font-heading text-lg font-black">Membuka kamera</p>
-            <p className="mt-1 text-sm font-semibold text-white/72">Gambar tidak disimpan.</p>
+            <p className="mt-1 text-sm font-semibold text-white/72">
+              Gambar tidak disimpan.
+            </p>
           </div>
         </div>
       ) : null}
