@@ -82,7 +82,7 @@ export function StudentNavbar({ items, schoolSyncStatus, schoolName }: StudentNa
 
   return (
     <>
-      <nav ref={navRef} className="sticky top-0 z-50 w-full px-3 py-3">
+      <nav ref={navRef} className="sticky top-0 z-50 w-full px-3 py-3 student-navbar-top">
         <DesktopStudentNav
           items={desktopItems}
           pathname={pathname}
@@ -214,7 +214,7 @@ function MobileStudentTopBar({
 
 function MobileStudentBottomNav({ items, pathname }: { items: StudentNavbarItem[]; pathname: string }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-3 md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-50 px-3 pb-3 md:hidden student-navbar-bottom">
       <div className="mx-auto grid max-w-md grid-cols-5 gap-1 rounded-[1.7rem] border border-white/75 bg-cream-50/92 p-2 shadow-[0_-14px_38px_rgba(47,23,110,0.12)] backdrop-blur-xl">
         {items.map((item) => {
           const isActive = isNavItemActive(pathname, item.href);

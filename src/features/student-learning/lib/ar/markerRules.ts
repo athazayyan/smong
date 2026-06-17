@@ -63,6 +63,13 @@ export function getRiskClassLabel(className: RiskObjectClass) {
   if (className === "exit-sign") return "Rambu Keluar";
   if (className === "bottle") return "Botol";
   if (className === "book") return "Buku";
+  if (className === "car") return "Mobil";
+  if (className === "truck") return "Truk";
+  if (className === "tree") return "Pohon";
+  if (className === "dog") return "Anjing";
+  if (className === "cat") return "Kucing";
+  if (className === "boat") return "Perahu";
+  if (className === "bench") return "Bangku";
   return "Objek";
 }
 

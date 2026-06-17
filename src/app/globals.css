@@ -109,3 +109,18 @@ body {
   background-size: 54px 4px, 100% 4px;
   background-repeat: repeat-x;
 }
+
+/* Hide Navbar during gameplay and reset layout padding */
+body.gameplay-active {
+  overflow: hidden;
+}
+
+body.gameplay-active .student-navbar-top,
+body.gameplay-active .student-navbar-bottom {
+  display: none !important;
+}
+
+body.gameplay-active .min-h-screen.pb-24 {
+  padding-bottom: 0 !important;
+}
+

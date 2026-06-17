@@ -31,6 +31,7 @@ export function createWinnerSummary(
   players: BoardGamePlayer[],
 ): BoardGameWinnerSummary {
   return {
+    id: `summary-${eventCardId}`,
     eventCardId,
     safePlayerIds: players.filter((player) => player.status === "selamat").map((player) => player.id),
     eliminatedPlayerIds: players.filter((player) => player.status === "tersingkir").map((player) => player.id),

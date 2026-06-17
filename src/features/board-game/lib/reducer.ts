@@ -25,7 +25,7 @@ type DiceValue = 1 | 2 | 3 | 4 | 5 | 6;
 
 export function boardGameReducer(state: BoardGameState, action: BoardGameAction): BoardGameState {
   if (action.type === "start-game") {
-    return createStartedBoardGameState(action.playerCount, action.mode);
+    return createStartedBoardGameState(action.playerCount, action.mode, action.playerNames);
   }
 
   if (action.type === "restart-game") {
@@ -106,7 +106,7 @@ function resolveLandingTile(state: BoardGameState, player: BoardGamePlayer, tile
   if (tile.type === "safe-zone") {
     const players = state.players.map((item) =>
       item.id === player.id && state.activeEvent
-        ? { ...item, status: "selamat", isProtectedThisEvent: true, reachedSafeZoneAtTurn: state.turnNumber }
+        ? { ...item, status: "selamat" as const, isProtectedThisEvent: true, reachedSafeZoneAtTurn: state.turnNumber }
         : item
     );
     return endTurn({
@@ -118,6 +118,24 @@ function resolveLandingTile(state: BoardGameState, player: BoardGamePlayer, tile
   }
 
   if (tile.type === "event" && !state.activeEvent) {
+    if (state.turnNumber <= state.players.length) {
+      return {
+        ...state,
+        phase: "story",
+        panel: {
+          type: "story",
+          playerId: player.id,
+          title: "Kesiapsiagaan Dimulai",
+          body: "Di putaran pertama, event bencana belum aktif. Manfaatkan waktu ini untuk mengumpulkan Koin dan membeli kartu mitigasi di petak MARKET!",
+        },
+        actionLog: addLog(
+          state,
+          player.id,
+          "Bencana Belum Aktif",
+          `${player.displayName} aman karena event belum aktif di putaran pertama.`
+        ),
+      };
+    }
     return startEventFromTile(state, player);
   }
 
@@ -187,6 +205,24 @@ function resolveLandingTile(state: BoardGameState, player: BoardGamePlayer, tile
     const players = state.players.map((item) =>
       item.id === player.id ? { ...item, coins: item.coins + 1 } : item
     );
+
+    let title = "Cerita Kebudayaan Nusantara";
+    let body = "Kearifan lokal Indonesia mengajarkan keharmonisan dengan alam untuk mengurangi risiko bencana.";
+
+    if (player.position === 7) {
+      title = "Kearifan Lokal Smong (Simeulue)";
+      body = "Masyarakat Simeulue memiliki tradisi lisan 'Smong' (nyanyian) yang mengingatkan untuk segera lari ke bukit jika terjadi gempa kuat disusul air laut yang surut.";
+    } else if (player.position === 13) {
+      title = "Arsitektur Tahan Gempa Baduy";
+      body = "Masyarakat Baduy membangun rumah panggung dari bambu, kayu, & ijuk dengan fondasi batu lepas. Struktur ini sangat fleksibel dan aman saat terjadi gempa bumi.";
+    } else if (player.position === 19) {
+      title = "Kearifan Kehutanan Mentawai";
+      body = "Suku Mentawai melestarikan hutan sebagai pelindung alami dari erosi dan banjir bandang. Kearifan ini diturunkan lewat kepercayaan Arat Sabulungan.";
+    } else if (player.position === 25) {
+      title = "Mitigasi Air Lewat Subak (Bali)";
+      body = "Sistem irigasi tradisional Subak di Bali membagi air secara adil untuk mengantisipasi kekeringan. Nilai Tri Hita Karana mengajarkan kepedulian terhadap alam.";
+    }
+
     return {
       ...state,
       players,
@@ -194,10 +230,10 @@ function resolveLandingTile(state: BoardGameState, player: BoardGamePlayer, tile
       panel: {
         type: "story",
         playerId: player.id,
-        title: "Cerita Smong Simeulue",
-        body: "Smong adalah kearifan lokal Simeulue yang mengingatkan warga untuk bergerak ke tempat tinggi setelah tanda tsunami muncul.",
+        title,
+        body,
       },
-      actionLog: addLog(state, player.id, "Cerita Smong", `${player.displayName} mendapat 1 Koin dari cerita lokal.`),
+      actionLog: addLog(state, player.id, "Kearifan Lokal", `${player.displayName} mendapat 1 Koin dari cerita kebudayaan Nusantara.`),
     };
   }
 
@@ -342,7 +378,7 @@ function applyEscapeRouteHelp(
       return {
         ...player,
         position: nextPosition,
-        status: isAtEscapeBuilding(nextPosition) ? "selamat" : player.status,
+        status: isAtEscapeBuilding(nextPosition) ? "selamat" as const : player.status,
         reachedSafeZoneAtTurn: isAtEscapeBuilding(nextPosition) ? state.turnNumber : player.reachedSafeZoneAtTurn,
       };
     }
@@ -389,9 +425,9 @@ function endTurn(state: BoardGameState): BoardGameState {
     const players = state.players.map((player) => {
       if (player.status !== "aktif") return player;
       if (isAtEscapeBuilding(player.position) || player.isProtectedThisEvent) {
-        return { ...player, status: "selamat", reachedSafeZoneAtTurn: state.turnNumber };
+        return { ...player, status: "selamat" as const, reachedSafeZoneAtTurn: state.turnNumber };
       }
-      return { ...player, status: "tersingkir" };
+      return { ...player, status: "tersingkir" as const };
     });
     return finalizeEvent({ ...state, eventCountdown: 0 }, players, state.activeEvent);
   }
@@ -412,10 +448,45 @@ function finalizeEvent(
   const resolvedPlayers = players.map((player) => {
     if (player.status !== "aktif") return player;
     if (isAtEscapeBuilding(player.position) || player.isProtectedThisEvent) {
-      return { ...player, status: "selamat", reachedSafeZoneAtTurn: state.turnNumber };
+      return { ...player, status: "selamat" as const, reachedSafeZoneAtTurn: state.turnNumber };
     }
-    return { ...player, status: "tersingkir" };
+    return { ...player, status: "tersingkir" as const };
   });
+
+  const survivors = resolvedPlayers.filter((p) => p.status !== "tersingkir");
+
+  if (survivors.length > 1) {
+    const nextPlayers = resolvedPlayers.map((player) => {
+      if (player.status === "selamat") {
+        return {
+          ...player,
+          status: "aktif" as const,
+          isProtectedThisEvent: false,
+          reachedSafeZoneAtTurn: undefined,
+        };
+      }
+      return player;
+    });
+
+    const nextPlayerIndex = getNextActivePlayerIndex(nextPlayers, state.currentPlayerIndex);
+
+    return {
+      ...state,
+      players: nextPlayers,
+      activeEvent: undefined,
+      eventCountdown: 0,
+      phase: "player-turn",
+      currentPlayerIndex: nextPlayerIndex,
+      turnNumber: state.turnNumber + 1,
+      panel: { type: "none" },
+      actionLog: addLog(
+        state,
+        "system",
+        "Bencana Selesai",
+        `Penyintas (${survivors.map((s) => s.displayName).join(", ")}) selamat dari bencana! Permainan dilanjutkan.`
+      ),
+    };
+  }
 
   return {
     ...state,
@@ -426,7 +497,7 @@ function finalizeEvent(
     phase: "final-recap",
     panel: { type: "none" },
     winnerSummary: createWinnerSummary(activeEvent.id, resolvedPlayers),
-    actionLog: addLog(state, "system", "Event selesai", "Lihat recap untuk membahas pilihan aman."),
+    actionLog: addLog(state, "system", "Game over", "Event bencana selesai. Hanya ada satu pemenang atau semua tersingkir."),
   };
 }
 
@@ -454,7 +525,7 @@ function movePlayerBySteps(
       ...item,
       position: nextPosition,
       coins: item.coins + (passedStart ? 2 : 0),
-      status: state.activeEvent && isAtEscapeBuilding(nextPosition) ? "selamat" : item.status,
+      status: state.activeEvent && isAtEscapeBuilding(nextPosition) ? "selamat" as const : item.status,
       reachedSafeZoneAtTurn: state.activeEvent && isAtEscapeBuilding(nextPosition) ? state.turnNumber : item.reachedSafeZoneAtTurn,
     };
   });
@@ -490,7 +561,7 @@ function applyEventStartRules(
     return {
       ...player,
       position: nextPosition,
-      status: isAtEscapeBuilding(nextPosition) ? "selamat" : player.status,
+      status: isAtEscapeBuilding(nextPosition) ? "selamat" as const : player.status,
       reachedSafeZoneAtTurn: isAtEscapeBuilding(nextPosition) ? turnNumber : player.reachedSafeZoneAtTurn,
     };
   });
@@ -500,7 +571,7 @@ function applyEventStartRules(
     if (playerHasFullProtection(player, eventCard)) {
       return {
         ...player,
-        status: "selamat",
+        status: "selamat" as const,
         isProtectedThisEvent: true,
         reachedSafeZoneAtTurn: turnNumber,
       };
@@ -508,7 +579,7 @@ function applyEventStartRules(
     if (isAtEscapeBuilding(player.position)) {
       return {
         ...player,
-        status: "selamat",
+        status: "selamat" as const,
         reachedSafeZoneAtTurn: turnNumber,
       };
     }
@@ -621,7 +692,7 @@ function areAllPlayersResolved(players: BoardGamePlayer[]) {
 }
 
 function getPreviousBoardPosition(position: number, steps: number) {
-  return ((position - 1 - steps + 40) % 40) + 1;
+  return ((position - 1 - steps + 25) % 25) + 1;
 }
 
 function removeOneDamageableCard(cardIds: MitigationCardId[]) {

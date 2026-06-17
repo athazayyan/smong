@@ -24,13 +24,24 @@ export function createInitialBoardGameState(): BoardGameState {
     triviaDeck: createTriviaDeck(),
     actionLog: [],
     panel: { type: "none" },
+    allPlayersCompletedFirstLap: false,
   };
 }
 
-export function createStartedBoardGameState(playerCount: PlayerCount, mode: BoardGameMode): BoardGameState {
+export function createStartedBoardGameState(
+  playerCount: PlayerCount,
+  mode: BoardGameMode,
+  playerNames?: string[]
+): BoardGameState {
   return {
     phase: "player-turn",
-    players: boardGameMockPlayers.slice(0, playerCount).map(resetPlayer),
+    players: boardGameMockPlayers.slice(0, playerCount).map((player, idx) => {
+      const customName = playerNames?.[idx]?.trim();
+      return resetPlayer({
+        ...player,
+        displayName: customName || player.displayName,
+      });
+    }),
     currentPlayerIndex: 0,
     turnNumber: 1,
     mode,
@@ -44,10 +55,11 @@ export function createStartedBoardGameState(playerCount: PlayerCount, mode: Boar
         turnNumber: 1,
         playerId: "system",
         label: "Game dimulai",
-        detail: "Kumpulkan Koin dan kartu sebelum event bencana muncul.",
+        detail: "Kumpulkan Koin dan kartu. Bencana aktif setelah semua pemain satu putaran!",
       },
     ],
     panel: { type: "none" },
+    allPlayersCompletedFirstLap: false,
   };
 }
 
@@ -73,6 +85,7 @@ function resetPlayer(player: BoardGamePlayer): BoardGamePlayer {
     isProtectedThisEvent: false,
     reachedSafeZoneAtTurn: undefined,
     escapeRouteUsedInEvent: false,
+    lapsCompleted: 0,
   };
 }
 

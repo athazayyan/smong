@@ -38,12 +38,20 @@ const DEFAULT_CONFIG = {
 } satisfies YoloDetectorConfig;
 
 const PERSON_CLASS_ID = 0;
+const CAR_CLASS_ID = 2;
+const TRUCK_CLASS_ID = 7;
+const BOAT_CLASS_ID = 8;
+const BENCH_CLASS_ID = 13;
+const CAT_CLASS_ID = 15;
+const DOG_CLASS_ID = 16;
 const BACKPACK_CLASS_ID = 24;
 const HANDBAG_CLASS_ID = 26;
 const SUITCASE_CLASS_ID = 28;
 const BOTTLE_CLASS_ID = 39;
 const CHAIR_CLASS_ID = 56;
+const POTTED_PLANT_CLASS_ID = 58;
 const TABLE_CLASS_ID = 60;
+const TV_CLASS_ID = 62;
 const BOOK_CLASS_ID = 73;
 
 const FLOOR_ITEM_CLASS_IDS = [
@@ -254,12 +262,38 @@ export class YoloObjectDetector {
     }
 
     for (const candidate of candidates) {
-      if (this.includesClass(FLOOR_ITEM_CLASS_IDS, candidate.classId) && this.getYPercent(candidate) >= 42) {
-        risks.push(this.createRiskCandidate(candidate, "floor-item"));
-      }
+      const classId = candidate.classId;
 
-      if (this.includesClass(BLOCKING_OBJECT_CLASS_IDS, candidate.classId) && this.getYPercent(candidate) >= 34) {
-        risks.push(this.createRiskCandidate(candidate, "blocked-path"));
+      if (classId === PERSON_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "person"));
+      } else if (classId === TABLE_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "table"));
+      } else if (classId === CHAIR_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "chair"));
+      } else if (classId === TV_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "monitor"));
+      } else if (classId === BACKPACK_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "backpack"));
+      } else if (classId === BOTTLE_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "bottle"));
+      } else if (classId === BOOK_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "book"));
+      } else if (classId === CAR_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "car"));
+      } else if (classId === TRUCK_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "truck"));
+      } else if (classId === POTTED_PLANT_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "tree"));
+      } else if (classId === DOG_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "dog"));
+      } else if (classId === CAT_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "cat"));
+      } else if (classId === BOAT_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "boat"));
+      } else if (classId === BENCH_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "bench"));
+      } else if (classId === HANDBAG_CLASS_ID || classId === SUITCASE_CLASS_ID) {
+        risks.push(this.createRiskCandidate(candidate, "floor-item"));
       }
     }
 

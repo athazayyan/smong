@@ -317,6 +317,13 @@ export type RiskObjectClass =
   | "stairs"
   | "shelf"
   | "exit-sign"
+  | "car"
+  | "truck"
+  | "tree"
+  | "dog"
+  | "cat"
+  | "boat"
+  | "bench"
   | "unknown";
 
 export type RiskLevel = "low" | "medium" | "high";

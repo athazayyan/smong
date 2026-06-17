@@ -179,6 +179,7 @@ export type BoardGamePlayer = {
   isProtectedThisEvent: boolean;
   reachedSafeZoneAtTurn?: number;
   escapeRouteUsedInEvent: boolean;
+  lapsCompleted?: number;
 };
 
 export type BoardGameActionLogItem = {
@@ -190,6 +191,7 @@ export type BoardGameActionLogItem = {
 };
 
 export type BoardGameWinnerSummary = {
+  id: string;
   eventCardId: string;
   safePlayerIds: string[];
   eliminatedPlayerIds: string[];
@@ -204,6 +206,7 @@ export type BoardGamePanel =
   | {
       type: "market";
       playerId: string;
+      isFreeSelection?: boolean;
     }
   | {
       type: "trivia";
@@ -228,6 +231,11 @@ export type BoardGamePanel =
       playerId: string;
       title: string;
       body: string;
+    }
+  | {
+      type: "free-card-selection";
+      playerId: string;
+      triviaCardId: string;
     };
 
 export type BoardGameState = {
@@ -240,6 +248,7 @@ export type BoardGameState = {
   eventCountdown: number;
   eventHistory: BoardGameEventCard[];
   eventDeck: BoardGameEventCard[];
+  allPlayersCompletedFirstLap?: boolean;
   triviaDeck: BoardGameTriviaCard[];
   actionLog: BoardGameActionLogItem[];
   winnerSummary?: BoardGameWinnerSummary;
@@ -252,6 +261,7 @@ export type BoardGameAction =
       type: "start-game";
       playerCount: 2 | 3 | 4 | 5 | 6;
       mode: BoardGameMode;
+      playerNames?: string[];
     }
   | {
       type: "roll-dice";

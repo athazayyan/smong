@@ -67,7 +67,7 @@ interface RoundScore {
   scenario: Scenario;
 }
 
-// ─── Scenario Pool (12 skenario, 5 dipilih acak per game) ─────────────────────
+// ─── Scenario Pool (20 skenario, 5 dipilih acak per game) ─────────────────────
 
 const SCENARIO_POOL: Scenario[] = [
   {
@@ -168,6 +168,70 @@ const SCENARIO_POOL: Scenario[] = [
     feedback: "Saat sirine berbunyi, tidak ada waktu untuk ragu. Jalur evakuasi telah ditandai — ikuti dan lari ke titik kumpul di ketinggian!",
     smong: "Di Simeulue, anak-anak diajari syair Smong sejak kecil. Pengetahuan turun-temurun ini terbukti menyelamatkan nyawa saat bencana datang tanpa peringatan teknologi.",
   },
+  {
+    id: "s13",
+    title: "Gunung Meletus (Awan Panas)",
+    situation: "Terdengar gemuruh dahsyat dari puncak gunung api dan kepulan awan panas bergulung turun!",
+    instructions: "Lindungi Pernapasan! (Silangkan tangan di dada/muka)",
+    targetMotionId: "silang_tangan",
+    feedback: "Gunakan masker atau kain basah, silangkan tangan menutupi muka untuk menghalau abu vulkanik panas masuk ke paru-paru.",
+  },
+  {
+    id: "s14",
+    title: "Angin Puting Beliung",
+    situation: "Pusaran angin raksasa terlihat mendekati sekolahmu. Seng atap mulai berhamburan!",
+    instructions: "Rendahkan Posisi! (Jongkok di dekat dinding)",
+    targetMotionId: "jongkok",
+    feedback: "Jauhi jendela kaca dan dinding luar. Jongkok serendah mungkin di sudut dalam ruangan yang kokoh untuk menghindari puing terbang.",
+  },
+  {
+    id: "s15",
+    title: "Kebakaran Sekolah (Asap Tebal)",
+    situation: "Sekolah mengalami kebakaran dan koridor dipenuhi asap hitam tebal di bagian atas!",
+    instructions: "Merangkak Menghindar Asap! (Jongkok sangat rendah)",
+    targetMotionId: "jongkok",
+    feedback: "Udara bersih berada di bawah dekat lantai. Merangkak atau jongkok rendah membantu Anda bernapas saat evakuasi.",
+  },
+  {
+    id: "s16",
+    title: "Gempa di Tepi Pantai",
+    situation: "Gempa mengguncang sangat keras saat kamu sedang bermain pasir di pantai wisata!",
+    instructions: "Lari ke Arah Bukit! (Gerakan lari)",
+    targetMotionId: "lari_di_tempat",
+    feedback: "Jangan menunggu alarm. Berlari secepat mungkin menjauhi garis pantai menuju dataran tinggi untuk menghindari potensi tsunami.",
+  },
+  {
+    id: "s17",
+    title: "Banjir Luapan Sungai",
+    situation: "Tanggul sungai jebol dan air setinggi pinggang mulai menggenangi area perumahan!",
+    instructions: "Tunjuk Rute Aman Terdekat! (Tunjuk arah)",
+    targetMotionId: "tunjuk_arah",
+    feedback: "Tunjuk dan pandu orang lain ke arah jalan yang lebih tinggi dan kering untuk evakuasi bersama.",
+  },
+  {
+    id: "s18",
+    title: "Puting Beliung di Lapangan",
+    situation: "Angin kencang berputar kencang di tengah lapangan terbuka, tiada bangunan terdekat!",
+    instructions: "Tiarap di Cekungan! (Jongkok sedalam mungkin)",
+    targetMotionId: "jongkok",
+    feedback: "Jika terjebak di luar ruangan, tiaraplah di parit atau cekungan tanah sambil melindungi kepala untuk menghindari angin badai.",
+  },
+  {
+    id: "s19",
+    title: "Letusan Gunung (Hujan Abu)",
+    situation: "Abu vulkanik pekat dan kerikil mulai berjatuhan dari langit di sekitar pemukiman!",
+    instructions: "Lindungi Kepala & Wajah! (Tangan di atas kepala)",
+    targetMotionId: "tangan_di_kepala",
+    feedback: "Lindungi kepala dari jatuhan kerikil panas dengan tangan atau benda keras seperti helm/papan kayu.",
+  },
+  {
+    id: "s20",
+    title: "Tanah Longsor Bukit",
+    situation: "Terdengar suara dentuman tanah dan terlihat longsoran lumpur mulai turun dari lereng bukit!",
+    instructions: "Lari Tegak Lurus Aliran! (Gerakan lari)",
+    targetMotionId: "lari_di_tempat",
+    feedback: "Segera lari tegak lurus menjauhi arah runtuhan material tanah. Jangan lari searah dengan luncuran tanah longsor.",
+  },
 ];
 
 // Fisher-Yates (Knuth) Shuffle untuk pengacakan soal yang merata
@@ -180,6 +244,72 @@ function pickScenarios(pool: Scenario[], count = 5): Scenario[] {
     shuffled[j] = temp;
   }
   return shuffled.slice(0, count);
+}
+
+// ─── Stickman Pose Preview Component ──────────────────────────────────────────
+export function StickmanPreview({ motionId, className = "h-20 w-20" }: { motionId: MotionId; className?: string }) {
+  let head = { cx: 50, cy: 25, r: 8 };
+  let neck = { x: 50, y: 33 };
+  let spine = { x1: 50, y1: 33, x2: 50, y2: 60 };
+  let lShoulder = { x: 40, y: 36 };
+  let rShoulder = { x: 60, y: 36 };
+  let lHip = { x: 45, y: 60 };
+  let rHip = { x: 55, y: 60 };
+
+  let lArm = { e: { x: 30, y: 45 }, w: { x: 20, y: 55 } }; 
+  let rArm = { e: { x: 70, y: 45 }, w: { x: 80, y: 55 } }; 
+  let lLeg = { k: { x: 45, y: 75 }, a: { x: 45, y: 90 } }; 
+  let rLeg = { k: { x: 55, y: 75 }, a: { x: 55, y: 90 } }; 
+
+  if (motionId === "jongkok") {
+    head = { cx: 50, cy: 50, r: 8 };
+    neck = { x: 50, y: 58 };
+    spine = { x1: 50, y1: 58, x2: 50, y2: 75 };
+    lShoulder = { x: 42, y: 60 };
+    rShoulder = { x: 58, y: 60 };
+    lHip = { x: 45, y: 75 };
+    rHip = { x: 55, y: 75 };
+    lArm = { e: { x: 38, y: 42 }, w: { x: 46, y: 46 } };
+    rArm = { e: { x: 62, y: 42 }, w: { x: 54, y: 46 } };
+    lLeg = { k: { x: 30, y: 80 }, a: { x: 42, y: 90 } };
+    rLeg = { k: { x: 70, y: 80 }, a: { x: 58, y: 90 } };
+  } else if (motionId === "tangan_di_kepala") {
+    lArm = { e: { x: 35, y: 22 }, w: { x: 45, y: 20 } };
+    rArm = { e: { x: 65, y: 22 }, w: { x: 55, y: 20 } };
+  } else if (motionId === "lari_di_tempat") {
+    lArm = { e: { x: 32, y: 44 }, w: { x: 26, y: 35 } }; 
+    rArm = { e: { x: 68, y: 48 }, w: { x: 72, y: 58 } }; 
+    lLeg = { k: { x: 32, y: 70 }, a: { x: 32, y: 82 } };
+    rLeg = { k: { x: 58, y: 75 }, a: { x: 58, y: 90 } };
+  } else if (motionId === "silang_tangan") {
+    lArm = { e: { x: 40, y: 44 }, w: { x: 56, y: 40 } }; 
+    rArm = { e: { x: 60, y: 44 }, w: { x: 44, y: 40 } }; 
+  } else if (motionId === "tunjuk_arah") {
+    lArm = { e: { x: 30, y: 45 }, w: { x: 20, y: 55 } }; 
+    rArm = { e: { x: 72, y: 36 }, w: { x: 88, y: 36 } }; 
+  }
+
+  return (
+    <svg viewBox="0 0 100 100" className={`${className} overflow-visible`} aria-hidden="true">
+      <defs>
+        <filter id="stickman-glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <circle cx={head.cx} cy={head.cy} r={head.r} className="stroke-purple-700 fill-purple-100" strokeWidth="4" />
+      <line x1={spine.x1} y1={spine.y1} x2={spine.x2} y2={spine.y2} className="stroke-purple-700" strokeWidth="4.5" strokeLinecap="round" />
+      <line x1={lShoulder.x} y1={lShoulder.y} x2={rShoulder.x} y2={rShoulder.y} className="stroke-purple-700" strokeWidth="4.5" strokeLinecap="round" />
+      <path d={`M ${lShoulder.x} ${lShoulder.y} L ${lArm.e.x} ${lArm.e.y} L ${lArm.w.x} ${lArm.w.y}`} className="stroke-purple-700 fill-none" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={`M ${rShoulder.x} ${rShoulder.y} L ${rArm.e.x} ${rArm.e.y} L ${rArm.w.x} ${rArm.w.y}`} className="stroke-purple-700 fill-none" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      <line x1={lHip.x} y1={lHip.y} x2={rHip.x} y2={rHip.y} className="stroke-purple-700" strokeWidth="4.5" strokeLinecap="round" />
+      <path d={`M ${lHip.x} ${lHip.y} L ${lLeg.k.x} ${lLeg.k.y} L ${lLeg.a.x} ${lLeg.a.y}`} className="stroke-purple-700 fill-none" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={`M ${rHip.x} ${rHip.y} L ${rLeg.k.x} ${rLeg.k.y} L ${rLeg.a.x} ${rLeg.a.y}`} className="stroke-purple-700 fill-none" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
 }
 
 // ─── Skeleton Connections (MediaPipe 33-point) ────────────────────────────────
@@ -202,26 +332,62 @@ interface KneeState {
   steps: number;
 }
 
+function getAngle(a: Landmark, b: Landmark, c: Landmark): number {
+  const ab = { x: a.x - b.x, y: a.y - b.y };
+  const cb = { x: c.x - b.x, y: c.y - b.y };
+  const dot = ab.x * cb.x + ab.y * cb.y;
+  const magAB = Math.hypot(ab.x, ab.y);
+  const magCB = Math.hypot(cb.x, cb.y);
+  if (magAB === 0 || magCB === 0) return 180;
+  const cos = dot / (magAB * magCB);
+  const angleRad = Math.acos(Math.max(-1, Math.min(1, cos)));
+  return (angleRad * 180) / Math.PI;
+}
+
 function checkPose(lms: Landmark[], motionId: MotionId, kneeState?: KneeState): number {
   if (!lms || lms.length < 29) return 0;
   const lm = (i: number) => lms[i];
   const ok = (i: number) => (lms[i]?.visibility ?? 1) > 0.35;
 
+  const torsoHeight = Math.hypot(
+    (lm(11).x + lm(12).x)/2 - (lm(23).x + lm(24).x)/2,
+    (lm(11).y + lm(12).y)/2 - (lm(23).y + lm(24).y)/2
+  ) || 0.3;
+
+  const shoulderWidth = Math.hypot(
+    lm(11).x - lm(12).x,
+    lm(11).y - lm(12).y
+  ) || 0.25;
+
   switch (motionId) {
     case "jongkok": {
-      if (!ok(0) || !ok(23) || !ok(24) || !ok(11) || !ok(12)) return 0;
-      const avgHipY = (lm(23).y + lm(24).y) / 2;
-      const avgShoulderY = (lm(11).y + lm(12).y) / 2;
-      const noseHipDist = avgHipY - lm(0).y;
-      const distScore = Math.max(0, Math.min(100, ((0.30 - noseHipDist) / 0.16) * 100));
-      const shoulderScore = Math.max(0, Math.min(100, ((avgShoulderY - 0.58) / 0.18) * 100));
-      return Math.round(Math.max(distScore, shoulderScore));
+      if (!ok(23) || !ok(24) || !ok(25) || !ok(26)) return 0;
+      const lKneeAngle = ok(27) ? getAngle(lm(23), lm(25), lm(27)) : 180;
+      const rKneeAngle = ok(28) ? getAngle(lm(24), lm(26), lm(28)) : 180;
+      const avgKneeAngle = (lKneeAngle + rKneeAngle) / 2;
+      const squatScoreKnee = avgKneeAngle < 130
+        ? Math.max(0, Math.min(100, ((130 - avgKneeAngle) / 50) * 100))
+        : Math.max(0, Math.min(40, ((160 - avgKneeAngle) / 80) * 40));
+      
+      let squatScoreHeight = 0;
+      if (ok(27) && ok(28)) {
+        const avgHipY = (lm(23).y + lm(24).y) / 2;
+        const avgAnkleY = (lm(27).y + lm(28).y) / 2;
+        const hipAnkleDist = avgAnkleY - avgHipY;
+        const normalizedDist = hipAnkleDist / torsoHeight;
+        squatScoreHeight = Math.max(0, Math.min(100, ((0.85 - normalizedDist) / 0.5) * 100));
+      } else {
+        squatScoreHeight = squatScoreKnee;
+      }
+      return Math.round(Math.max(squatScoreKnee, squatScoreHeight));
     }
     case "tangan_di_kepala": {
       if (!ok(0) || !ok(15) || !ok(16)) return 0;
       const noseY = lm(0).y;
-      const lScore = Math.max(0, Math.min(100, ((noseY - lm(15).y + 0.03) / 0.12) * 100));
-      const rScore = Math.max(0, Math.min(100, ((noseY - lm(16).y + 0.03) / 0.12) * 100));
+      const lDist = (noseY - lm(15).y) / torsoHeight;
+      const rDist = (noseY - lm(16).y) / torsoHeight;
+      const lScore = Math.max(0, Math.min(100, ((lDist + 0.1) / 0.3) * 100));
+      const rScore = Math.max(0, Math.min(100, ((rDist + 0.1) / 0.3) * 100));
       return Math.round((lScore + rScore) / 2);
     }
     case "lari_di_tempat": {
@@ -230,26 +396,29 @@ function checkPose(lms: Landmark[], motionId: MotionId, kneeState?: KneeState): 
       const rDelta = kneeState.rightPrevY - lm(26).y;
       kneeState.leftPrevY = lm(25).y;
       kneeState.rightPrevY = lm(26).y;
-      if (lDelta > 0.045 || rDelta > 0.045) kneeState.steps = Math.min(kneeState.steps + 1, 10);
+      const stepThreshold = torsoHeight * 0.12;
+      if (lDelta > stepThreshold || rDelta > stepThreshold) {
+        kneeState.steps = Math.min(kneeState.steps + 1, 10);
+      }
       return Math.round((kneeState.steps / 7) * 100);
     }
     case "silang_tangan": {
       if (!ok(11) || !ok(12) || !ok(15) || !ok(16) || !ok(23) || !ok(24)) return 0;
-      const crossed = lm(16).x - lm(15).x; // positive = crossed in physical space
-      const crossScore = Math.max(0, Math.min(100, (crossed / 0.08) * 100));
+      const crossed = lm(16).x - lm(15).x;
+      const crossScore = Math.max(0, Math.min(100, ((crossed / shoulderWidth) + 0.2) / 0.5 * 100));
       const midShoulderY = (lm(11).y + lm(12).y) / 2;
       const midHipY = (lm(23).y + lm(24).y) / 2;
       const inChest =
-        lm(15).y > midShoulderY - 0.05 && lm(15).y < midHipY + 0.05 &&
-        lm(16).y > midShoulderY - 0.05 && lm(16).y < midHipY + 0.05;
+        lm(15).y > midShoulderY - torsoHeight * 0.15 && lm(15).y < midHipY + torsoHeight * 0.15 &&
+        lm(16).y > midShoulderY - torsoHeight * 0.15 && lm(16).y < midHipY + torsoHeight * 0.15;
       return Math.round(crossScore * (inChest ? 1.0 : 0.45));
     }
     case "tunjuk_arah": {
       if (!ok(11) || !ok(12) || !ok(15) || !ok(16)) return 0;
-      const lExt = Math.max(0, Math.min(100, ((lm(15).x - lm(11).x - 0.07) / 0.15) * 100));
-      const lAlign = Math.max(0, 1 - Math.abs(lm(15).y - lm(11).y) / 0.13);
-      const rExt = Math.max(0, Math.min(100, ((lm(12).x - lm(16).x - 0.07) / 0.15) * 100));
-      const rAlign = Math.max(0, 1 - Math.abs(lm(16).y - lm(12).y) / 0.13);
+      const lExt = Math.max(0, Math.min(100, ((lm(15).x - lm(11).x) / shoulderWidth) * 100));
+      const lAlign = Math.max(0, 1 - Math.abs(lm(15).y - lm(11).y) / (torsoHeight * 0.45));
+      const rExt = Math.max(0, Math.min(100, ((lm(12).x - lm(16).x) / shoulderWidth) * 100));
+      const rAlign = Math.max(0, 1 - Math.abs(lm(16).y - lm(12).y) / (torsoHeight * 0.45));
       return Math.round(Math.max(lExt * lAlign, rExt * rAlign));
     }
     default: return 0;
@@ -300,6 +469,19 @@ export default function MotionGameContainer() {
   // Sync state to refs
   useEffect(() => {
     phaseRef.current = phase;
+  }, [phase]);
+
+  // Handle navbar visibility during gameplay
+  useEffect(() => {
+    const isGameplay = phase !== "MODE_SELECTION" && phase !== "FINAL_RESULT";
+    if (isGameplay) {
+      document.body.classList.add("gameplay-active");
+    } else {
+      document.body.classList.remove("gameplay-active");
+    }
+    return () => {
+      document.body.classList.remove("gameplay-active");
+    };
   }, [phase]);
 
   useEffect(() => {
@@ -636,9 +818,16 @@ export default function MotionGameContainer() {
   const totalP1 = roundScores.reduce((a, r) => a + r.p1, 0);
   const totalP2 = roundScores.reduce((a, r) => a + r.p2, 0);
 
+  const isActiveGameplay =
+    phase === "WAITING_FOR_PLAYER" ||
+    phase === "COUNTDOWN" ||
+    phase === "TASK_SHOW" ||
+    phase === "ACTION" ||
+    phase === "SNAP";
+
   // ─── Render ───────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-cream-50 text-ink-900 font-sans overflow-x-hidden relative flex flex-col justify-between">
+    <div className={`min-h-screen bg-cream-50 text-ink-900 font-sans overflow-x-hidden relative flex flex-col justify-between ${isActiveGameplay ? "md:min-h-screen" : ""}`}>
       {/* Decorative bg blobs matching light theme */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute -top-40 -left-40 h-[32rem] w-[32rem] rounded-full bg-lavender-200/40 blur-3xl animate-pulse" style={{ animationDuration: "15s" }} />
@@ -660,7 +849,7 @@ export default function MotionGameContainer() {
       </AnimatePresence>
 
 
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 md:px-6 md:py-10 flex-1 flex flex-col justify-center">
+      <main className={`mx-auto w-full max-w-6xl flex-1 flex flex-col justify-center ${isActiveGameplay ? "p-0 md:px-6 md:py-10" : "px-4 py-8 md:px-6 md:py-10"}`}>
 
         {/* ─── LOADING ──────────────────────────────────────────────────────── */}
         {!modelLoaded && (
@@ -779,10 +968,10 @@ export default function MotionGameContainer() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6"
+              className="w-full max-w-4xl mx-auto flex flex-col items-center md:gap-6 gap-0"
             >
-              {/* Camera view container with deep purple frame */}
-              <div className="relative w-full aspect-[4/3] overflow-hidden rounded-[2rem] border-4 border-purple-900 bg-slate-950 shadow-[0_25px_60px_-15px_rgba(47,23,110,0.18)]">
+              {/* Camera view container with deep purple frame - responsive fullscreen on mobile */}
+              <div className="overflow-hidden bg-slate-950 shadow-[0_25px_60px_-15px_rgba(47,23,110,0.18)] md:relative md:w-full md:aspect-[4/3] md:rounded-[2rem] md:border-4 md:border-purple-900 fixed inset-0 z-40 w-screen h-screen rounded-none border-0">
                 {/* Live Video */}
                 <video
                   ref={videoRef}
@@ -842,53 +1031,59 @@ export default function MotionGameContainer() {
                 )}
 
                 {/* 2. HUD - Top Right: State/Timer Badge */}
-                <div className="absolute right-6 top-6 pointer-events-none z-10">
+                <div className="absolute right-3 top-3 md:right-6 md:top-6 pointer-events-none z-10">
                   {phase === "ACTION" && (
-                    <div className="flex items-center gap-2 rounded-2xl bg-coral-500 border border-coral-400 px-4 py-2 text-sm font-bold text-white shadow-lg animate-pulse">
-                      <Activity className="h-4 w-4" />
-                      <span className="font-mono text-lg font-black tracking-tight">{actionTimer}s</span>
+                    <div className="flex items-center gap-1.5 md:gap-2 rounded-2xl bg-coral-500 border border-coral-400 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold text-white shadow-lg animate-pulse">
+                      <Activity className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      <span className="font-mono text-base md:text-lg font-black tracking-tight">{actionTimer}s</span>
                     </div>
                   )}
                   {phase === "COUNTDOWN" && (
-                    <div className="flex items-center gap-2 rounded-2xl bg-amber-400 border border-amber-300 px-4 py-2 text-sm font-bold text-slate-900 shadow-lg">
-                      <Zap className="h-4 w-4 animate-bounce" />
-                      <span className="tracking-wide uppercase font-extrabold text-xs">PERSIAPAN</span>
+                    <div className="flex items-center gap-1.5 md:gap-2 rounded-2xl bg-amber-400 border border-amber-300 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold text-slate-900 shadow-lg">
+                      <Zap className="h-3.5 w-3.5 md:h-4 md:w-4 animate-bounce" />
+                      <span className="tracking-wide uppercase font-extrabold text-[10px] md:text-xs">PERSIAPAN</span>
                     </div>
                   )}
                   {phase === "TASK_SHOW" && (
-                    <div className="flex items-center gap-2 rounded-2xl bg-purple-600 border border-purple-500 px-4 py-2 text-sm font-bold text-white shadow-lg animate-pulse">
-                      <BookOpen className="h-4 w-4" />
-                      <span className="tracking-wide uppercase font-extrabold text-xs">SKENARIO</span>
+                    <div className="flex items-center gap-1.5 md:gap-2 rounded-2xl bg-purple-600 border border-purple-500 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold text-white shadow-lg animate-pulse">
+                      <BookOpen className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      <span className="tracking-wide uppercase font-extrabold text-[10px] md:text-xs">SKENARIO</span>
                     </div>
                   )}
                   {phase === "WAITING_FOR_PLAYER" && (
-                    <div className="flex items-center gap-2 rounded-2xl bg-purple-600 border border-purple-500 px-4 py-2 text-sm font-bold text-white shadow-lg">
-                      <span className="relative flex h-2 w-2">
+                    <div className="flex items-center gap-1.5 md:gap-2 rounded-2xl bg-purple-600 border border-purple-500 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold text-white shadow-lg">
+                      <span className="relative flex h-1.5 w-1.5 md:h-2 md:w-2">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-white" />
+                        <span className="relative inline-flex h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-white" />
                       </span>
-                      <span className="tracking-wide uppercase font-extrabold text-xs">DETEKSI AI</span>
+                      <span className="tracking-wide uppercase font-extrabold text-[10px] md:text-xs">DETEKSI AI</span>
                     </div>
                   )}
                   {phase === "SNAP" && (
-                    <div className="flex items-center gap-2 rounded-2xl bg-teal-500 border border-teal-400 px-4 py-2 text-sm font-bold text-white shadow-lg">
-                      <Camera className="h-4 w-4 animate-pulse" />
-                      <span className="text-xs font-bold">TERFOTO</span>
+                    <div className="flex items-center gap-1.5 md:gap-2 rounded-2xl bg-teal-500 border border-teal-400 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold text-white shadow-lg">
+                      <Camera className="h-3.5 w-3.5 md:h-4 md:w-4 animate-pulse" />
+                      <span className="text-[10px] md:text-xs font-bold">TERFOTO</span>
                     </div>
                   )}
                 </div>
 
-                {/* 3. HUD - Bottom Center: Action Instruction */}
+                {/* 3. HUD - Bottom Center: Action Instruction & Stickman Peraga */}
                 {phase === "ACTION" && currentScenario && (
-                  <div className="absolute left-6 right-6 bottom-6 flex flex-col gap-2 pointer-events-none items-center text-center z-10">
-                    <div className="rounded-2xl border border-teal-200 bg-teal-50/95 px-6 py-2.5 shadow-md backdrop-blur-sm max-w-xl">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700">TINDAKAN MITIGASI</p>
-                      <p className="font-heading text-base md:text-lg font-black text-purple-955">
-                        {currentScenario.instructions}
-                      </p>
-                    </div>
-                    <div className="rounded-xl bg-white/90 border border-lavender-200 px-4 py-1.5 text-xs font-semibold text-ink-700 max-w-lg shadow-sm backdrop-blur-xs">
-                      {motionHint[currentScenario.targetMotionId]}
+                  <div className="absolute left-3 right-3 bottom-3 md:left-6 md:right-6 md:bottom-6 flex flex-col gap-2 pointer-events-none items-center text-center z-10">
+                    <div className="flex items-center gap-3 rounded-2xl border border-teal-200 bg-teal-50/98 px-4 py-2.5 shadow-md backdrop-blur-sm max-w-xl w-full text-left">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest text-teal-700">TINDAKAN MITIGASI</p>
+                        <p className="font-heading text-sm md:text-lg font-black text-purple-950 leading-tight">
+                          {currentScenario.instructions}
+                        </p>
+                        <p className="text-[10px] md:text-xs font-medium text-ink-600 mt-1 truncate">
+                          {motionHint[currentScenario.targetMotionId]}
+                        </p>
+                      </div>
+                      <div className="shrink-0 flex flex-col items-center gap-0.5 bg-white border border-purple-200 rounded-xl p-1 md:p-1.5 shadow-xs">
+                        <span className="text-[7px] font-bold text-purple-700 uppercase tracking-widest leading-none mb-0.5">Peraga</span>
+                        <StickmanPreview motionId={currentScenario.targetMotionId} className="h-10 w-10 md:h-12 md:w-12" />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1001,24 +1196,31 @@ export default function MotionGameContainer() {
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 1.1, opacity: 0 }}
                         transition={{ type: "spring", stiffness: 350, damping: 22 }}
-                        className="w-full max-w-md bg-white/95 border border-lavender-200 p-6 rounded-2xl shadow-xl text-center backdrop-blur-md text-ink-900 animate-fade-in"
+                        className="w-full max-w-sm md:max-w-md bg-white/95 border border-lavender-200 p-5 md:p-6 rounded-2xl shadow-xl text-center backdrop-blur-md text-ink-900 animate-fade-in"
                       >
                         <span className="rounded-full bg-purple-100 border border-purple-200 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-purple-700">
                           RONDE {roundIndex + 1}
                         </span>
-                        <h3 className="font-heading text-2xl font-bold text-purple-900 mt-2">
+                        <h3 className="font-heading text-xl md:text-2xl font-bold text-purple-900 mt-2">
                           {currentScenario.title}
                         </h3>
-                        <p className="text-xs font-semibold text-ink-600 mt-2 bg-lavender-50/50 p-3 rounded-xl border border-lavender-100/50">
+                        <p className="text-xs font-semibold text-ink-600 mt-2 bg-lavender-50/50 p-2.5 md:p-3 rounded-xl border border-lavender-100/50">
                           "{currentScenario.situation}"
                         </p>
 
-                        <div className="mt-4 border-t border-dashed border-lavender-200 pt-4">
+                        <div className="mt-4 border-t border-dashed border-lavender-200 pt-4 flex flex-col items-center">
                           <p className="text-[10px] font-bold text-teal-600 uppercase tracking-widest">TINDAKAN ANDA</p>
-                          <p className="font-heading text-lg font-black text-purple-955 mt-1">
+                          <p className="font-heading text-base md:text-lg font-black text-purple-955 mt-1 leading-tight">
                             {currentScenario.instructions}
                           </p>
-                          <p className="text-[11px] text-ink-500 mt-1 italic font-medium">
+                          
+                          {/* Large Stickman Preview */}
+                          <div className="my-3 flex flex-col items-center justify-center bg-purple-50/50 border border-purple-100 rounded-2xl p-3 shadow-inner">
+                            <StickmanPreview motionId={currentScenario.targetMotionId} className="h-24 w-24 md:h-28 md:w-28 bg-white border border-purple-200 rounded-xl p-2 shadow-sm" />
+                            <span className="text-[9px] font-bold text-purple-700 mt-1.5 uppercase tracking-widest">Contoh Peragaan</span>
+                          </div>
+
+                          <p className="text-[11px] text-ink-500 italic font-medium">
                             Siapkan gerakan ini sekarang!
                           </p>
                         </div>
@@ -1279,9 +1481,11 @@ export default function MotionGameContainer() {
         </AnimatePresence>
       </main>
 
-      <footer className="border-t border-lavender-200/70 py-5 text-center text-xs font-semibold text-ink-400 bg-white/30 backdrop-blur-sm">
-        <span className="text-purple-700">SMONG</span> · Platform Edukasi Kesiapsiagaan Bencana · AI Pose Detection by MediaPipe
-      </footer>
+      {!isActiveGameplay && (
+        <footer className="border-t border-lavender-200/70 py-5 text-center text-xs font-semibold text-ink-400 bg-white/30 backdrop-blur-sm">
+          <span className="text-purple-700">SMONG</span> · Platform Edukasi Kesiapsiagaan Bencana · AI Pose Detection by MediaPipe
+        </footer>
+      )}
     </div>
   );
 }

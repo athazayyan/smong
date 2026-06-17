@@ -25,9 +25,9 @@ export const studentNavbarItems = [
   },
   {
     id: "badges",
-    label: "Badge",
-    href: "/siswa/badge",
-    iconName: "Award",
+    label: "Simulasi Bencana",
+    href: "/siswa/simulasi-bencana",
+    iconName: "Activity",
     isVisible: true,
     placement: "primary",
     mobileSlot: "bottom",

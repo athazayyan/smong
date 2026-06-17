@@ -1,7 +1,7 @@
 import type { BoardGameTriviaCard } from "../types";
 
-const REWARD_CORRECT = 3;
-const REWARD_WRONG = 1;
+const REWARD_CORRECT = 1;
+const REWARD_WRONG = 0;
 
 export const boardGameTriviaCards = [
   {

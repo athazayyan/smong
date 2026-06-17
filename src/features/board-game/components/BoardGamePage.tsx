@@ -2,13 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useReducer, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Award,
   CircleHelp,
   Construction,
+  Dice1,
+  Dice2,
+  Dice3,
+  Dice4,
   Dice5,
+  Dice6,
   Droplets,
   Flag,
   Gamepad2,
@@ -32,7 +37,13 @@ import { boardGameTiles } from "../data/boardTiles";
 import { mitigationCards } from "../data/mitigationCards";
 import { boardGameReducer } from "../lib/reducer";
 import { createInitialBoardGameState } from "../lib/gameSetup";
-import { canReceiveCard, getDisasterLabel, getMitigationCard, getProtectedDisasterLabels } from "../lib/cardRules";
+import { getNextBoardPosition } from "../lib/movement";
+import {
+  canReceiveCard,
+  getDisasterLabel,
+  getMitigationCard,
+  getProtectedDisasterLabels,
+} from "../lib/cardRules";
 import { sortPlayersForLeaderboard } from "../lib/scoring";
 import type {
   BoardGameDisasterId,
@@ -50,191 +61,697 @@ import type {
 type PlayerCount = 2 | 3 | 4 | 5 | 6;
 type DiceValue = 1 | 2 | 3 | 4 | 5 | 6;
 
+// ─── Dice Rolling Hook ────────────────────────────────────────────────────────
+
+function useDiceRoller(onComplete: (val: DiceValue) => void) {
+  const [rolling, setRolling] = useState(false);
+  const [val1, setVal1] = useState<DiceValue>(1);
+  const [val2, setVal2] = useState<DiceValue>(6);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const roll = useCallback(() => {
+    if (rolling) return;
+    setRolling(true);
+    let ticks = 0;
+    const max = 16;
+    const final1 = (Math.floor(Math.random() * 6) + 1) as DiceValue;
+    const final2 = (Math.floor(Math.random() * 6) + 1) as DiceValue;
+    const tick = () => {
+      ticks++;
+      setVal1((Math.floor(Math.random() * 6) + 1) as DiceValue);
+      setVal2((Math.floor(Math.random() * 6) + 1) as DiceValue);
+      if (ticks < max) {
+        timer.current = setTimeout(tick, 50 + ticks * 10);
+      } else {
+        setVal1(final1);
+        setVal2(final2);
+        setRolling(false);
+        // Use only first dice value for movement (1–6)
+        onComplete(final1);
+      }
+    };
+    tick();
+  }, [rolling, onComplete]);
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+  return { roll, rolling, val1, val2 };
+}
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
 export function BoardGamePage() {
   const [state, dispatch] = useReducer(boardGameReducer, undefined, createInitialBoardGameState);
   const [playerCount, setPlayerCount] = useState<PlayerCount>(4);
   const [mode, setMode] = useState<BoardGameMode>("random");
-  const shouldReduceMotion = useReducedMotion();
+  
+  // Custom player names
+  const [playerNames, setPlayerNames] = useState<string[]>(["Rina", "Bima", "Sari", "Dika", "Maya", "Ardi"]);
+
+  // Visual walking states
+  const [playerVisualPositions, setPlayerVisualPositions] = useState<Record<string, number>>({});
+  const [isWalking, setIsWalking] = useState(false);
+  const [isRulesOpen, setIsRulesOpen] = useState(false);
+
   const currentPlayer = state.players[state.currentPlayerIndex] ?? state.players[0];
-  const currentTile = currentPlayer ? getTile(currentPlayer.position) : boardGameTiles[0];
   const canRoll =
     currentPlayer &&
     currentPlayer.status === "aktif" &&
     (state.phase === "player-turn" || state.phase === "event-active") &&
-    state.panel.type === "none";
+    state.panel.type === "none" &&
+    !isWalking;
+
+  // Sync player visual positions when NOT walking (e.g. game start or help cards)
+  useEffect(() => {
+    if (!isWalking) {
+      const positions: Record<string, number> = {};
+      state.players.forEach((p) => {
+        positions[p.id] = p.position;
+      });
+      setPlayerVisualPositions(positions);
+    }
+  }, [state.players, isWalking]);
+
+  // Sync page state with global navbar visibility
+  useEffect(() => {
+    if (state.phase !== "setup") {
+      document.body.classList.add("gameplay-active");
+    } else {
+      document.body.classList.remove("gameplay-active");
+    }
+    return () => {
+      document.body.classList.remove("gameplay-active");
+    };
+  }, [state.phase]);
+
+  // Handle dice roll completion with step-by-step visual walk and delayed dispatch
+  const handleRollComplete = useCallback(
+    (value: DiceValue) => {
+      if (!currentPlayer) return;
+      setIsWalking(true);
+
+      let stepsTaken = 0;
+      let currentPos = currentPlayer.position;
+
+      const intervalId = setInterval(() => {
+        stepsTaken++;
+        currentPos = getNextBoardPosition(currentPos, 1);
+        
+        setPlayerVisualPositions((prev) => ({
+          ...prev,
+          [currentPlayer.id]: currentPos,
+        }));
+
+        if (stepsTaken >= value) {
+          clearInterval(intervalId);
+          
+          // Wait 1.2 seconds before executing final landing card & panel resolution
+          setTimeout(() => {
+            dispatch({ type: "roll-dice", value });
+            setIsWalking(false);
+          }, 1200);
+        }
+      }, 300); // 300ms per block walk transition
+    },
+    [currentPlayer]
+  );
+
+  const { roll, rolling, val1, val2 } = useDiceRoller(handleRollComplete);
 
   if (state.phase === "setup") {
     return (
-      <BoardGameSetup
+      <SetupScreen
         playerCount={playerCount}
         mode={mode}
+        playerNames={playerNames}
         onChangePlayerCount={setPlayerCount}
         onChangeMode={setMode}
-        onStart={() => dispatch({ type: "start-game", playerCount, mode })}
+        onChangePlayerNames={setPlayerNames}
+        onStart={() => dispatch({ type: "start-game", playerCount, mode, playerNames: playerNames.slice(0, playerCount) })}
       />
     );
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-cream-50 pb-10 pt-4 text-ink-900">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(124,91,219,0.12),transparent_28%),radial-gradient(circle_at_82%_20%,rgba(34,185,154,0.11),transparent_26%),radial-gradient(circle_at_52%_88%,rgba(255,214,184,0.35),transparent_32%)]" />
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 sm:px-6 lg:px-8">
-        <BoardGameHeader state={state} onRestart={() => dispatch({ type: "restart-game" })} />
+    <main className="min-h-screen bg-cream-50 text-ink-900 relative overflow-hidden">
+      {/* Decorative quiet field backgrounds */}
+      <div className="pointer-events-none absolute inset-0 -z-20 smong-quiet-field" />
+      <div className="pointer-events-none absolute left-1/2 top-20 -z-10 h-[440px] w-[88vw] max-w-6xl -translate-x-1/2 smong-veil bg-white/40 blur-[1px]" />
 
-        <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-4">
-            <BoardMap state={state} currentTile={currentTile} shouldReduceMotion={shouldReduceMotion} />
-            <ActiveTilePanel tile={currentTile} currentPlayer={currentPlayer} state={state} />
-          </div>
+      {/* Top bar */}
+      <header className="flex items-center justify-between border-b border-purple-700/10 bg-white/80 px-4 py-2.5 backdrop-blur-md shadow-sm">
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-black text-purple-700">
+            <Gamepad2 className="h-3.5 w-3.5" />
+            SMONG Board
+          </span>
+          <span className="rounded-full bg-teal-100 px-3 py-1 text-xs font-black text-teal-700">
+            {getModeLabel(state.mode)}
+          </span>
+          {state.activeEvent && (
+            <motion.span
+              initial={{ scale: 0.8 }}
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+              className="flex items-center gap-1 rounded-full bg-coral-100 px-3 py-1 text-xs font-black text-coral-700"
+            >
+              <TriangleAlert className="h-3 w-3" />
+              Evakuasi! {state.eventCountdown} giliran
+            </motion.span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsRulesOpen(true)}
+            className="flex items-center gap-1.5 rounded-full border border-purple-700/10 bg-white/50 px-3 py-1.5 text-xs font-black text-ink-700 transition hover:bg-purple-50 cursor-pointer"
+          >
+            <CircleHelp className="h-3.5 w-3.5" />
+            Panduan
+          </button>
+          <button
+            type="button"
+            onClick={() => dispatch({ type: "restart-game" })}
+            className="flex items-center gap-1.5 rounded-full border border-purple-700/10 bg-white/50 px-3 py-1.5 text-xs font-black text-ink-700 transition hover:bg-purple-50 cursor-pointer"
+          >
+            <RefreshCcw className="h-3.5 w-3.5" />
+            Reset
+          </button>
+        </div>
+      </header>
 
-          <aside className="space-y-4">
-            <TurnPanel
-              state={state}
-              currentPlayer={currentPlayer}
-              canRoll={Boolean(canRoll)}
-              onRoll={() => dispatch({ type: "roll-dice", value: createDiceValue() })}
-              onUseEscapeRoute={(targetPlayerId) =>
-                currentPlayer &&
-                dispatch({
-                  type: "use-escape-route-help",
-                  helperPlayerId: currentPlayer.id,
-                  targetPlayerId,
-                })
-              }
-            />
-            <PlayerStatusRail players={state.players} />
-            <PlayerHand player={currentPlayer} />
-            <ActionLog state={state} />
-          </aside>
-        </section>
+      {/* Main layout */}
+      <div className="flex h-[calc(100vh-49px)] flex-col lg:flex-row">
+        {/* Board area */}
+        <div className="flex flex-1 items-center justify-center overflow-auto p-3 sm:p-5">
+          <BoardMap
+            state={state}
+            playerVisualPositions={playerVisualPositions}
+            rolling={rolling}
+            val1={val1}
+            val2={val2}
+            canRoll={Boolean(canRoll)}
+            onRoll={roll}
+          />
+        </div>
+
+        {/* Right sidebar */}
+        <aside className="flex flex-col gap-3 overflow-y-auto border-t border-purple-700/10 bg-white/40 p-3 lg:w-72 lg:border-l lg:border-t-0 lg:p-4 xl:w-80 backdrop-blur-md">
+          <TurnInfo state={state} currentPlayer={currentPlayer} />
+          <PlayerList players={state.players} />
+          <PlayerHand player={currentPlayer} />
+          <ActionLog state={state} />
+        </aside>
       </div>
 
+      {/* Modal panels */}
       <AnimatePresence>
-        {state.panel.type !== "none" ? (
+        {state.panel.type !== "none" && (
           <GamePanel
             panel={state.panel}
             state={state}
-            onBuyCard={(playerId, cardId) => dispatch({ type: "buy-card", playerId, cardId })}
-            onAnswerTrivia={(playerId, triviaCardId, selectedOptionId) =>
-              dispatch({ type: "answer-trivia", playerId, triviaCardId, selectedOptionId })
-            }
-            onResolveMission={(playerId) =>
-              dispatch({ type: "resolve-mission", playerId, value: createDiceValue() })
-            }
+            onBuyCard={(pid, cid) => dispatch({ type: "buy-card", playerId: pid, cardId: cid })}
+            onAnswerTrivia={(pid, tid, oid) => dispatch({ type: "answer-trivia", playerId: pid, triviaCardId: tid, selectedOptionId: oid })}
+            onResolveMission={(pid) => dispatch({ type: "resolve-mission", playerId: pid, value: rng6() })}
             onContinueEvent={() => dispatch({ type: "continue-event" })}
             onAdvanceTurn={() => dispatch({ type: "advance-turn" })}
           />
-        ) : null}
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {state.phase === "final-recap" ? (
+        {state.phase === "final-recap" && (
           <FinalRecap state={state} onRestart={() => dispatch({ type: "restart-game" })} />
-        ) : null}
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isRulesOpen && (
+          <RulesModal onClose={() => setIsRulesOpen(false)} />
+        )}
       </AnimatePresence>
     </main>
   );
 }
 
-function BoardGameSetup({
+// ─── Board Map ────────────────────────────────────────────────────────────────
+
+function BoardMap({
+  state,
+  playerVisualPositions,
+  rolling,
+  val1,
+  val2,
+  canRoll,
+  onRoll,
+}: {
+  state: BoardGameState;
+  playerVisualPositions: Record<string, number>;
+  rolling: boolean;
+  val1: DiceValue;
+  val2: DiceValue;
+  canRoll: boolean;
+  onRoll: () => void;
+}) {
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const [hoveredTile, setHoveredTile] = useState<BoardGameTile | null>(null);
+
+  return (
+    <div
+      className="relative aspect-square w-full max-w-[min(90vw,680px)] overflow-hidden rounded-[24px] border border-purple-700/15 bg-white/80 backdrop-blur-md shadow-[0_32px_80px_rgba(47,23,110,0.12)] p-2.5"
+    >
+      {/* 7×8 grid of tiles */}
+      <div className="grid h-full w-full grid-cols-7 grid-rows-8 gap-1.5 sm:gap-2">
+        {boardGameTiles.map((tile) => {
+          const gp = tileGridPos(tile.position);
+          
+          // Use current visual position for layout walks
+          const playersOnTile = state.players.map(p => ({
+            ...p,
+            position: playerVisualPositions[p.id] ?? p.position
+          })).filter((p) => p.position === tile.position);
+          
+          const isActive = currentPlayer ? currentPlayer.position === tile.position : false;
+          return (
+            <Tile
+              key={tile.id}
+              tile={tile}
+              players={playersOnTile}
+              isActive={isActive}
+              col={gp.col}
+              row={gp.row}
+              onHover={setHoveredTile}
+            />
+          );
+        })}
+      </div>
+
+      {/* Center panel with dice + status + dynamic hovered tile details */}
+      <div className="absolute left-[15.5%] right-[15.5%] top-[13.5%] bottom-[13.5%] flex flex-col items-center justify-center rounded-[20px] border border-purple-700/15 bg-white/98 backdrop-blur-md shadow-lg p-4 transition-all duration-300">
+        <AnimatePresence mode="wait">
+          {hoveredTile ? (
+            <motion.div
+              key={`hover-${hoveredTile.id}`}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="text-center flex flex-col items-center justify-center h-full w-full"
+            >
+              <span className={`p-2.5 rounded-2xl shadow-sm ${getTypeStyles(hoveredTile.type).bg} ${getTypeStyles(hoveredTile.type).textColor} mb-2`}>
+                {tileIcon(hoveredTile.iconName, "h-5 w-5 sm:h-7 sm:w-7")}
+              </span>
+              <h3 className="font-heading text-xs sm:text-base font-black text-purple-900 leading-tight truncate max-w-full">
+                {hoveredTile.name}
+              </h3>
+              <span className="text-[7px] sm:text-[9px] font-black uppercase text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full mt-1 border border-teal-100 tracking-wider">
+                {hoveredTile.zone.replace("-", " ")} · {hoveredTile.type.replace("-", " ")}
+              </span>
+              <p className="text-[9px] sm:text-xs text-ink-700 font-semibold leading-normal mt-2 max-w-[95%] text-pretty">
+                {hoveredTile.description}
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="game-status"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              className="text-center flex flex-col items-center justify-center h-full w-full gap-2"
+            >
+              {/* Current Player Banner */}
+              {currentPlayer && (
+                <div className="flex items-center gap-1.5 bg-purple-50 px-2.5 py-1 rounded-full border border-purple-100 shadow-sm mb-1">
+                  <span className={`h-2 w-2 rounded-full shrink-0 ${tokenBg(currentPlayer.tokenColor)} animate-pulse`} />
+                  <span className="text-[9px] font-black text-purple-800 tracking-wide uppercase">
+                    {currentPlayer.displayName}
+                  </span>
+                </div>
+              )}
+
+              {/* Dice */}
+              <div className="flex gap-3 justify-center items-center">
+                <DiceBlock value={val1} rolling={rolling} delay={0} />
+              </div>
+
+              {/* Roll button */}
+              <button
+                type="button"
+                disabled={!canRoll}
+                onClick={onRoll}
+                className="mt-1 rounded-full bg-purple-900 px-6 py-2 text-xs font-black text-white shadow-[0_4px_0_#20104f] transition hover:bg-purple-800 active:translate-y-0.5 active:shadow-none disabled:cursor-not-allowed disabled:bg-purple-100 disabled:text-purple-300 disabled:shadow-none cursor-pointer"
+              >
+                {rolling ? "Menggelinding…" : "Lempar Dadu"}
+              </button>
+
+             
+
+              <p className="text-[7px] sm:text-[9px] font-bold text-ink-400 mt-1 uppercase tracking-wider hidden sm:block">
+                Sorot petak untuk detail info
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+// ─── 3D Dice Block ────────────────────────────────────────────────────────────
+
+function DiceBlock({ value, rolling, delay }: { value: DiceValue; rolling: boolean; delay: number }) {
+  return (
+    <motion.div
+      animate={
+        rolling
+          ? { rotate: [0, 20, -20, 15, -15, 8, -8, 0], y: [0, -8, 0, -5, 0], scale: [1, 1.15, 0.95, 1.1, 1] }
+          : { rotate: 0, y: 0, scale: 1 }
+      }
+      transition={{ duration: 0.7, delay, ease: "easeInOut" }}
+      className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-purple-200 bg-white shadow-[0_4px_0_rgba(47,23,110,0.15),inset_0_1px_0_rgba(255,255,255,0.8)] sm:h-14 sm:w-14"
+      style={{ color: "#2f176e" }}
+    >
+      {renderDice(value, "h-8 w-8 sm:h-10 sm:w-10")}
+    </motion.div>
+  );
+}
+
+// ─── Single Tile ──────────────────────────────────────────────────────────────
+
+function Tile({
+  tile,
+  players,
+  isActive,
+  col,
+  row,
+  onHover,
+}: {
+  tile: BoardGameTile;
+  players: BoardGamePlayer[];
+  isActive: boolean;
+  col: number;
+  row: number;
+  onHover: (tile: BoardGameTile | null) => void;
+}) {
+  const styles = getTypeStyles(tile.type);
+
+  return (
+    <div
+      onMouseEnter={() => onHover(tile)}
+      onMouseLeave={() => onHover(null)}
+      className={`group relative flex min-h-0 min-w-0 flex-col justify-between p-1 overflow-hidden rounded-xl border transition-all duration-200 cursor-pointer select-none
+        ${styles.bg} ${styles.border} ${isActive ? "ring-2 ring-purple-650 ring-offset-2 scale-[1.02] z-10 shadow-md" : "hover:scale-[1.03] hover:z-10 hover:shadow-sm"}
+      `}
+      style={{ gridColumn: col, gridRow: row }}
+    >
+      {/* Position and Zone Badge */}
+      <div className="flex items-center justify-between w-full">
+        <span className={`flex h-3.5 w-3.5 sm:h-5 sm:w-5 items-center justify-center rounded-full text-[7px] sm:text-xs font-black shadow-inner ${styles.badgeBg} ${styles.badgeText}`}>
+          {tile.position}
+        </span>
+        <span className="text-[6px] sm:text-[8px] font-black uppercase opacity-60 tracking-wider hidden sm:inline">
+          {tile.zone === "pesisir" && "🌊"}
+          {tile.zone === "sungai-kota" && "🏢"}
+          {tile.zone === "gunung-hutan" && "🌲"}
+          {tile.zone === "desa-kearifan" && "🏡"}
+        </span>
+      </div>
+
+      {/* Icon and short name centered */}
+      <div className="flex flex-1 flex-col items-center justify-center py-0.5">
+        <span className={`transition-transform duration-200 group-hover:scale-105 ${styles.iconColor}`}>
+          {tileIcon(tile.iconName, "h-3.5 w-3.5 sm:h-5 sm:w-5")}
+        </span>
+        
+        {/* Shortened Label */}
+        <span className={`text-[6px] sm:text-[8px] font-black uppercase mt-0.5 leading-tight text-center tracking-wide block max-w-full truncate px-0.5 ${styles.textColor}`}>
+          {getTileShortName(tile)}
+        </span>
+      </div>
+
+      {/* Tokens Container */}
+      <div className="min-h-5 w-full flex items-center justify-center mt-auto">
+        {players.length > 0 && (
+          <div className="flex -space-x-1 hover:-space-x-0.5 transition-all duration-250 justify-center">
+            {players.map((p) => (
+              <motion.div
+                key={p.id}
+                layoutId={`tok-${p.id}`}
+                transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                className={`h-4 w-4 sm:h-5 sm:w-5 rounded-full border border-white flex items-center justify-center font-heading text-[8px] sm:text-[10px] font-black text-white shadow-[0_1.5px_3px_rgba(0,0,0,0.15)] cursor-help shrink-0 ${tokenBg(p.tokenColor)}`}
+                title={p.displayName}
+              >
+                {p.displayName.charAt(0).toUpperCase()}
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Sidebar: Turn Info ───────────────────────────────────────────────────────
+
+function TurnInfo({ state, currentPlayer }: { state: BoardGameState; currentPlayer?: BoardGamePlayer }) {
+  return (
+    <div className="rounded-2xl border border-purple-700/8 bg-white/80 p-3 shadow-sm">
+      <p className="mb-1 text-[9px] font-black uppercase tracking-widest text-ink-400">Giliran</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-heading text-lg font-black text-ink-900">{currentPlayer?.displayName ?? "—"}</p>
+        {currentPlayer && (
+          <span className={`h-9 w-9 rounded-xl border-2 border-white shadow-sm flex items-center justify-center font-heading text-sm font-black text-white ${tokenBg(currentPlayer.tokenColor)}`}>
+            {currentPlayer.displayName.charAt(0).toUpperCase()}
+          </span>
+        )}
+      </div>
+      <div className="mt-2.5 grid grid-cols-3 gap-1.5 text-center">
+        {[
+          { label: "Petak", val: currentPlayer?.position ?? "—" },
+          { label: "Koin", val: currentPlayer?.coins ?? "—" },
+          { label: "Kartu", val: currentPlayer?.cardIds.length ?? "—" },
+        ].map(({ label, val }) => (
+          <div key={label} className="rounded-xl bg-cream-50 border border-purple-700/5 py-2">
+            <p className="text-[9px] font-black uppercase tracking-wider text-ink-400">{label}</p>
+            <p className="font-heading text-base font-black text-ink-900">{val}</p>
+          </div>
+        ))}
+      </div>
+      {state.activeEvent && (
+        <div className="mt-2.5 rounded-xl border border-coral-200 bg-coral-50 p-2.5">
+          <p className="text-[9px] font-black uppercase tracking-wider text-coral-700">Event aktif</p>
+          <p className="mt-0.5 text-xs font-black text-ink-900">{state.activeEvent.title}</p>
+          <p className="text-[10px] font-bold text-ink-700">Sisa {state.eventCountdown} giliran</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Sidebar: Player List ─────────────────────────────────────────────────────
+
+function PlayerList({ players }: { players: BoardGamePlayer[] }) {
+  return (
+    <div className="rounded-2xl border border-purple-700/8 bg-white/80 p-3 shadow-sm">
+      <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-ink-400">Pemain</p>
+      <div className="space-y-1.5">
+        {players.map((p) => (
+          <div key={p.id} className="flex items-center gap-2 rounded-xl bg-cream-50 border border-purple-700/5 px-2.5 py-2">
+            <span className={`h-6 w-6 shrink-0 rounded-full border border-white shadow-sm flex items-center justify-center font-heading text-[10px] font-black text-white ${tokenBg(p.tokenColor)}`}>
+              {p.displayName.charAt(0).toUpperCase()}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-black text-ink-900">{p.displayName}</p>
+              <p className="text-[9px] font-bold text-ink-400">#{p.position} · {statusLabel(p.status)}</p>
+            </div>
+            <span className="text-xs font-black text-yellow-750">{p.coins} Koin</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Sidebar: Player Hand ─────────────────────────────────────────────────────
+
+function PlayerHand({ player }: { player?: BoardGamePlayer }) {
+  if (!player || player.cardIds.length === 0) return null;
+  return (
+    <div className="rounded-2xl border border-purple-700/8 bg-white/80 p-3 shadow-sm">
+      <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-ink-400">Kartu {player.displayName}</p>
+      <div className="grid gap-1 sm:grid-cols-2">
+        {player.cardIds.map((cid, i) => {
+          const card = getMitigationCard(cid);
+          return (
+            <div key={`${cid}-${i}`} className="flex items-center gap-1.5 rounded-xl border border-purple-700/5 bg-cream-50 px-2 py-1.5">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
+                {mitigationIcon(card.iconName, "h-3 w-3")}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[10px] font-black text-ink-900">{card.shortName}</p>
+                <p className="text-[8px] font-bold text-teal-700">{getProtectedDisasterLabels(card)}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Sidebar: Action Log ──────────────────────────────────────────────────────
+
+function ActionLog({ state }: { state: BoardGameState }) {
+  const logs = state.actionLog.slice(0, 5);
+  if (logs.length === 0) return null;
+  return (
+    <div className="rounded-2xl border border-purple-700/8 bg-white/80 p-3 shadow-sm">
+      <p className="mb-2 text-[9px] font-black uppercase tracking-widest text-ink-400">Log</p>
+      <div className="space-y-1.5">
+        {logs.map((item, i) => (
+          <div key={item.id} className={`rounded-lg p-2 border border-purple-700/5 ${i === 0 ? "bg-purple-50" : "bg-cream-50"}`}>
+            <p className="text-[10px] font-black text-ink-900">{item.label}</p>
+            <p className="text-[9px] font-semibold leading-4 text-ink-700">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Setup Screen ─────────────────────────────────────────────────────────────
+
+function getPlayerColor(index: number): BoardGameTokenColor {
+  const colors: BoardGameTokenColor[] = ["purple", "teal", "coral", "yellow", "sky", "peach"];
+  return colors[index % colors.length];
+}
+
+function SetupScreen({
   playerCount,
   mode,
+  playerNames,
   onChangePlayerCount,
   onChangeMode,
+  onChangePlayerNames,
   onStart,
 }: {
   playerCount: PlayerCount;
   mode: BoardGameMode;
-  onChangePlayerCount: (count: PlayerCount) => void;
-  onChangeMode: (mode: BoardGameMode) => void;
+  playerNames: string[];
+  onChangePlayerCount: (c: PlayerCount) => void;
+  onChangeMode: (m: BoardGameMode) => void;
+  onChangePlayerNames: (names: string[]) => void;
   onStart: () => void;
 }) {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-cream-50 px-4 pb-16 pt-6 text-ink-900 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(91,59,181,0.16),transparent_30%),radial-gradient(circle_at_82%_22%,rgba(34,185,154,0.12),transparent_28%),linear-gradient(180deg,rgba(255,248,240,0),rgba(251,239,227,0.78))]" />
-      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl items-center gap-8 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="space-y-7">
+    <main className="relative min-h-screen overflow-hidden bg-cream-50 px-4 pb-16 pt-6 text-ink-900">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(124,58,237,0.06),transparent_55%),radial-gradient(ellipse_at_80%_80%,rgba(34,185,154,0.04),transparent_55%)]" />
+      <section className="relative z-10 mx-auto grid min-h-[calc(100vh-8rem)] max-w-5xl items-center gap-8 lg:grid-cols-[1fr_400px]">
+        <div className="space-y-6">
           <Link
             href="/siswa/games"
-            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-lavender-200 bg-white/80 px-4 text-sm font-extrabold text-purple-700 shadow-sm"
+            className="inline-flex items-center gap-2 rounded-full border border-purple-700/10 bg-white/50 px-4 py-2 text-sm font-black text-purple-700 hover:bg-purple-50 transition"
           >
             <Gamepad2 className="h-4 w-4" />
             Games Smong
           </Link>
-
-          <div className="max-w-3xl space-y-4">
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-teal-700">Board Game Kesiapsiagaan</p>
-            <h1 className="font-heading text-5xl font-black leading-[0.95] text-purple-900 sm:text-6xl lg:text-7xl">
-              Jelajahi Papan Siaga Nusantara
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-teal-700">Board Game Kesiapsiagaan</p>
+            <h1 className="mt-2 font-heading text-5xl font-black leading-[0.92] text-ink-900 sm:text-6xl lg:text-7xl">
+              Jelajahi<br />Papan Siaga<br />
+              <span className="text-purple-700">Nusantara</span>
             </h1>
-            <p className="max-w-2xl text-base font-semibold leading-8 text-ink-700 sm:text-lg">
-              Kumpulkan Koin, pilih kartu mitigasi, jawab trivia, lalu hadapi satu event bencana besar dengan strategi yang tenang.
+            <p className="mt-4 max-w-xl text-sm font-semibold leading-7 text-ink-700">
+              Kumpulkan Koin, pilih kartu mitigasi, jawab trivia, lalu hadapi event bencana dengan strategi.
             </p>
           </div>
-
           <div className="grid gap-3 sm:grid-cols-3">
-            <SetupFeature iconName="MapPin" title="40 Petak" body="Pesisir, sungai, gunung, hutan, dan desa kearifan lokal." />
-            <SetupFeature iconName="ShieldPlus" title="8 Kartu" body="Bangun strategi dari Mangrove sampai Early Warning." />
-            <SetupFeature iconName="TriangleAlert" title="4 Bencana" body="Tsunami, Gempa Bumi, Banjir, dan Cuaca Ekstrem." />
+            {[
+              { label: "40 Petak", sub: "Pesisir, sungai, gunung, hutan" },
+              { label: "8 Kartu", sub: "Mangrove sampai Early Warning" },
+              { label: "4 Bencana", sub: "Tsunami, Gempa, Banjir, Cuaca" },
+            ].map(({ label, sub }) => (
+              <div key={label} className="rounded-2xl border border-purple-700/10 bg-white/70 backdrop-blur-sm p-4 shadow-sm">
+                <p className="font-heading text-lg font-black text-ink-900">{label}</p>
+                <p className="mt-1 text-xs font-semibold text-ink-700">{sub}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        <div className="rounded-[2rem] border border-white/80 bg-white/78 p-5 shadow-[0_22px_70px_rgba(47,23,110,0.14)] backdrop-blur-xl sm:p-6">
-          <div className="mb-5 flex items-center gap-4">
-            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-[1.6rem] bg-lavender-100">
-              <Image
-                src="/assets/mascot/mascot-smong.png"
-                alt="Mascot Smong"
-                width={80}
-                height={80}
-                sizes="80px"
-                className="h-full w-full object-contain p-2"
-                priority
-              />
+        <div className="rounded-[2rem] border border-purple-700/10 bg-white/80 p-5 backdrop-blur-xl shadow-md space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-purple-100">
+              <Image src="/assets/mascot/mascot-smong.png" alt="Smong" width={64} height={64} className="h-full w-full object-contain p-1.5" priority />
             </div>
             <div>
-              <p className="font-heading text-2xl font-black text-purple-900">Siapkan sesi</p>
-              <p className="text-sm font-bold leading-6 text-ink-700">Pilih jumlah pemain dan mode bencana.</p>
+              <p className="font-heading text-xl font-black text-ink-900">Siapkan sesi</p>
+              <p className="text-xs font-bold text-ink-700">Pilih pemain dan mode bencana.</p>
             </div>
           </div>
 
-          <div className="space-y-5">
-            <fieldset className="space-y-3">
-              <legend className="text-sm font-black text-ink-900">Jumlah pemain</legend>
+          <div className="space-y-4">
+            {/* Player count selector */}
+            <fieldset>
+              <legend className="mb-2 text-xs font-black text-ink-700/60 uppercase tracking-wider">Jumlah pemain</legend>
               <div className="grid grid-cols-5 gap-2">
-                {([2, 3, 4, 5, 6] satisfies PlayerCount[]).map((count) => (
+                {([2, 3, 4, 5, 6] satisfies PlayerCount[]).map((c) => (
                   <button
-                    key={count}
+                    key={c}
                     type="button"
-                    className={`min-h-12 rounded-2xl border text-base font-black transition ${
-                      playerCount === count
-                        ? "border-purple-700 bg-purple-700 text-white shadow-[0_5px_0_#2F176E]"
-                        : "border-lavender-200 bg-cream-50 text-ink-700 hover:bg-lavender-100"
+                    onClick={() => onChangePlayerCount(c)}
+                    className={`min-h-11 rounded-xl border text-sm font-black transition ${
+                      playerCount === c
+                        ? "border-purple-900 bg-purple-700 text-white shadow-[0_4px_0_#2f176e]"
+                        : "border-purple-700/10 bg-white/50 text-ink-700 hover:bg-purple-50"
                     }`}
-                    onClick={() => onChangePlayerCount(count)}
                   >
-                    {count}
+                    {c}
                   </button>
                 ))}
               </div>
             </fieldset>
 
-            <fieldset className="space-y-3">
-              <legend className="text-sm font-black text-ink-900">Mode bencana</legend>
-              <div className="grid gap-2">
-                {getModeOptions().map((option) => (
+            {/* Custom player names inputs */}
+            <div className="space-y-2.5">
+              <p className="text-xs font-black text-ink-700/60 uppercase tracking-wider">Nama Pemain</p>
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {Array.from({ length: playerCount }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className={`h-6 w-6 rounded-lg border border-purple-700/10 shrink-0 ${tokenBg(getPlayerColor(i))}`} />
+                    <input
+                      type="text"
+                      value={playerNames[i] || ""}
+                      onChange={(e) => {
+                        const next = [...playerNames];
+                        next[i] = e.target.value;
+                        onChangePlayerNames(next);
+                      }}
+                      placeholder={`Pemain ${i + 1}`}
+                      className="flex-1 min-h-10 px-3 py-1 text-sm font-black rounded-xl border border-purple-700/10 bg-white/70 text-ink-900 focus:outline-none focus:ring-2 focus:ring-purple-500 placeholder-ink-400"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Mode selector */}
+            <fieldset>
+              <legend className="mb-2 text-xs font-black text-ink-700/60 uppercase tracking-wider">Mode bencana</legend>
+              <div className="space-y-1.5">
+                {getModeOpts().map((opt) => (
                   <button
-                    key={option.id}
+                    key={opt.id}
                     type="button"
-                    className={`flex min-h-12 items-center justify-between rounded-2xl border px-4 text-left transition ${
-                      mode === option.id
-                        ? "border-purple-700 bg-lavender-100 text-purple-900"
-                        : "border-lavender-200 bg-cream-50 text-ink-700 hover:bg-white"
+                    onClick={() => onChangeMode(opt.id)}
+                    className={`flex min-h-11 w-full items-center justify-between rounded-xl border px-4 text-left transition ${
+                      mode === opt.id
+                        ? "border-purple-700 bg-purple-100 text-purple-900"
+                        : "border-purple-700/10 bg-white/50 text-ink-700 hover:bg-purple-50"
                     }`}
-                    onClick={() => onChangeMode(option.id)}
                   >
-                    <span className="font-heading text-base font-black">{option.label}</span>
-                    <span className="text-xs font-extrabold text-ink-400">{option.helper}</span>
+                    <span className="text-sm font-black">{opt.label}</span>
+                    <span className="text-xs text-ink-400">{opt.helper}</span>
                   </button>
                 ))}
               </div>
@@ -242,8 +759,8 @@ function BoardGameSetup({
 
             <button
               type="button"
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-purple-700 px-6 font-heading text-lg font-black text-white shadow-[0_7px_0_#2F176E] transition hover:bg-purple-500 active:translate-y-1 active:shadow-none"
               onClick={onStart}
+              className="flex min-h-13 w-full items-center justify-center gap-2 rounded-full bg-purple-700 font-heading text-base font-black text-white shadow-[0_6px_0_#2f176e] transition hover:bg-purple-600 active:translate-y-1 active:shadow-none cursor-pointer"
             >
               <Dice5 className="h-5 w-5" />
               Mulai Board Game
@@ -255,598 +772,200 @@ function BoardGameSetup({
   );
 }
 
-function SetupFeature({ iconName, title, body }: { iconName: BoardGameTileIconName; title: string; body: string }) {
-  return (
-    <div className="rounded-[1.5rem] border border-white/80 bg-white/72 p-4 shadow-[0_14px_40px_rgba(47,23,110,0.08)]">
-      <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-lavender-100 text-purple-700">
-        {renderTileIcon(iconName, "h-5 w-5")}
-      </div>
-      <p className="font-heading text-lg font-black text-purple-900">{title}</p>
-      <p className="mt-1 text-sm font-semibold leading-6 text-ink-700">{body}</p>
-    </div>
-  );
-}
-
-function BoardGameHeader({ state, onRestart }: { state: BoardGameState; onRestart: () => void }) {
-  return (
-    <header className="rounded-[2rem] border border-white/80 bg-white/78 p-4 shadow-[0_16px_48px_rgba(47,23,110,0.1)] backdrop-blur-xl">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0">
-          <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="inline-flex min-h-8 items-center gap-2 rounded-full bg-lavender-100 px-3 text-xs font-black text-purple-700">
-              <Gamepad2 className="h-4 w-4" />
-              Board Game
-            </span>
-            <span className="inline-flex min-h-8 items-center rounded-full bg-mint-100 px-3 text-xs font-black text-teal-700">
-              Mode {getModeLabel(state.mode)}
-            </span>
-            {state.activeEvent ? (
-              <span className="inline-flex min-h-8 items-center rounded-full bg-coral-50 px-3 text-xs font-black text-coral-700">
-                Evakuasi {state.eventCountdown} giliran
-              </span>
-            ) : null}
-          </div>
-          <h1 className="font-heading text-3xl font-black text-purple-900 sm:text-4xl">
-            Smong Archipelago Board
-          </h1>
-          <p className="mt-1 text-sm font-bold text-ink-700">
-            Kumpulkan resource, pilih kartu mitigasi, lalu cari jalan aman saat event muncul.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-lavender-200 bg-cream-50 px-4 text-sm font-black text-purple-700 transition hover:bg-white"
-          onClick={onRestart}
-        >
-          <RefreshCcw className="h-4 w-4" />
-          Reset
-        </button>
-      </div>
-    </header>
-  );
-}
-
-function BoardMap({
-  state,
-  currentTile,
-  shouldReduceMotion,
-}: {
-  state: BoardGameState;
-  currentTile: BoardGameTile;
-  shouldReduceMotion: boolean | null;
-}) {
-  return (
-    <section className="rounded-[2rem] border border-white/80 bg-white/72 p-3 shadow-[0_22px_70px_rgba(47,23,110,0.12)] backdrop-blur-xl sm:p-5">
-      <div className="relative mx-auto aspect-square w-full max-w-[760px] rounded-[1.7rem] bg-[linear-gradient(135deg,#FFF8F0,#EEE8FF_42%,#D7F7E7)] p-2 shadow-inner sm:p-3">
-        <div className="pointer-events-none absolute inset-[14%] rounded-[35%_20%_35%_18%/22%_35%_18%_28%] bg-[radial-gradient(circle_at_30%_28%,rgba(255,232,154,0.6),transparent_30%),radial-gradient(circle_at_68%_62%,rgba(34,185,154,0.22),transparent_38%),linear-gradient(145deg,rgba(255,255,255,0.74),rgba(216,241,255,0.38))] shadow-[inset_0_0_60px_rgba(91,59,181,0.08)]" />
-        <div className="grid h-full w-full grid-cols-11 grid-rows-11 gap-1 sm:gap-1.5">
-          {boardGameTiles.map((tile) => (
-            <BoardTileView
-              key={tile.id}
-              tile={tile}
-              players={state.players.filter((player) => player.position === tile.position)}
-              isActive={tile.position === currentTile.position}
-              shouldReduceMotion={shouldReduceMotion}
-            />
-          ))}
-        </div>
-        <div className="pointer-events-none absolute inset-[31%] hidden items-center justify-center rounded-[2rem] border border-white/60 bg-cream-50/70 text-center shadow-sm backdrop-blur-sm sm:flex">
-          <div className="px-5">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-teal-700">Papan Siaga</p>
-            <p className="font-heading text-2xl font-black leading-tight text-purple-900">Nusantara Aman</p>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function BoardTileView({
-  tile,
-  players,
-  isActive,
-  shouldReduceMotion,
-}: {
-  tile: BoardGameTile;
-  players: BoardGamePlayer[];
-  isActive: boolean;
-  shouldReduceMotion: boolean | null;
-}) {
-  const gridPosition = getTileGridPosition(tile.position);
-  const Wrapper = shouldReduceMotion ? "div" : motion.div;
-  const motionProps = shouldReduceMotion
-    ? {}
-    : {
-        initial: { opacity: 0, scale: 0.96 },
-        animate: { opacity: 1, scale: isActive ? 1.04 : 1 },
-        transition: { duration: 0.22 },
-      };
-
-  return (
-    <Wrapper
-      {...motionProps}
-      className={`relative flex min-h-0 min-w-0 flex-col justify-between overflow-hidden rounded-[0.65rem] border p-1.5 shadow-sm sm:rounded-[0.85rem] sm:p-2 ${getTileClass(tile, isActive)}`}
-      style={{
-        gridColumn: gridPosition.column,
-        gridRow: gridPosition.row,
-      }}
-    >
-      <div className="flex items-center justify-between gap-1">
-        <span className="text-[0.62rem] font-black leading-none text-current sm:text-[0.68rem]">{tile.position}</span>
-        <span className="hidden shrink-0 sm:inline-flex">{renderTileIcon(tile.iconName, "h-3.5 w-3.5")}</span>
-      </div>
-      <p className="hidden truncate text-[0.54rem] font-black leading-none sm:block">{tile.name}</p>
-      {players.length > 0 ? (
-        <div className="absolute bottom-1 right-1 flex -space-x-1">
-          {players.map((player) => (
-            <span
-              key={player.id}
-              className={`h-3.5 w-3.5 rounded-full border border-white shadow-sm sm:h-4 sm:w-4 ${getTokenClass(player.tokenColor)}`}
-              title={player.displayName}
-            />
-          ))}
-        </div>
-      ) : null}
-    </Wrapper>
-  );
-}
-
-function ActiveTilePanel({
-  tile,
-  currentPlayer,
-  state,
-}: {
-  tile: BoardGameTile;
-  currentPlayer?: BoardGamePlayer;
-  state: BoardGameState;
-}) {
-  return (
-    <section className="rounded-[1.6rem] border border-white/80 bg-white/76 p-4 shadow-[0_14px_44px_rgba(47,23,110,0.08)] backdrop-blur-xl">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div className="min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-ink-400">Petak aktif</p>
-          <div className="mt-1 flex min-w-0 items-center gap-2">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-lavender-100 text-purple-700">
-              {renderTileIcon(tile.iconName, "h-5 w-5")}
-            </span>
-            <div className="min-w-0">
-              <p className="truncate font-heading text-xl font-black text-purple-900">{tile.name}</p>
-              <p className="line-clamp-2 text-sm font-semibold leading-6 text-ink-700">{tile.description}</p>
-            </div>
-          </div>
-        </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <span className="rounded-full bg-cream-100 px-3 py-2 text-xs font-black text-ink-700">
-            Giliran {state.turnNumber}
-          </span>
-          {currentPlayer ? (
-            <span className="rounded-full bg-mint-100 px-3 py-2 text-xs font-black text-teal-700">
-              {currentPlayer.displayName}
-            </span>
-          ) : null}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function TurnPanel({
-  state,
-  currentPlayer,
-  canRoll,
-  onRoll,
-  onUseEscapeRoute,
-}: {
-  state: BoardGameState;
-  currentPlayer?: BoardGamePlayer;
-  canRoll: boolean;
-  onRoll: () => void;
-  onUseEscapeRoute: (targetPlayerId: string) => void;
-}) {
-  const helpTargets = currentPlayer && state.activeEvent && currentPlayer.cardIds.includes("escape-route") && !currentPlayer.escapeRouteUsedInEvent
-    ? state.players.filter((player) => player.id !== currentPlayer.id && player.status === "aktif")
-    : [];
-
-  return (
-    <section className="rounded-[1.7rem] border border-white/80 bg-white/80 p-4 shadow-[0_16px_48px_rgba(47,23,110,0.1)] backdrop-blur-xl">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.2em] text-ink-400">Giliran</p>
-          <p className="font-heading text-2xl font-black text-purple-900">
-            {currentPlayer?.displayName ?? "Pemain"}
-          </p>
-        </div>
-        {currentPlayer ? (
-          <span className={`h-12 w-12 rounded-2xl border-4 border-white shadow-md ${getTokenClass(currentPlayer.tokenColor)}`} />
-        ) : null}
-      </div>
-
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <StatusStat label="Posisi" value={currentPlayer ? `${currentPlayer.position}` : "-"} />
-        <StatusStat label="Koin" value={currentPlayer ? `${currentPlayer.coins}` : "-"} />
-        <StatusStat label="Kartu" value={currentPlayer ? `${currentPlayer.cardIds.length}` : "-"} />
-      </div>
-
-      {state.activeEvent ? (
-        <div className="mt-4 rounded-2xl border border-coral-200 bg-coral-50 p-3">
-          <p className="text-xs font-black text-coral-700">Event aktif</p>
-          <p className="font-heading text-lg font-black text-purple-900">{state.activeEvent.title}</p>
-          <p className="mt-1 text-sm font-bold text-ink-700">
-            Sisa {state.eventCountdown} giliran untuk menuju Escape Building atau memakai proteksi.
-          </p>
-        </div>
-      ) : null}
-
-      <button
-        type="button"
-        className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-purple-700 px-5 font-heading text-lg font-black text-white shadow-[0_7px_0_#2F176E] transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-lavender-200 disabled:text-ink-400 disabled:shadow-none"
-        disabled={!canRoll}
-        onClick={onRoll}
-      >
-        <Dice5 className="h-5 w-5" />
-        Lempar Dadu
-      </button>
-
-      {state.lastDiceValue ? (
-        <p className="mt-3 rounded-2xl bg-lavender-100 px-3 py-2 text-center text-sm font-black text-purple-700">
-          Dadu terakhir: {state.lastDiceValue}
-        </p>
-      ) : null}
-
-      {helpTargets.length > 0 ? (
-        <div className="mt-4 space-y-2 rounded-2xl border border-teal-100 bg-mint-100/60 p-3">
-          <p className="text-xs font-black text-teal-700">Escape Route siap membantu</p>
-          {helpTargets.map((player) => (
-            <button
-              key={player.id}
-              type="button"
-              className="flex min-h-10 w-full items-center justify-between rounded-xl bg-white/78 px-3 text-sm font-black text-ink-700"
-              onClick={() => onUseEscapeRoute(player.id)}
-            >
-              <span>{player.displayName}</span>
-              <Route className="h-4 w-4 text-teal-700" />
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </section>
-  );
-}
-
-function StatusStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl bg-cream-100 px-2 py-3">
-      <p className="text-[0.66rem] font-black uppercase tracking-wider text-ink-400">{label}</p>
-      <p className="font-heading text-xl font-black text-purple-900">{value}</p>
-    </div>
-  );
-}
-
-function PlayerStatusRail({ players }: { players: BoardGamePlayer[] }) {
-  return (
-    <section className="rounded-[1.7rem] border border-white/80 bg-white/78 p-4 shadow-[0_16px_48px_rgba(47,23,110,0.08)] backdrop-blur-xl">
-      <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-ink-400">Pemain</p>
-      <div className="grid gap-2">
-        {players.map((player) => (
-          <div key={player.id} className="flex min-h-12 items-center gap-3 rounded-2xl bg-cream-50 px-3">
-            <span className={`h-8 w-8 rounded-xl border-2 border-white shadow-sm ${getTokenClass(player.tokenColor)}`} />
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-heading text-base font-black text-purple-900">{player.displayName}</p>
-              <p className="text-xs font-bold text-ink-400">Petak {player.position} · {getPlayerStatusLabel(player.status)}</p>
-            </div>
-            <span className="rounded-full bg-white px-2 py-1 text-xs font-black text-ink-700">{player.coins}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function PlayerHand({ player }: { player?: BoardGamePlayer }) {
-  if (!player) return null;
-  const cards = player.cardIds.map(getMitigationCard);
-
-  return (
-    <section className="rounded-[1.7rem] border border-white/80 bg-white/78 p-4 shadow-[0_16px_48px_rgba(47,23,110,0.08)] backdrop-blur-xl">
-      <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-ink-400">Kartu {player.displayName}</p>
-      {cards.length === 0 ? (
-        <p className="rounded-2xl bg-cream-100 p-3 text-sm font-bold leading-6 text-ink-700">
-          Belum ada kartu. Cari Market atau petak Mitigasi Gratis.
-        </p>
-      ) : (
-        <div className="grid gap-2">
-          {cards.map((card, index) => (
-            <div key={`${card.id}-${index}`} className="rounded-2xl border border-lavender-200 bg-cream-50 p-3">
-              <div className="flex items-center gap-2">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-lavender-100 text-purple-700">
-                  {renderMitigationIcon(card.iconName, "h-4 w-4")}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate font-heading text-base font-black text-purple-900">{card.name}</p>
-                  <p className="text-xs font-bold text-teal-700">{getProtectedDisasterLabels(card)}</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
-
-function ActionLog({ state }: { state: BoardGameState }) {
-  return (
-    <section className="rounded-[1.7rem] border border-white/80 bg-white/78 p-4 shadow-[0_16px_48px_rgba(47,23,110,0.08)] backdrop-blur-xl">
-      <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-ink-400">Log</p>
-      <div className="space-y-2">
-        {state.actionLog.slice(0, 4).map((item) => (
-          <div key={item.id} className="rounded-2xl bg-cream-50 p-3">
-            <p className="text-sm font-black text-purple-900">{item.label}</p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-ink-700">{item.detail}</p>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
+// ─── Game Panel (modal) ───────────────────────────────────────────────────────
 
 function GamePanel({
-  panel,
-  state,
-  onBuyCard,
-  onAnswerTrivia,
-  onResolveMission,
-  onContinueEvent,
-  onAdvanceTurn,
+  panel, state, onBuyCard, onAnswerTrivia, onResolveMission, onContinueEvent, onAdvanceTurn,
 }: {
   panel: Exclude<BoardGamePanel, { type: "none" }>;
   state: BoardGameState;
-  onBuyCard: (playerId: string, cardId: MitigationCardId) => void;
-  onAnswerTrivia: (playerId: string, triviaCardId: string, selectedOptionId: string) => void;
-  onResolveMission: (playerId: string) => void;
+  onBuyCard: (pid: string, cid: MitigationCardId) => void;
+  onAnswerTrivia: (pid: string, tid: string, oid: string) => void;
+  onResolveMission: (pid: string) => void;
   onContinueEvent: () => void;
   onAdvanceTurn: () => void;
 }) {
   return (
     <motion.div
-      className="fixed inset-0 z-[70] flex items-end bg-purple-900/24 p-3 backdrop-blur-[2px] sm:items-center sm:justify-center"
+      className="fixed inset-0 z-[70] flex items-end bg-purple-900/20 p-3 backdrop-blur-md sm:items-center sm:justify-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
       <motion.section
-        className="max-h-[88vh] w-full overflow-y-auto rounded-[2rem] border border-white/80 bg-cream-50 p-4 shadow-[0_24px_80px_rgba(47,23,110,0.26)] sm:max-w-2xl sm:p-6"
-        initial={{ opacity: 0, y: 24, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: 20, scale: 0.98 }}
+        className="max-h-[90vh] w-full overflow-y-auto rounded-[2rem] border border-purple-700/10 bg-white p-4 shadow-[0_30px_80px_rgba(47,23,110,0.15)] sm:max-w-xl sm:p-6 text-ink-900"
+        initial={{ y: 40, opacity: 0, scale: 0.97 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 30, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 26 }}
       >
         <div className="mb-4 flex items-center justify-between gap-3">
-          <p className="font-heading text-2xl font-black text-purple-900">{getPanelTitle(panel)}</p>
-          {panel.type !== "event" ? (
+          <p className="font-heading text-xl font-black text-ink-900">{panelTitle(panel)}</p>
+          {panel.type !== "event" && (
             <button
               type="button"
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-purple-700 shadow-sm"
-              aria-label="Tutup panel"
               onClick={onAdvanceTurn}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 transition"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
-          ) : null}
+          )}
         </div>
 
-        {panel.type === "market" ? (
-          <MarketPanel state={state} playerId={panel.playerId} onBuyCard={onBuyCard} onAdvanceTurn={onAdvanceTurn} />
-        ) : null}
-        {panel.type === "trivia" ? (
-          <TriviaPanel panel={panel} onAnswerTrivia={onAnswerTrivia} onAdvanceTurn={onAdvanceTurn} />
-        ) : null}
-        {panel.type === "event" ? (
-          <EventPanel panel={panel} onContinueEvent={onContinueEvent} />
-        ) : null}
-        {panel.type === "mission" ? (
-          <MissionPanel panel={panel} onResolveMission={onResolveMission} onAdvanceTurn={onAdvanceTurn} />
-        ) : null}
-        {panel.type === "story" ? (
-          <StoryPanel panel={panel} onAdvanceTurn={onAdvanceTurn} />
-        ) : null}
+        {panel.type === "market" && <MarketPanel state={state} playerId={panel.playerId} onBuyCard={onBuyCard} onDone={onAdvanceTurn} />}
+        {panel.type === "trivia" && <TriviaPanel panel={panel} onAnswer={onAnswerTrivia} onDone={onAdvanceTurn} />}
+        {panel.type === "event" && <EventPanel panel={panel} onContinue={onContinueEvent} />}
+        {panel.type === "mission" && <MissionPanel panel={panel} onResolve={onResolveMission} onDone={onAdvanceTurn} />}
+        {panel.type === "story" && <StoryPanel panel={panel} onDone={onAdvanceTurn} />}
       </motion.section>
     </motion.div>
   );
 }
 
-function MarketPanel({
-  state,
-  playerId,
-  onBuyCard,
-  onAdvanceTurn,
-}: {
-  state: BoardGameState;
-  playerId: string;
-  onBuyCard: (playerId: string, cardId: MitigationCardId) => void;
-  onAdvanceTurn: () => void;
+function MarketPanel({ state, playerId, onBuyCard, onDone }: {
+  state: BoardGameState; playerId: string;
+  onBuyCard: (pid: string, cid: MitigationCardId) => void; onDone: () => void;
 }) {
-  const player = getPlayer(state, playerId);
-
+  const player = state.players.find((p) => p.id === playerId);
+  if (!player) return null;
   return (
-    <div className="space-y-4">
-      <p className="text-sm font-bold leading-6 text-ink-700">
-        Koin {player.displayName}: <span className="font-black text-purple-900">{player.coins}</span>. Beli kartu yang masih tersedia untuk memperkuat strategi.
-      </p>
-      <div className="grid gap-3 sm:grid-cols-2">
+    <div className="space-y-3">
+      <p className="text-sm font-bold text-ink-700">Koin Kamu: <span className="font-black text-yellow-600">{player.coins} Koin</span></p>
+      <div className="grid gap-2 sm:grid-cols-2">
         {mitigationCards.map((card) => {
-          const canBuy = player.coins >= card.price && canReceiveCard(player, card);
+          const ok = player.coins >= card.price && canReceiveCard(player, card);
           return (
-            <div key={card.id} className="rounded-[1.4rem] border border-lavender-200 bg-white p-4">
-              <div className="mb-3 flex items-start gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-lavender-100 text-purple-700">
-                  {renderMitigationIcon(card.iconName, "h-5 w-5")}
+            <div key={card.id} className="rounded-xl border border-purple-700/10 bg-cream-50/50 p-3">
+              <div className="mb-2 flex items-start gap-2">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-700 shadow-sm">
+                  {mitigationIcon(card.iconName, "h-4 w-4")}
                 </span>
                 <div className="min-w-0">
-                  <p className="font-heading text-lg font-black leading-tight text-purple-900">{card.name}</p>
-                  <p className="mt-1 text-xs font-black text-teal-700">{getProtectedDisasterLabels(card)}</p>
+                  <p className="text-sm font-black text-ink-900">{card.name}</p>
+                  <p className="text-[10px] font-bold text-teal-700">{getProtectedDisasterLabels(card)}</p>
                 </div>
               </div>
-              <p className="min-h-12 text-sm font-semibold leading-6 text-ink-700">{card.description}</p>
+              <p className="mb-2 text-xs text-ink-700">{card.description}</p>
               <button
                 type="button"
-                className="mt-3 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-purple-700 px-4 text-sm font-black text-white shadow-[0_5px_0_#2F176E] transition disabled:bg-lavender-200 disabled:text-ink-400 disabled:shadow-none"
-                disabled={!canBuy}
+                disabled={!ok}
                 onClick={() => onBuyCard(playerId, card.id)}
+                className="flex min-h-9 w-full items-center justify-center gap-1 rounded-full bg-purple-700 text-xs font-black text-white shadow-[0_3px_0_#20104f] transition hover:bg-purple-650 disabled:bg-purple-100 disabled:text-purple-300 disabled:shadow-none"
               >
-                <Store className="h-4 w-4" />
-                Beli {card.price} Koin
+                <Store className="h-3.5 w-3.5" /> Beli {card.price} Koin
               </button>
             </div>
           );
         })}
       </div>
-      <button
-        type="button"
-        className="flex min-h-12 w-full items-center justify-center rounded-full bg-teal-500 px-4 font-heading text-base font-black text-white shadow-[0_5px_0_#1A9278]"
-        onClick={onAdvanceTurn}
-      >
+      <button type="button" onClick={onDone} className="flex min-h-10 w-full items-center justify-center rounded-full bg-teal-650 text-sm font-black text-white shadow-[0_3px_0_#147864] hover:bg-teal-600">
         Selesai Belanja
       </button>
     </div>
   );
 }
 
-function TriviaPanel({
-  panel,
-  onAnswerTrivia,
-  onAdvanceTurn,
-}: {
+function TriviaPanel({ panel, onAnswer, onDone }: {
   panel: Extract<BoardGamePanel, { type: "trivia" }>;
-  onAnswerTrivia: (playerId: string, triviaCardId: string, selectedOptionId: string) => void;
-  onAdvanceTurn: () => void;
+  onAnswer: (pid: string, tid: string, oid: string) => void;
+  onDone: () => void;
 }) {
-  const selectedOption = panel.selectedOptionId
-    ? panel.triviaCard.options.find((option) => option.id === panel.selectedOptionId)
-    : undefined;
-
+  const sel = panel.selectedOptionId ? panel.triviaCard.options.find((o) => o.id === panel.selectedOptionId) : undefined;
   return (
-    <div className="space-y-4">
-      <div className="rounded-[1.4rem] border border-lavender-200 bg-white p-4">
-        <p className="text-xs font-black uppercase tracking-[0.2em] text-teal-700">Pertanyaan</p>
-        <h2 className="mt-2 font-heading text-2xl font-black leading-tight text-purple-900">
-          {panel.triviaCard.question}
-        </h2>
+    <div className="space-y-3">
+      <div className="rounded-xl border border-purple-700/10 bg-cream-50 p-4">
+        <p className="text-[9px] font-black uppercase tracking-widest text-teal-700">Pertanyaan</p>
+        <h2 className="mt-1.5 font-heading text-xl font-black leading-tight text-ink-900">{panel.triviaCard.question}</h2>
       </div>
       <div className="grid gap-2">
-        {panel.triviaCard.options.map((option) => {
-          const isSelected = panel.selectedOptionId === option.id;
-          const isCorrect = option.id === panel.triviaCard.correctOptionId;
+        {panel.triviaCard.options.map((opt) => {
+          const isSel = panel.selectedOptionId === opt.id;
+          const isCorr = opt.id === panel.triviaCard.correctOptionId;
           return (
             <button
-              key={option.id}
+              key={opt.id}
               type="button"
-              className={`min-h-12 rounded-2xl border px-4 text-left text-sm font-black transition ${
-                isSelected
-                  ? isCorrect
-                    ? "border-teal-500 bg-mint-100 text-teal-700"
-                    : "border-coral-500 bg-coral-50 text-coral-700"
-                  : "border-lavender-200 bg-white text-ink-700 hover:bg-lavender-100"
-              }`}
               disabled={Boolean(panel.selectedOptionId)}
-              onClick={() => onAnswerTrivia(panel.playerId, panel.triviaCard.id, option.id)}
+              onClick={() => onAnswer(panel.playerId, panel.triviaCard.id, opt.id)}
+              className={`min-h-11 rounded-xl border px-4 text-left text-sm font-black transition ${
+                isSel ? (isCorr ? "border-teal-500 bg-teal-50 text-teal-700" : "border-coral-500 bg-coral-50 text-coral-700")
+                : "border-purple-700/10 bg-white text-ink-900 hover:bg-purple-50"
+              }`}
             >
-              {option.label}
+              {opt.label}
             </button>
           );
         })}
       </div>
-      {selectedOption ? (
-        <div className="rounded-[1.4rem] border border-lavender-200 bg-white p-4">
-          <p className={`font-heading text-xl font-black ${panel.isCorrect ? "text-teal-700" : "text-coral-700"}`}>
-            {panel.isCorrect ? "Jawaban aman" : "Coba pahami lagi"}
+      {sel && (
+        <div className="rounded-xl border border-purple-700/10 bg-cream-50 p-4">
+          <p className={`font-heading text-lg font-black ${panel.isCorrect ? "text-teal-700" : "text-coral-700"}`}>
+            {panel.isCorrect ? "✓ Benar! +3 Koin" : "✗ Kurang Tepat, tetap dapat +1 Koin"}
           </p>
-          <p className="mt-2 text-sm font-semibold leading-6 text-ink-700">{selectedOption.feedback}</p>
-          <p className="mt-2 text-sm font-bold leading-6 text-purple-900">{panel.triviaCard.explanation}</p>
-          <button
-            type="button"
-            className="mt-4 flex min-h-12 w-full items-center justify-center rounded-full bg-purple-700 px-4 font-heading text-base font-black text-white shadow-[0_5px_0_#2F176E]"
-            onClick={onAdvanceTurn}
-          >
+          <p className="mt-1 text-sm text-ink-750">{sel.feedback}</p>
+          <p className="mt-1 text-sm font-bold text-ink-900">{panel.triviaCard.explanation}</p>
+          <button type="button" onClick={onDone} className="mt-3 flex min-h-10 w-full items-center justify-center rounded-full bg-purple-700 text-sm font-black text-white shadow-[0_3px_0_#20104f] hover:bg-purple-650">
             Lanjutkan
           </button>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
 
-function EventPanel({
-  panel,
-  onContinueEvent,
-}: {
-  panel: Extract<BoardGamePanel, { type: "event" }>;
-  onContinueEvent: () => void;
+function EventPanel({ panel, onContinue }: {
+  panel: Extract<BoardGamePanel, { type: "event" }>; onContinue: () => void;
 }) {
-  const eventCard = panel.eventCard;
+  const ev = panel.eventCard;
   return (
-    <div className="space-y-4">
-      <div className={`rounded-[1.8rem] border p-5 ${getEventToneClass(eventCard.disasterId)}`}>
-        <p className="text-xs font-black uppercase tracking-[0.2em]">{getDisasterLabel(eventCard.disasterId)}</p>
-        <h2 className="mt-2 font-heading text-3xl font-black leading-tight text-purple-900">{eventCard.title}</h2>
-        <p className="mt-3 text-sm font-semibold leading-7 text-ink-700">{eventCard.factSummary}</p>
+    <div className="space-y-3">
+      <div className={`rounded-xl border p-4 ${eventTone(ev.disasterId)}`}>
+        <p className="text-[9px] font-black uppercase tracking-widest opacity-80">{getDisasterLabel(ev.disasterId)}</p>
+        <h2 className="mt-1.5 font-heading text-2xl font-black text-ink-900">{ev.title}</h2>
+        <p className="mt-2 text-sm font-semibold leading-6 text-ink-850">{ev.factSummary}</p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-[1.4rem] bg-white p-4">
-          <p className="text-xs font-black text-ink-400">Waktu evakuasi</p>
-          <p className="font-heading text-3xl font-black text-purple-900">{eventCard.giliranEvakuasi} giliran</p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <div className="rounded-xl bg-cream-50 border border-purple-700/5 p-3">
+          <p className="text-[9px] font-black text-ink-400">Waktu evakuasi</p>
+          <p className="font-heading text-2xl font-black text-ink-900">{ev.giliranEvakuasi} giliran</p>
         </div>
-        <div className="rounded-[1.4rem] bg-white p-4">
-          <p className="text-xs font-black text-ink-400">Kartu yang membantu</p>
-          <p className="mt-1 text-sm font-black leading-6 text-teal-700">
-            {[...eventCard.protectionCardIds, ...eventCard.bonusCardIds].map((cardId) => getMitigationCard(cardId).shortName).join(", ")}
+        <div className="rounded-xl bg-cream-50 border border-purple-700/5 p-3">
+          <p className="text-[9px] font-black text-ink-400">Kartu yang membantu</p>
+          <p className="mt-1 text-xs font-black text-teal-700">
+            {[...ev.protectionCardIds, ...ev.bonusCardIds].map((c) => getMitigationCard(c).shortName).join(", ")}
           </p>
         </div>
       </div>
-      <div className="rounded-[1.4rem] border border-lavender-200 bg-white p-4">
-        <p className="text-xs font-black text-ink-400">Pelajaran</p>
-        <p className="mt-1 text-sm font-bold leading-6 text-ink-700">{eventCard.learningInsight}</p>
+      <div className="rounded-xl bg-cream-50 border border-purple-700/5 p-3">
+        <p className="text-[9px] font-black text-ink-400">Pelajaran</p>
+        <p className="mt-1 text-sm font-semibold text-ink-750">{ev.learningInsight}</p>
       </div>
-      <button
-        type="button"
-        className="flex min-h-12 w-full items-center justify-center rounded-full bg-coral-500 px-4 font-heading text-base font-black text-white shadow-[0_5px_0_#C43A4A]"
-        onClick={onContinueEvent}
-      >
+      <button type="button" onClick={onContinue} className="flex min-h-11 w-full items-center justify-center rounded-full bg-coral-600 text-sm font-black text-white shadow-[0_3px_0_#991b1b] hover:bg-coral-550 transition">
         Mulai Evakuasi
       </button>
     </div>
   );
 }
 
-function MissionPanel({
-  panel,
-  onResolveMission,
-  onAdvanceTurn,
-}: {
-  panel: Extract<BoardGamePanel, { type: "mission" }>;
-  onResolveMission: (playerId: string) => void;
-  onAdvanceTurn: () => void;
+function MissionPanel({ panel, onResolve, onDone }: {
+  panel: Extract<BoardGamePanel, { type: "mission" }>; onResolve: (pid: string) => void; onDone: () => void;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="rounded-[1.5rem] border border-lavender-200 bg-white p-5">
-        <p className="text-sm font-bold leading-7 text-ink-700">
-          Lempar dadu misi. Hasil 4 sampai 6 membantu pemain maju ekstra sebagai tanda misi komunitas berhasil.
-        </p>
+    <div className="space-y-3">
+      <div className="rounded-xl border border-purple-700/10 bg-cream-50 p-4">
+        <p className="text-sm font-semibold text-ink-700">Lempar dadu misi. Hasil 4–6 membantu pemain maju ekstra.</p>
       </div>
-      {panel.missionRoll ? (
-        <div className="rounded-[1.5rem] bg-mint-100 p-4 text-center">
-          <p className="text-sm font-black text-teal-700">Hasil misi</p>
-          <p className="font-heading text-4xl font-black text-purple-900">{panel.missionRoll}</p>
-          <p className="text-sm font-bold text-ink-700">
-            {panel.didMove ? "Pemain maju mengikuti hasil misi." : "Pemain tetap di posisi dan melanjutkan giliran berikutnya."}
-          </p>
+      {panel.missionRoll && (
+        <div className="rounded-xl bg-teal-50 border border-teal-200 p-4 text-center">
+          <p className="text-xs font-black text-teal-700">Hasil</p>
+          <p className="font-heading text-5xl font-black text-teal-800">{panel.missionRoll}</p>
+          <p className="text-sm text-teal-700 font-bold">{panel.didMove ? "Pemain maju!" : "Pemain tetap di posisi."}</p>
         </div>
-      ) : null}
+      )}
       <button
         type="button"
-        className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-purple-700 px-4 font-heading text-base font-black text-white shadow-[0_5px_0_#2F176E]"
-        onClick={panel.missionRoll ? onAdvanceTurn : () => onResolveMission(panel.playerId)}
+        onClick={panel.missionRoll ? onDone : () => onResolve(panel.playerId)}
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-purple-700 text-sm font-black text-white shadow-[0_3px_0_#20104f] hover:bg-purple-650 transition"
       >
         <Dice5 className="h-4 w-4" />
         {panel.missionRoll ? "Lanjutkan" : "Lempar Dadu Misi"}
@@ -855,101 +974,81 @@ function MissionPanel({
   );
 }
 
-function StoryPanel({
-  panel,
-  onAdvanceTurn,
-}: {
-  panel: Extract<BoardGamePanel, { type: "story" }>;
-  onAdvanceTurn: () => void;
+function StoryPanel({ panel, onDone }: {
+  panel: Extract<BoardGamePanel, { type: "story" }>; onDone: () => void;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-[120px_minmax(0,1fr)] sm:items-center">
-        <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-[1.7rem] bg-lavender-100">
-          <Image
-            src="/assets/mascot/mascot-smong.png"
-            alt="Mascot Smong"
-            width={112}
-            height={112}
-            sizes="112px"
-            className="h-full w-full object-contain p-2"
-          />
+    <div className="space-y-3">
+      <div className="flex gap-3">
+        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-purple-100 shadow-sm border border-purple-200">
+          <Image src="/assets/mascot/mascot-smong.png" alt="Smong" width={80} height={80} className="h-full w-full object-contain p-2" />
         </div>
-        <div className="rounded-[1.5rem] border border-lavender-200 bg-white p-5">
-          <h2 className="font-heading text-2xl font-black text-purple-900">{panel.title}</h2>
-          <p className="mt-2 text-sm font-semibold leading-7 text-ink-700">{panel.body}</p>
+        <div className="rounded-xl border border-purple-700/10 bg-cream-50 p-4 flex-1">
+          <h2 className="font-heading text-lg font-black text-ink-900">{panel.title}</h2>
+          <p className="mt-1 text-sm font-semibold text-ink-700">{panel.body}</p>
         </div>
       </div>
-      <button
-        type="button"
-        className="flex min-h-12 w-full items-center justify-center rounded-full bg-purple-700 px-4 font-heading text-base font-black text-white shadow-[0_5px_0_#2F176E]"
-        onClick={onAdvanceTurn}
-      >
+      <button type="button" onClick={onDone} className="flex min-h-11 w-full items-center justify-center rounded-full bg-purple-700 text-sm font-black text-white shadow-[0_3px_0_#20104f] hover:bg-purple-650 transition">
         Lanjutkan
       </button>
     </div>
   );
 }
 
+// ─── Final Recap ──────────────────────────────────────────────────────────────
+
 function FinalRecap({ state, onRestart }: { state: BoardGameState; onRestart: () => void }) {
-  const leaderboard = useMemo(() => sortPlayersForLeaderboard(state.players), [state.players]);
-  const eventCard = state.eventHistory[state.eventHistory.length - 1];
+  const board = useMemo(() => sortPlayersForLeaderboard(state.players), [state.players]);
+  const lastEvent = state.eventHistory[state.eventHistory.length - 1];
 
   return (
     <motion.div
-      className="fixed inset-0 z-[80] overflow-y-auto bg-cream-50/96 p-4 backdrop-blur-md"
+      className="fixed inset-0 z-[80] overflow-y-auto bg-cream-50/95 p-4 backdrop-blur-md text-ink-900"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <section className="mx-auto max-w-5xl space-y-5 py-6">
-        <div className="rounded-[2rem] border border-white/80 bg-white p-6 text-center shadow-[0_24px_80px_rgba(47,23,110,0.16)]">
-          <Award className="mx-auto mb-3 h-12 w-12 text-yellow-700" />
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-teal-700">Recap Board Game</p>
-          <h2 className="mt-2 font-heading text-4xl font-black text-purple-900">Misi Siaga Selesai</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-7 text-ink-700">
-            Bahas pilihan yang membantu pemain selamat, lalu coba sesi baru dengan deck yang berbeda.
-          </p>
+      <section className="mx-auto max-w-3xl space-y-4 py-8">
+        <div className="rounded-[2rem] border border-purple-700/10 bg-white p-6 text-center shadow-sm">
+          <Award className="mx-auto mb-3 h-10 w-10 text-yellow-500" />
+          <p className="text-[9px] font-black uppercase tracking-widest text-teal-700">Recap</p>
+          <h2 className="mt-1.5 font-heading text-4xl font-black text-ink-900">Misi Siaga Selesai</h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-ink-700">Bahas pilihan yang membantu pemain selamat, lalu coba sesi baru.</p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="rounded-[2rem] border border-white/80 bg-white p-5 shadow-sm">
-            <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-ink-400">Leaderboard</p>
-            <div className="space-y-3">
-              {leaderboard.map((player, index) => (
-                <div key={player.id} className="flex min-h-14 items-center gap-3 rounded-2xl bg-cream-50 px-4">
-                  <span className="font-heading text-xl font-black text-purple-900">{index + 1}</span>
-                  <span className={`h-9 w-9 rounded-xl border-2 border-white shadow-sm ${getTokenClass(player.tokenColor)}`} />
+        <div className="grid gap-4 sm:grid-cols-[1fr_260px]">
+          <div className="rounded-[2rem] border border-purple-700/10 bg-white p-5 shadow-sm">
+            <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-ink-400">Leaderboard</p>
+            <div className="space-y-2">
+              {board.map((p, i) => (
+                <div key={p.id} className="flex min-h-12 items-center gap-3 rounded-xl bg-cream-50 border border-purple-700/5 px-3">
+                  <span className="font-heading text-xl font-black text-ink-400">{i + 1}</span>
+                  <span className={`h-8 w-8 rounded-xl border border-white shadow-sm shrink-0 ${tokenBg(p.tokenColor)}`} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-heading text-lg font-black text-purple-900">{player.displayName}</p>
-                    <p className="text-xs font-bold text-ink-400">{getPlayerStatusLabel(player.status)} · {player.coins} Koin</p>
+                    <p className="truncate text-sm font-black text-ink-900">{p.displayName}</p>
+                    <p className="text-[9px] font-bold text-ink-500">{statusLabel(p.status)} · {p.coins} Koin</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="space-y-5">
-            {eventCard ? (
-              <div className="rounded-[2rem] border border-white/80 bg-white p-5 shadow-sm">
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-ink-400">Event</p>
-                <p className="mt-2 font-heading text-2xl font-black text-purple-900">{eventCard.title}</p>
-                <p className="mt-2 text-sm font-semibold leading-7 text-ink-700">{eventCard.learningInsight}</p>
+          <div className="space-y-3">
+            {lastEvent && (
+              <div className="rounded-[2rem] border border-purple-700/10 bg-white p-4 shadow-sm">
+                <p className="text-[9px] font-black uppercase tracking-widest text-ink-400">Event</p>
+                <p className="mt-1.5 font-heading text-lg font-black text-ink-900">{lastEvent.title}</p>
+                <p className="mt-1 text-xs text-ink-700">{lastEvent.learningInsight}</p>
               </div>
-            ) : null}
-            <div className="rounded-[2rem] border border-white/80 bg-mint-100 p-5 shadow-sm">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-teal-700">Diskusi guru</p>
-              <p className="mt-2 text-sm font-black leading-7 text-ink-900">
+            )}
+            <div className="rounded-[2rem] border border-teal-200 bg-teal-50 p-4 shadow-sm text-teal-800">
+              <p className="text-[9px] font-black uppercase tracking-widest text-teal-700">Diskusi guru</p>
+              <p className="mt-1.5 text-sm font-semibold leading-relaxed">
                 {state.winnerSummary?.discussionPrompt ?? "Apa tindakan aman yang bisa kita latih bersama?"}
               </p>
             </div>
-            <button
-              type="button"
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-purple-700 px-5 font-heading text-base font-black text-white shadow-[0_5px_0_#2F176E]"
-              onClick={onRestart}
-            >
-              <RefreshCcw className="h-4 w-4" />
-              Main Lagi
+            <button type="button" onClick={onRestart} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-purple-700 font-heading text-sm font-black text-white shadow-[0_4px_0_#20104f] hover:bg-purple-650 transition">
+              <RefreshCcw className="h-4 w-4" /> Main Lagi
             </button>
           </div>
         </div>
@@ -958,36 +1057,20 @@ function FinalRecap({ state, onRestart }: { state: BoardGameState; onRestart: ()
   );
 }
 
-function getTile(position: number) {
-  const tile = boardGameTiles.find((item) => item.position === position);
-  if (!tile) throw new Error(`Missing board tile: ${position}`);
-  return tile;
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+function rng6(): DiceValue {
+  return (Math.floor(Math.random() * 6) + 1) as DiceValue;
 }
 
-function getPlayer(state: BoardGameState, playerId: string) {
-  const player = state.players.find((item) => item.id === playerId);
-  if (!player) throw new Error(`Missing player: ${playerId}`);
-  return player;
-}
-
-function createDiceValue(): DiceValue {
-  const value = Math.floor(Math.random() * 6) + 1;
-  if (value === 1) return 1;
-  if (value === 2) return 2;
-  if (value === 3) return 3;
-  if (value === 4) return 4;
-  if (value === 5) return 5;
-  return 6;
-}
-
-function getModeOptions() {
+function getModeOpts() {
   return [
-    { id: "random", label: "Random", helper: "Semua bencana" },
-    { id: "gempa-bumi", label: "Gempa Bumi", helper: "Drop Cover" },
-    { id: "tsunami", label: "Tsunami", helper: "Tempat tinggi" },
-    { id: "banjir", label: "Banjir", helper: "Air naik" },
-    { id: "cuaca-ekstrem", label: "Cuaca Ekstrem", helper: "Angin dan hujan" },
-  ] satisfies { id: BoardGameMode; label: string; helper: string }[];
+    { id: "random" as BoardGameMode, label: "Random", helper: "Semua bencana" },
+    { id: "gempa-bumi" as BoardGameMode, label: "Gempa Bumi", helper: "Drop Cover" },
+    { id: "tsunami" as BoardGameMode, label: "Tsunami", helper: "Tempat tinggi" },
+    { id: "banjir" as BoardGameMode, label: "Banjir", helper: "Air naik" },
+    { id: "cuaca-ekstrem" as BoardGameMode, label: "Cuaca Ekstrem", helper: "Angin & hujan" },
+  ];
 }
 
 function getModeLabel(mode: BoardGameMode) {
@@ -995,81 +1078,276 @@ function getModeLabel(mode: BoardGameMode) {
   return getDisasterLabel(mode);
 }
 
-function getTileGridPosition(position: number) {
-  if (position <= 11) {
-    return { row: 11, column: position };
-  }
-  if (position <= 21) {
-    return { row: 22 - position, column: 11 };
-  }
-  if (position <= 31) {
-    return { row: 1, column: 32 - position };
-  }
-  return { row: position - 30, column: 1 };
+function tileGridPos(pos: number) {
+  if (pos <= 7) return { col: pos, row: 8 };
+  if (pos <= 14) return { col: 7, row: 15 - pos };
+  if (pos <= 20) return { col: 21 - pos, row: 1 };
+  return { col: 1, row: pos - 19 };
 }
 
-function getTileClass(tile: BoardGameTile, isActive: boolean) {
-  const active = isActive ? "ring-4 ring-yellow-200 ring-offset-1 ring-offset-cream-50" : "";
-  if (tile.type === "event") return `${active} border-coral-200 bg-coral-50 text-coral-700`;
-  if (tile.type === "safe-zone") return `${active} border-teal-100 bg-mint-100 text-teal-700`;
-  if (tile.type === "trivia") return `${active} border-sky-100 bg-sky-100 text-purple-900`;
-  if (tile.type === "market") return `${active} border-yellow-200 bg-yellow-200/70 text-yellow-800`;
-  if (tile.type === "mission") return `${active} border-peach-200 bg-peach-200/70 text-ink-900`;
-  if (tile.type === "free-mitigation") return `${active} border-lavender-200 bg-lavender-100 text-purple-700`;
-  if (tile.type === "special-story") return `${active} border-teal-100 bg-white text-teal-700`;
-  if (tile.type === "start") return `${active} border-purple-500 bg-purple-700 text-white`;
-  return `${active} border-white/80 bg-white/80 text-ink-700`;
+function tileColors(tile: BoardGameTile): string {
+  if (tile.type === "start")          return "border-purple-350 bg-purple-100 text-purple-800 shadow-sm font-black";
+  if (tile.type === "event")          return "border-coral-200 bg-coral-50/90 text-coral-800 font-black";
+  if (tile.type === "safe-zone")      return "border-teal-200 bg-teal-50/90 text-teal-800 font-black";
+  if (tile.type === "trivia")         return "border-sky-200 bg-sky-50/90 text-sky-850 font-black";
+  if (tile.type === "market")         return "border-yellow-300 bg-yellow-50/90 text-yellow-800 font-black";
+  if (tile.type === "mission")        return "border-peach-300 bg-peach-50/90 text-peach-800 font-black";
+  if (tile.type === "free-mitigation") return "border-purple-200 bg-purple-50/90 text-purple-850 font-black";
+  if (tile.type === "special-story")  return "border-teal-200 bg-teal-50/90 text-teal-850 font-black";
+  return "border-purple-700/5 bg-white/40 text-ink-400";
 }
 
-function getTokenClass(color: BoardGameTokenColor) {
-  if (color === "purple") return "bg-purple-700";
-  if (color === "teal") return "bg-teal-500";
-  if (color === "coral") return "bg-coral-500";
+function tokenBg(color: BoardGameTokenColor): string {
+  if (color === "purple") return "bg-purple-600";
+  if (color === "teal")   return "bg-teal-500";
+  if (color === "coral")  return "bg-coral-500";
   if (color === "yellow") return "bg-yellow-500";
-  if (color === "sky") return "bg-sky-100";
-  return "bg-peach-300";
+  if (color === "sky")    return "bg-sky-400";
+  return "bg-peach-400";
 }
 
-function getPlayerStatusLabel(status: BoardGamePlayer["status"]) {
-  if (status === "selamat") return "Selamat";
-  if (status === "tersingkir") return "Perlu evaluasi";
+function statusLabel(s: BoardGamePlayer["status"]): string {
+  if (s === "selamat")    return "Selamat ✓";
+  if (s === "tersingkir") return "Perlu evaluasi";
   return "Aktif";
 }
 
-function getPanelTitle(panel: Exclude<BoardGamePanel, { type: "none" }>) {
-  if (panel.type === "market") return "Market Kartu";
-  if (panel.type === "trivia") return "ASK ME";
-  if (panel.type === "event") return "WATCH YOUR STEP";
-  if (panel.type === "mission") return "Misi Komunitas";
-  return "Cerita Smong";
+function panelTitle(panel: Exclude<BoardGamePanel, { type: "none" }>): string {
+  if (panel.type === "market")  return "🛒 Market Kartu";
+  if (panel.type === "trivia")  return "❓ ASK ME";
+  if (panel.type === "event")   return "⚠️ WATCH YOUR STEP";
+  if (panel.type === "mission") return "🤝 Misi Komunitas";
+  return "🌊 Cerita Smong";
 }
 
-function getEventToneClass(disasterId: BoardGameDisasterId) {
-  if (disasterId === "tsunami") return "border-sky-100 bg-sky-100/78";
-  if (disasterId === "gempa-bumi") return "border-peach-200 bg-peach-200/62";
-  if (disasterId === "banjir") return "border-teal-100 bg-mint-100/72";
-  return "border-coral-200 bg-coral-50";
+function eventTone(id: BoardGameDisasterId): string {
+  if (id === "tsunami")      return "border-sky-200 bg-sky-50 text-sky-900";
+  if (id === "gempa-bumi")   return "border-peach-200 bg-peach-50 text-peach-900";
+  if (id === "banjir")       return "border-teal-200 bg-teal-50 text-teal-900";
+  return "border-coral-200 bg-coral-50 text-coral-900";
 }
 
-function renderTileIcon(iconName: BoardGameTileIconName, className: string) {
-  if (iconName === "Flag") return <Flag className={className} />;
-  if (iconName === "ShieldCheck") return <ShieldCheck className={className} />;
-  if (iconName === "TriangleAlert") return <TriangleAlert className={className} />;
-  if (iconName === "CircleHelp") return <CircleHelp className={className} />;
-  if (iconName === "Store") return <Store className={className} />;
-  if (iconName === "HeartHandshake") return <HeartHandshake className={className} />;
-  if (iconName === "ShieldPlus") return <ShieldPlus className={className} />;
-  if (iconName === "Waves") return <Waves className={className} />;
-  return <MapPin className={className} />;
+function renderDice(v: DiceValue, cls: string) {
+  if (v === 1) return <Dice1 className={cls} />;
+  if (v === 2) return <Dice2 className={cls} />;
+  if (v === 3) return <Dice3 className={cls} />;
+  if (v === 4) return <Dice4 className={cls} />;
+  if (v === 5) return <Dice5 className={cls} />;
+  return <Dice6 className={cls} />;
 }
 
-function renderMitigationIcon(iconName: MitigationCardIconName, className: string) {
-  if (iconName === "Leaf") return <Leaf className={className} />;
-  if (iconName === "Construction") return <Construction className={className} />;
-  if (iconName === "Route") return <Route className={className} />;
-  if (iconName === "Radio") return <Radio className={className} />;
-  if (iconName === "HardHat") return <HardHat className={className} />;
-  if (iconName === "House") return <House className={className} />;
-  if (iconName === "Trees") return <Trees className={className} />;
-  return <Droplets className={className} />;
+function tileIcon(name: BoardGameTileIconName, cls: string) {
+  if (name === "Flag")           return <Flag className={cls} />;
+  if (name === "ShieldCheck")    return <ShieldCheck className={cls} />;
+  if (name === "TriangleAlert")  return <TriangleAlert className={cls} />;
+  if (name === "CircleHelp")     return <CircleHelp className={cls} />;
+  if (name === "Store")          return <Store className={cls} />;
+  if (name === "HeartHandshake") return <HeartHandshake className={cls} />;
+  if (name === "ShieldPlus")     return <ShieldPlus className={cls} />;
+  if (name === "Waves")          return <Waves className={cls} />;
+  return <MapPin className={cls} />;
+}
+
+function getTileShortName(tile: BoardGameTile): string {
+  if (tile.type === "start") return "START";
+  if (tile.type === "safe-zone") return "SAFE";
+  if (tile.type === "event") return "BAHAYA";
+  if (tile.type === "trivia") return "TRIVIA";
+  if (tile.type === "market") return "MARKET";
+  if (tile.type === "mission") return "MISI";
+  if (tile.type === "free-mitigation") {
+    if (tile.mitigationCardId === "mangrove") return "MANGROVE";
+    if (tile.mitigationCardId === "tanggul") return "TANGGUL";
+    if (tile.mitigationCardId === "bangunan-tahan-gempa") return "RT GEMPA";
+    if (tile.mitigationCardId === "early-warning") return "EARLY WARN";
+    return "MITIGASI";
+  }
+  if (tile.type === "special-story") return "CERITA";
+  return "JALUR";
+}
+
+function getTypeStyles(type: BoardGameTile["type"]) {
+  switch (type) {
+    case "start":
+      return {
+        bg: "bg-purple-100 hover:bg-purple-200/90",
+        border: "border-purple-300",
+        badgeBg: "bg-purple-600",
+        badgeText: "text-white",
+        iconColor: "text-purple-700",
+        textColor: "text-purple-800",
+      };
+    case "safe-zone":
+      return {
+        bg: "bg-teal-600 hover:bg-teal-700 text-white shadow-teal-100/30",
+        border: "border-teal-500",
+        badgeBg: "bg-white",
+        badgeText: "text-teal-700",
+        iconColor: "text-white",
+        textColor: "text-white",
+      };
+    case "event":
+      return {
+        bg: "bg-coral-50 hover:bg-coral-100/95",
+        border: "border-coral-300",
+        badgeBg: "bg-coral-600",
+        badgeText: "text-white",
+        iconColor: "text-coral-600",
+        textColor: "text-coral-700",
+      };
+    case "trivia":
+      return {
+        bg: "bg-sky-50 hover:bg-sky-100/95",
+        border: "border-sky-300",
+        badgeBg: "bg-sky-600",
+        badgeText: "text-white",
+        iconColor: "text-sky-600",
+        textColor: "text-sky-700",
+      };
+    case "market":
+      return {
+        bg: "bg-yellow-50 hover:bg-yellow-100/95",
+        border: "border-yellow-300",
+        badgeBg: "bg-yellow-500",
+        badgeText: "text-white",
+        iconColor: "text-yellow-600",
+        textColor: "text-yellow-850",
+      };
+    case "mission":
+      return {
+        bg: "bg-peach-100 hover:bg-peach-200/95",
+        border: "border-peach-350",
+        badgeBg: "bg-peach-500",
+        badgeText: "text-white",
+        iconColor: "text-peach-600",
+        textColor: "text-peach-850",
+      };
+    case "free-mitigation":
+      return {
+        bg: "bg-lavender-100 hover:bg-lavender-200/95",
+        border: "border-lavender-350",
+        badgeBg: "bg-purple-500",
+        badgeText: "text-white",
+        iconColor: "text-purple-650",
+        textColor: "text-purple-850",
+      };
+    case "special-story":
+      return {
+        bg: "bg-mint-100 hover:bg-mint-200/95",
+        border: "border-teal-200",
+        badgeBg: "bg-teal-600",
+        badgeText: "text-white",
+        iconColor: "text-teal-650",
+        textColor: "text-teal-800",
+      };
+    default:
+      return {
+        bg: "bg-white/60 hover:bg-white/80",
+        border: "border-purple-200/40",
+        badgeBg: "bg-purple-100",
+        badgeText: "text-purple-700",
+        iconColor: "text-purple-300",
+        textColor: "text-purple-400",
+      };
+  }
+}
+
+function mitigationIcon(name: MitigationCardIconName, cls: string) {
+  if (name === "Leaf")         return <Leaf className={cls} />;
+  if (name === "Construction") return <Construction className={cls} />;
+  if (name === "Route")        return <Route className={cls} />;
+  if (name === "Radio")        return <Radio className={cls} />;
+  if (name === "HardHat")      return <HardHat className={cls} />;
+  if (name === "House")        return <House className={cls} />;
+  if (name === "Trees")        return <Trees className={cls} />;
+  return <Droplets className={cls} />;
+}
+
+// ─── Rules and Icons Guide Popup Modal ───────────────────────────────────────
+
+function RulesModal({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-purple-900/20 p-4 backdrop-blur-md"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.section
+        className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-purple-700/10 bg-white p-6 shadow-[0_30px_80px_rgba(47,23,110,0.15)] text-ink-900"
+        initial={{ y: 40, opacity: 0, scale: 0.97 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 30, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 26 }}
+      >
+        <div className="mb-4 flex items-center justify-between border-b border-purple-100 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-700">
+              <CircleHelp className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="font-heading text-2xl font-black leading-none text-ink-900">Panduan & Aturan Bermain</h2>
+              <p className="text-xs text-ink-500 font-bold mt-1 font-sans">Pelajari cara bermain dan arti petak papan SMONG</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 transition cursor-pointer"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-6 text-sm">
+          {/* Cara Bermain */}
+          <div>
+            <h3 className="font-heading text-lg font-black text-purple-700 mb-2">🎮 Cara Bermain</h3>
+            <ol className="list-decimal list-inside space-y-1.5 text-ink-700 font-semibold leading-relaxed font-sans">
+              <li>Pemain bergantian melemparkan dadu untuk memutari papan 25 petak.</li>
+              <li>Kumpulkan <strong>Koin</strong> dengan melewati petak <strong>START (+2 Koin)</strong> atau menjawab trivia kesiapsiagaan di petak <strong>ASK ME!</strong>.</li>
+              <li>Gunakan koin di petak <strong>MARKET</strong> untuk membeli <strong>Kartu Mitigasi</strong> yang melindungi dari bencana.</li>
+              <li>Di <strong>putaran pertama</strong>, event bencana belum aktif agar pemain bisa bersiap-siap.</li>
+              <li>Mulai putaran kedua, jika ada pemain mendarat di petak <strong>WATCH YOUR STEP</strong>, bencana alam akan terjadi!</li>
+              <li>Semua pemain harus segera mengungsi ke <strong>ESCAPE BUILDING</strong> sebelum waktu evakuasi habis, kecuali jika memiliki kartu mitigasi pelindung penuh yang sesuai.</li>
+              <li>Jika ada lebih dari satu pemain yang selamat, permainan dilanjutkan kembali di papan sampai tersisa <strong>hanya satu pemenang utama</strong>!</li>
+            </ol>
+          </div>
+
+          {/* Arti Petak & Simbol */}
+          <div>
+            <h3 className="font-heading text-lg font-black text-purple-700 mb-2">🗺️ Arti Petak & Simbol Papan</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {[
+                { icon: "🚩", type: "START", desc: "Petak awal. Setiap melewatinya mendapat bonus 2 Koin." },
+                { icon: "❓", type: "ASK ME!", desc: "Pertanyaan trivia. Benar mendapat +3 Koin, salah mendapat +1 Koin." },
+                { icon: "🛒", type: "MARKET", desc: "Toko mitigasi. Beli kartu dengan koin untuk persiapan menghadapi bencana." },
+                { icon: "🛡️", type: "ESCAPE BUILDING", desc: "Zona aman. Pemain yang berada di sini otomatis selamat dari bencana aktif." },
+                { icon: "⚠️", type: "WATCH YOUR STEP", desc: "Petak bahaya. Membuka kartu event bencana secara acak untuk seluruh pemain." },
+                { icon: "🏗️", type: "MITIGASI GRATIS", desc: "Mendarat di petak mitigasi memberi kartu mitigasi gratis (Mangrove, Tanggul, dll)." },
+                { icon: "🌊", type: "LOCAL KNOWLEDGE", desc: "Mendengar cerita kebudayaan mitigasi bencana Nusantara dan mendapat +1 Koin." },
+                { icon: "📍", type: "JALAN BIASA", desc: "Petak normal kosong tanpa memicu aksi atau kejadian apa pun." },
+              ].map((item, idx) => (
+                <div key={idx} className="flex gap-2.5 rounded-xl border border-purple-700/5 bg-cream-50/50 p-3">
+                  <span className="text-2xl shrink-0 select-none">{item.icon}</span>
+                  <div>
+                    <h4 className="font-heading text-sm font-black text-ink-900">{item.type}</h4>
+                    <p className="text-xs text-ink-700 leading-normal mt-0.5 font-sans">{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-6 flex min-h-11 w-full items-center justify-center rounded-full bg-purple-700 font-heading text-base font-black text-white shadow-[0_4px_0_#20104f] hover:bg-purple-650 transition cursor-pointer"
+        >
+          Saya Mengerti, Mulai Main!
+        </button>
+      </motion.section>
+    </motion.div>
+  );
 }
