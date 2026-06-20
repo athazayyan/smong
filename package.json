@@ -13,6 +13,7 @@
     "@tensorflow-models/coco-ssd": "^2.2.3",
     "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-webgl": "^4.22.0",
+    "@types/three": "^0.184.1",
     "clsx": "^2.1.1",
     "docx": "^9.7.1",
     "framer-motion": "^12.40.0",
@@ -22,7 +23,8 @@
     "onnxruntime-web": "^1.26.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
