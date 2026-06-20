@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import type { TitikKumpul, LatLng } from "../../types";
 import {
@@ -23,8 +23,9 @@ const BEACON_RADIUS = 0.08;
 
 /**
  * Lapis A — Beacon GPS.
- * Merender pilar cahaya vertikal untuk setiap titik kumpul tersimpan.
+ * Merender pilar cahaya vertikal futuristik untuk setiap titik kumpul tersimpan.
  * Posisi & skala diperbarui setiap kali userPosition berubah.
+ * Menggunakan proyeksi 3D ke 2D (camera.project) untuk peletakan label HTML secara presisi.
  */
 export function BeaconLayer({
   sceneRef,
@@ -33,10 +34,25 @@ export function BeaconLayer({
   userPosition,
   isActive,
 }: BeaconLayerProps) {
-  /** Map: titikId → { group: THREE.Group, ring: THREE.Mesh } */
+  /** Map: titikId → THREE group and animated meshes */
   const beaconMapRef = useRef<
-    Map<string, { group: THREE.Group; pillar: THREE.Mesh; ring: THREE.Mesh }>
+    Map<
+      string,
+      {
+        group: THREE.Group;
+        pillarCore: THREE.Mesh;
+        pillarGlow: THREE.Mesh;
+        ringBase: THREE.Mesh;
+        ringInner: THREE.Mesh;
+        ringPulse: THREE.Mesh;
+        topMesh: THREE.Mesh;
+      }
+    >
   >(new Map());
+
+  const [labelCoords, setLabelCoords] = useState<
+    Record<string, { x: number; y: number; visible: boolean }>
+  >({});
 
   // ── Buat / hapus beacon saat daftar titik berubah ─────────────────────────
   useEffect(() => {
@@ -52,10 +68,18 @@ export function BeaconLayer({
         const entry = beaconMapRef.current.get(id);
         if (entry) {
           scene.remove(entry.group);
-          entry.pillar.geometry.dispose();
-          (entry.pillar.material as THREE.Material).dispose();
-          entry.ring.geometry.dispose();
-          (entry.ring.material as THREE.Material).dispose();
+          entry.pillarCore.geometry.dispose();
+          (entry.pillarCore.material as THREE.Material).dispose();
+          entry.pillarGlow.geometry.dispose();
+          (entry.pillarGlow.material as THREE.Material).dispose();
+          entry.ringBase.geometry.dispose();
+          (entry.ringBase.material as THREE.Material).dispose();
+          entry.ringInner.geometry.dispose();
+          (entry.ringInner.material as THREE.Material).dispose();
+          entry.ringPulse.geometry.dispose();
+          (entry.ringPulse.material as THREE.Material).dispose();
+          entry.topMesh.geometry.dispose();
+          (entry.topMesh.material as THREE.Material).dispose();
           beaconMapRef.current.delete(id);
         }
       }
@@ -67,51 +91,108 @@ export function BeaconLayer({
 
       const group = new THREE.Group();
 
-      // Pilar utama: silinder tipis bercahaya
-      const pillarGeo = new THREE.CylinderGeometry(
-        BEACON_RADIUS,
-        BEACON_RADIUS * 1.5,
+      // 1. Pilar Utama Core (Putih Terang) - Segments ditingkatkan ke 16 agar mulus
+      const coreGeo = new THREE.CylinderGeometry(
+        BEACON_RADIUS * 0.4,
+        BEACON_RADIUS * 0.5,
         BEACON_VISUAL_HEIGHT,
-        8,
+        16,
         1,
         true
       );
-      const pillarMat = new THREE.MeshBasicMaterial({
-        color: 0x00ffaa,
+      const coreMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
         transparent: true,
-        opacity: 0.82,
+        opacity: 0.95,
         side: THREE.DoubleSide,
       });
-      const pillar = new THREE.Mesh(pillarGeo, pillarMat);
-      pillar.position.y = BEACON_VISUAL_HEIGHT / 2;
-      group.add(pillar);
+      const pillarCore = new THREE.Mesh(coreGeo, coreMat);
+      pillarCore.position.y = BEACON_VISUAL_HEIGHT / 2;
+      group.add(pillarCore);
 
-      // Lingkaran bercahaya di dasar beacon
-      const ringGeo = new THREE.RingGeometry(0.4, 0.6, 32);
-      const ringMat = new THREE.MeshBasicMaterial({
-        color: 0x00ffaa,
+      // 2. Pilar Outer Glow (Neon Cyan/Teal)
+      const glowGeo = new THREE.CylinderGeometry(
+        BEACON_RADIUS * 1.3,
+        BEACON_RADIUS * 1.9,
+        BEACON_VISUAL_HEIGHT,
+        16,
+        1,
+        true
+      );
+      const glowMat = new THREE.MeshBasicMaterial({
+        color: 0x00f3ff,
         transparent: true,
-        opacity: 0.55,
+        opacity: 0.4,
+        blending: THREE.AdditiveBlending,
         side: THREE.DoubleSide,
       });
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      ring.rotation.x = -Math.PI / 2;
-      ring.position.y = 0.01;
-      group.add(ring);
+      const pillarGlow = new THREE.Mesh(glowGeo, glowMat);
+      pillarGlow.position.y = BEACON_VISUAL_HEIGHT / 2;
+      group.add(pillarGlow);
 
-      // Bola di puncak beacon
-      const topGeo = new THREE.SphereGeometry(BEACON_RADIUS * 2.5, 8, 8);
-      const topMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-      const top = new THREE.Mesh(topGeo, topMat);
-      top.position.y = BEACON_VISUAL_HEIGHT;
-      group.add(top);
+      // 3. Ring Base Statis (Teal)
+      const ringBaseGeo = new THREE.RingGeometry(0.3, 0.45, 32);
+      const ringBaseMat = new THREE.MeshBasicMaterial({
+        color: 0x00f3ff,
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide,
+      });
+      const ringBase = new THREE.Mesh(ringBaseGeo, ringBaseMat);
+      ringBase.rotation.x = -Math.PI / 2;
+      ringBase.position.y = 0.01;
+      group.add(ringBase);
+
+      // 4. Ring Inner (Berputar berlawanan arah jarum jam)
+      const ringInnerGeo = new THREE.RingGeometry(0.12, 0.22, 32);
+      const ringInnerMat = new THREE.MeshBasicMaterial({
+        color: 0x00ffcc,
+        transparent: true,
+        opacity: 0.5,
+        side: THREE.DoubleSide,
+      });
+      const ringInner = new THREE.Mesh(ringInnerGeo, ringInnerMat);
+      ringInner.rotation.x = -Math.PI / 2;
+      ringInner.position.y = 0.015;
+      group.add(ringInner);
+
+      // 5. Ring Pulse (Merenggang keluar)
+      const ringPulseGeo = new THREE.RingGeometry(0.1, 0.5, 32);
+      const ringPulseMat = new THREE.MeshBasicMaterial({
+        color: 0x8b5cf6, // Ungu neon
+        transparent: true,
+        opacity: 0.45,
+        side: THREE.DoubleSide,
+      });
+      const ringPulse = new THREE.Mesh(ringPulseGeo, ringPulseMat);
+      ringPulse.rotation.x = -Math.PI / 2;
+      ringPulse.position.y = 0.02;
+      group.add(ringPulse);
+
+      // 6. Puncak Oktahedron Emas Berputar
+      const topGeo = new THREE.OctahedronGeometry(BEACON_RADIUS * 3.5, 0);
+      const topMat = new THREE.MeshBasicMaterial({
+        color: 0xffd700, // Warna emas premium
+        wireframe: false,
+      });
+      const topMesh = new THREE.Mesh(topGeo, topMat);
+      topMesh.position.y = BEACON_VISUAL_HEIGHT;
+      group.add(topMesh);
 
       scene.add(group);
-      beaconMapRef.current.set(titik.id, { group, pillar, ring });
+      beaconMapRef.current.set(titik.id, {
+        group,
+        pillarCore,
+        pillarGlow,
+        ringBase,
+        ringInner,
+        ringPulse,
+        topMesh,
+      });
     }
   }, [titikKumpulList, sceneRef, isActive]);
 
-  // ── Update posisi beacon saat GPS user berubah ────────────────────────────
+  // ── Update posisi beacon berdasarkan koordinat nyata GPS ──────────────────
   useEffect(() => {
     if (!userPosition || !isActive) return;
 
@@ -124,10 +205,17 @@ export function BeaconLayer({
 
       const { x, z, distanceM } = gpsToRelativeXZ(userPosition, titik);
 
-      // Normalisasi posisi: tampilkan beacon di jarak visual maksimum 25m
-      const visualScale = Math.min(25, distanceM) / Math.max(distanceM, 0.01);
+      // Logarithmic/Clamped visual scaling agar tidak menumpuk aneh di kejauhan
+      const maxDistance = 40;
+      const minDistance = 2;
+      const visualDistance = Math.max(
+        minDistance,
+        Math.min(maxDistance, distanceM)
+      );
+      const visualScale = visualDistance / Math.max(distanceM, 0.01);
+
       const visualX = x * visualScale;
-      const visualZ = -z * visualScale; // Three.js Z negatif = ke depan (utara)
+      const visualZ = -z * visualScale; // Z negatif = depan (utara)
 
       entry.group.position.set(
         camera.position.x + visualX,
@@ -135,39 +223,107 @@ export function BeaconLayer({
         camera.position.z + visualZ
       );
 
-      // Skala berdasarkan jarak nyata (lebih dekat = lebih besar)
+      // Sizing pilar berdasarkan kedekatan
       const scale = beaconScaleFromDistance(distanceM);
       entry.group.scale.setScalar(scale);
-
-      // Animasi pulse untuk ring (opacity berdenyut)
-      const pulse = 0.4 + 0.3 * Math.sin(Date.now() * 0.003);
-      (entry.ring.material as THREE.MeshBasicMaterial).opacity = pulse;
     }
   }, [userPosition, titikKumpulList, cameraRef, isActive]);
 
-  // ── Label overlay HTML ────────────────────────────────────────────────────
-  // Label ditampilkan sebagai overlay HTML/CSS di atas canvas,
-  // bukan sebagai objek 3D (lebih ringan dan mudah dibaca)
+  // ── Animasi Mesh & Proyeksi 3D-ke-2D untuk Label HTML ──────────────────────
+  useEffect(() => {
+    if (!isActive || !userPosition) return;
+
+    let animFrameId: number;
+    const tempV = new THREE.Vector3();
+
+    const tick = () => {
+      const camera = cameraRef.current;
+      if (!camera) {
+        animFrameId = requestAnimationFrame(tick);
+        return;
+      }
+
+      const time = performance.now() * 0.001;
+      const coords: Record<string, { x: number; y: number; visible: boolean }> = {};
+
+      for (const titik of titikKumpulList) {
+        const entry = beaconMapRef.current.get(titik.id);
+        if (!entry) continue;
+
+        // 1. Putar Oktahedron di puncak
+        entry.topMesh.rotation.y = time * 1.6;
+        entry.topMesh.rotation.x = time * 0.9;
+
+        // 2. Putar Ring Inner
+        entry.ringInner.rotation.z = -time * 0.8;
+
+        // 3. Efek denyut Ring Pulse di dasar
+        const pulseCycle = (time * 1.1) % 1.0;
+        const pulseScale = 0.5 + pulseCycle * 2.8;
+        entry.ringPulse.scale.set(pulseScale, pulseScale, 1);
+        (entry.ringPulse.material as THREE.MeshBasicMaterial).opacity =
+          0.6 * (1.0 - pulseCycle);
+
+        // 4. Proyeksikan posisi 3D pilar ke 2D layar
+        tempV.setFromMatrixPosition(entry.group.matrixWorld);
+        // Arahkan sedikit di atas oktahedron
+        tempV.y += BEACON_VISUAL_HEIGHT + 0.8;
+
+        tempV.project(camera);
+
+        const isBehind = tempV.z > 1;
+        const x = (tempV.x * 0.5 + 0.5) * 100;
+        const y = (-(tempV.y * 0.5) + 0.5) * 100;
+
+        // Sembunyikan label jika di belakang kamera atau jauh di luar layar
+        const visible = !isBehind && x >= -15 && x <= 115 && y >= -15 && y <= 115;
+
+        coords[titik.id] = { x, y, visible };
+      }
+
+      setLabelCoords(coords);
+      animFrameId = requestAnimationFrame(tick);
+    };
+
+    tick();
+
+    return () => {
+      cancelAnimationFrame(animFrameId);
+    };
+  }, [userPosition, titikKumpulList, cameraRef, isActive]);
+
   if (!isActive || !userPosition) return null;
 
   return (
     <>
       {titikKumpulList.map((titik) => {
+        const coords = labelCoords[titik.id];
+        if (!coords || !coords.visible) return null;
+
         const { distanceM } = gpsToRelativeXZ(userPosition, titik);
+
         return (
           <div
             key={titik.id}
-            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2"
-            style={{ transform: `translateX(-50%) translateY(-${60 + distanceM / 10}%)` }}
+            className="pointer-events-none absolute z-30 flex flex-col items-center animate-fade-in"
+            style={{
+              left: `${coords.x}%`,
+              top: `${coords.y}%`,
+              transform: "translate(-50%, -100%)",
+            }}
           >
-            <div className="rounded-full bg-emerald-950/80 px-3 py-1 text-center backdrop-blur-sm">
-              <p className="font-heading text-xs font-black text-emerald-300">
+            {/* Glowing neon HUD card */}
+            <div className="flex flex-col items-center rounded-2xl border border-purple-500/30 bg-purple-900/90 px-4 py-2.5 text-center shadow-[0_10px_30px_rgba(139,92,246,0.3)] backdrop-blur-md transition-all duration-300">
+              <span className="h-2 w-2 animate-ping rounded-full bg-emerald-400 mb-1.5" />
+              <p className="font-heading text-xs font-black tracking-widest text-emerald-300 uppercase">
                 {titik.nama}
               </p>
-              <p className="text-[10px] font-bold text-emerald-400/80">
+              <p className="mt-0.5 text-[11px] font-bold text-white/90">
                 {formatDistance(distanceM)}
               </p>
             </div>
+            {/* Pointer segitiga kecil di bawah card */}
+            <div className="h-0 w-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-purple-900/90" />
           </div>
         );
       })}

@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 import type { WebXrStatus, XrHitInfo } from "../types";
 
 interface UseWebXRReturn {
   xrStatus: WebXrStatus;
   hitInfo: XrHitInfo | null;
   isHitFound: boolean;
-  startSession: (canvas: HTMLCanvasElement) => Promise<void>;
+  startSession: (canvas: HTMLCanvasElement, renderer: THREE.WebGLRenderer) => Promise<void>;
   endSession: () => Promise<void>;
+  updateHitTest: (frame: XRFrame, renderer: THREE.WebGLRenderer) => void;
   xrSessionRef: React.MutableRefObject<XRSession | null>;
   xrGlRef: React.MutableRefObject<WebGLRenderingContext | WebGL2RenderingContext | null>;
 }
@@ -25,7 +27,6 @@ export function useWebXR(): UseWebXRReturn {
   const xrSessionRef = useRef<XRSession | null>(null);
   const xrGlRef = useRef<WebGLRenderingContext | WebGL2RenderingContext | null>(null);
   const hitTestSourceRef = useRef<XRHitTestSource | null>(null);
-  const rafIdRef = useRef<number | null>(null);
   const isMountedRef = useRef(true);
 
   useEffect(() => {
@@ -36,10 +37,6 @@ export function useWebXR(): UseWebXRReturn {
   }, []);
 
   const endSession = useCallback(async () => {
-    if (rafIdRef.current !== null) {
-      xrSessionRef.current?.cancelAnimationFrame(rafIdRef.current);
-      rafIdRef.current = null;
-    }
     hitTestSourceRef.current?.cancel();
     hitTestSourceRef.current = null;
 
@@ -59,7 +56,7 @@ export function useWebXR(): UseWebXRReturn {
   }, []);
 
   const startSession = useCallback(
-    async (canvas: HTMLCanvasElement) => {
+    async (canvas: HTMLCanvasElement, renderer: THREE.WebGLRenderer) => {
       // 1. Feature detection
       if (!("xr" in navigator) || !navigator.xr) {
         setXrStatus("unsupported");
@@ -84,29 +81,24 @@ export function useWebXR(): UseWebXRReturn {
 
       try {
         // 2. Dapatkan konteks WebGL yang kompatibel dengan XR
-        const gl =
-          (canvas.getContext("webgl2") as WebGL2RenderingContext | null) ??
-          (canvas.getContext("webgl") as WebGLRenderingContext | null);
-
+        const gl = renderer.getContext();
         if (!gl) {
-          throw new Error("WebGL tidak tersedia di canvas ini");
+          throw new Error("WebGL context tidak tersedia");
         }
+        xrGlRef.current = gl;
 
-        // 3. Buat sesi WebXR
+        // 3. Buat sesi WebXR dengan DOM Overlay (agar elemen HTML UI terlihat)
         const session = await navigator.xr.requestSession("immersive-ar", {
           requiredFeatures: ["hit-test"],
           optionalFeatures: ["dom-overlay"],
+          domOverlay: { root: document.body }, // Tampilkan UI di atas layar AR
         });
 
         xrSessionRef.current = session;
-        xrGlRef.current = gl;
 
-        // Ikat GL ke sesi XR
-        const xrGlLayer = new XRWebGLLayer(session, gl);
-        await session.updateRenderState({ baseLayer: xrGlLayer });
-
-        // 4. Reference space
-        const refSpace = await session.requestReferenceSpace("local");
+        // 4. Hubungkan sesi XR ke Three.js renderer
+        renderer.xr.enabled = true;
+        await renderer.xr.setSession(session);
 
         // 5. Hit-test source (viewer space)
         const viewerSpace = await session.requestReferenceSpace("viewer");
@@ -116,30 +108,6 @@ export function useWebXR(): UseWebXRReturn {
         hitTestSourceRef.current = hitTestSource ?? null;
 
         setXrStatus("active");
-
-        // 6. Loop frame
-        function onXrFrame(_time: number, frame: XRFrame) {
-          if (!xrSessionRef.current || !isMountedRef.current) return;
-
-          rafIdRef.current = xrSessionRef.current.requestAnimationFrame(onXrFrame);
-
-          if (hitTestSourceRef.current) {
-            const results = frame.getHitTestResults(hitTestSourceRef.current);
-            if (results.length > 0) {
-              const pose = results[0].getPose(refSpace);
-              if (pose) {
-                setHitInfo({
-                  matrix: new Float32Array(pose.transform.matrix),
-                  found: true,
-                });
-              }
-            } else {
-              setHitInfo((prev) => (prev?.found ? { ...prev, found: false } : prev));
-            }
-          }
-        }
-
-        rafIdRef.current = session.requestAnimationFrame(onXrFrame);
 
         // Tangani sesi yang berakhir dari luar (mis. tombol back perangkat)
         session.addEventListener("end", () => {
@@ -159,6 +127,27 @@ export function useWebXR(): UseWebXRReturn {
     [endSession]
   );
 
+  // 6. Lakukan hit-test menggunakan frame dari main animation loop Three.js
+  const updateHitTest = useCallback((frame: XRFrame, renderer: THREE.WebGLRenderer) => {
+    if (!xrSessionRef.current || !hitTestSourceRef.current || !isMountedRef.current) return;
+
+    const refSpace = renderer.xr.getReferenceSpace();
+    if (!refSpace) return;
+
+    const results = frame.getHitTestResults(hitTestSourceRef.current);
+    if (results.length > 0) {
+      const pose = results[0].getPose(refSpace);
+      if (pose) {
+        setHitInfo({
+          matrix: new Float32Array(pose.transform.matrix),
+          found: true,
+        });
+      }
+    } else {
+      setHitInfo((prev) => (prev?.found ? { ...prev, found: false } : prev));
+    }
+  }, []);
+
   // Cleanup saat unmount
   useEffect(() => {
     return () => {
@@ -173,6 +162,7 @@ export function useWebXR(): UseWebXRReturn {
     isHitFound: hitInfo?.found === true,
     startSession,
     endSession,
+    updateHitTest,
     xrSessionRef,
     xrGlRef,
   };

@@ -21,23 +21,45 @@ export async function compressImage(
   dataUrl: string,
   maxPx: number = MAX_PHOTO_PX
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
+  // Jika bukan data URL yang valid, kembalikan apa adanya
+  if (!dataUrl || !dataUrl.startsWith("data:")) return dataUrl;
+
+  return new Promise((resolve) => {
     const img = new Image();
     img.onload = () => {
       const { naturalWidth: w, naturalHeight: h } = img;
+      // Jika sudah cukup kecil, tidak perlu kompres
+      if (w <= maxPx && h <= maxPx) {
+        resolve(dataUrl);
+        return;
+      }
       const scale = Math.min(1, maxPx / Math.max(w, h));
       const canvas = document.createElement("canvas");
       canvas.width = Math.round(w * scale);
       canvas.height = Math.round(h * scale);
       const ctx = canvas.getContext("2d");
       if (!ctx) {
-        reject(new Error("Canvas 2D context tidak tersedia"));
+        // Context tidak tersedia — fallback ke original
+        resolve(dataUrl);
         return;
       }
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      resolve(canvas.toDataURL("image/jpeg", JPEG_QUALITY));
+      try {
+        // canvas.toDataURL bisa gagal jika canvas tainted (cross-origin)
+        const compressed = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+        resolve(compressed);
+      } catch (err) {
+        console.warn("[MitigaSee] Canvas tainted, skip kompresi:", err);
+        resolve(dataUrl);
+      }
     };
-    img.onerror = () => reject(new Error("Gagal load gambar untuk kompresi"));
+    img.onerror = (err) => {
+      console.warn("[MitigaSee] Gagal load gambar untuk kompresi, skip:", err);
+      // Graceful fallback — kembalikan dataUrl asli tanpa crash
+      resolve(dataUrl);
+    };
+    // Penting: set crossOrigin SEBELUM src untuk menghindari tainted canvas
+    img.crossOrigin = "anonymous";
     img.src = dataUrl;
   });
 }

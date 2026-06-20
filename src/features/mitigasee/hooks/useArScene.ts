@@ -10,7 +10,7 @@ interface UseArSceneReturn {
   cameraRef: React.RefObject<THREE.PerspectiveCamera | null>;
   initScene: () => void;
   disposeScene: () => void;
-  startRenderLoop: (onFrame?: (delta: number) => void) => void;
+  startRenderLoop: (onFrame?: (delta: number, frame?: XRFrame) => void) => void;
   stopRenderLoop: () => void;
 }
 
@@ -24,9 +24,13 @@ export function useArScene(): UseArSceneReturn {
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const rafIdRef = useRef<number | null>(null);
-  const clockRef = useRef(new THREE.Clock());
+  const lastTimeRef = useRef<number>(0);
 
   const stopRenderLoop = useCallback(() => {
+    const renderer = rendererRef.current;
+    if (renderer) {
+      renderer.setAnimationLoop(null);
+    }
     if (rafIdRef.current !== null) {
       cancelAnimationFrame(rafIdRef.current);
       rafIdRef.current = null;
@@ -74,6 +78,9 @@ export function useArScene(): UseArSceneReturn {
       renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
       renderer.setClearColor(0x000000, 0); // clear transparan
 
+      // Aktifkan WebXR secara default agar Three.js siap menerima sesi WebXR
+      renderer.xr.enabled = true;
+
       const scene = new THREE.Scene();
 
       const camera = new THREE.PerspectiveCamera(
@@ -83,6 +90,8 @@ export function useArScene(): UseArSceneReturn {
         1000
       );
       camera.position.set(0, 1.6, 0); // Tinggi mata rata-rata (1.6m)
+      camera.rotation.order = "YXZ"; // Rotasi YXZ untuk FPV/AR look yang mulus
+
 
       // Pencahayaan ambient agar beacon tidak gelap total
       const ambient = new THREE.AmbientLight(0xffffff, 0.6);
@@ -94,40 +103,45 @@ export function useArScene(): UseArSceneReturn {
       rendererRef.current = renderer;
       sceneRef.current = scene;
       cameraRef.current = camera;
-      clockRef.current = new THREE.Clock();
+      lastTimeRef.current = performance.now();
     } catch (err) {
       console.error("[MitigaSee] Gagal inisialisasi Three.js renderer:", err);
     }
   }, [disposeScene]);
 
   const startRenderLoop = useCallback(
-    (onFrame?: (delta: number) => void) => {
+    (onFrame?: (delta: number, frame?: XRFrame) => void) => {
       stopRenderLoop();
 
-      function loop() {
-        rafIdRef.current = requestAnimationFrame(loop);
+      const renderer = rendererRef.current;
+      if (!renderer) return;
 
-        const delta = clockRef.current.getDelta();
-        onFrame?.(delta);
+      lastTimeRef.current = performance.now();
 
-        const renderer = rendererRef.current;
+      renderer.setAnimationLoop((_time, frame) => {
+        const now = performance.now();
+        const delta = Math.min(0.1, (now - lastTimeRef.current) / 1000); // Batasi max delta 100ms
+        lastTimeRef.current = now;
+
+        onFrame?.(delta, frame);
+
         const scene = sceneRef.current;
         const camera = cameraRef.current;
         if (renderer && scene && camera) {
-          // Resize responsif
-          const canvas = renderer.domElement;
-          const w = canvas.clientWidth;
-          const h = canvas.clientHeight;
-          if (canvas.width !== w || canvas.height !== h) {
-            renderer.setSize(w, h, false);
-            camera.aspect = w / h;
-            camera.updateProjectionMatrix();
+          // Hanya resize jika sedang tidak presentasi XR (karena XR mengontrol viewport secara internal)
+          if (!renderer.xr.isPresenting) {
+            const canvas = renderer.domElement;
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            if (canvas.width !== w || canvas.height !== h) {
+              renderer.setSize(w, h, false);
+              camera.aspect = w / h;
+              camera.updateProjectionMatrix();
+            }
           }
           renderer.render(scene, camera);
         }
-      }
-
-      loop();
+      });
     },
     [stopRenderLoop]
   );
