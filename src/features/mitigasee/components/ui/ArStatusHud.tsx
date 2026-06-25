@@ -120,14 +120,7 @@ export function ArStatusHud({
         )}
       </div>
 
-      {/* ── Indikator akurasi GPS rendah ── */}
-      {isLowAccuracy && (
-        <div className="pointer-events-none absolute right-3 bottom-20 z-30 rounded-full bg-amber-950/70 px-3 py-1.5 backdrop-blur-sm">
-          <p className="text-[11px] font-semibold text-amber-300">
-            📍 Akurasi rendah {accuracy !== null ? `(±${Math.round(accuracy)}m)` : ""}
-          </p>
-        </div>
-      )}
+
 
       {/* ── FPS counter (pojok kanan atas) ── */}
       <div className="pointer-events-none absolute right-3 top-3 z-30 rounded-full bg-black/40 px-2.5 py-1 backdrop-blur-sm">

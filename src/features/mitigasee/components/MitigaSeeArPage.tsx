@@ -2,12 +2,12 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Radio, List, Plus, Square, AlertTriangle, Navigation } from "lucide-react";
+import { Radio, List, Plus, Square, AlertTriangle, Navigation, Camera, Layers, Map, Clock, ArrowLeft, Building2, Check, X, ShieldAlert, Award, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-import type { TitikKumpul, MitigaSeeTab, ArMode } from "../types";
-import { getAllTitikKumpul, deleteTitikKumpul } from "../lib/storage";
-import { findNearestTitik, formatDistance } from "../lib/geo";
+import type { TitikKumpul, MitigaSeeTab, ArMode, LatLng } from "../types";
+import { getAllTitikKumpul, deleteTitikKumpul, saveTitikKumpul } from "../lib/storage";
+import { findNearestTitik, formatDistance, calculateDistance } from "../lib/geo";
 
 import { useGeoWatch } from "../hooks/useGeoWatch";
 import { useWebXR } from "../hooks/useWebXR";
@@ -29,18 +29,39 @@ import { SafetyMarkerOverlay } from "@/features/student-learning/components/acti
 import { ArRiskToolbar } from "@/features/student-learning/components/activities/ar/ArRiskToolbar";
 import { ArAutoDetectionControl } from "@/features/student-learning/components/activities/ar/ArAutoDetectionControl";
 import { ArFeedbackPanel } from "@/features/student-learning/components/activities/ar/ArFeedbackPanel";
-import type { RiskObjectClass, ObjectDetectionResult, ArDetectorStatus } from "@/features/student-learning/types";
+import type { RiskObjectClass, ObjectDetectionResult, ArDetectorStatus, ArWarning } from "@/features/student-learning/types";
 
-const TAB_ITEMS: { id: MitigaSeeTab; label: string; icon: React.ReactNode }[] = [
-  { id: "ar", label: "Mode AR", icon: <Radio className="h-4 w-4" /> },
-  { id: "daftar", label: "Daftar Titik", icon: <List className="h-4 w-4" /> },
-  { id: "tambah", label: "Tambah Titik", icon: <Plus className="h-4 w-4" /> },
+// TAB ITEMS untuk halaman navigasi
+const TAB_ITEMS = [
+  {
+    id: "ar" as MitigaSeeTab,
+    label: "Mode AR",
+    icon: <Camera className="h-3.5 w-3.5" />,
+  },
+  {
+    id: "daftar" as MitigaSeeTab,
+    label: "Daftar Titik",
+    icon: <List className="h-3.5 w-3.5" />,
+  },
+  {
+    id: "tambah" as MitigaSeeTab,
+    label: "Tambah Titik",
+    icon: <Plus className="h-3.5 w-3.5" />,
+  },
 ];
+
+// MOCK SVG untuk palang tanda titik kumpul darurat
+const MOCK_SIGN_SVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="400" height="480"><rect width="100" height="120" rx="10" fill="%23047857"/><rect x="5" y="5" width="90" height="110" rx="8" fill="none" stroke="%23ffffff" stroke-width="2"/><path d="M 15 15 L 35 35 M 35 35 L 25 35 M 35 35 L 35 25" stroke="%23ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M 85 15 L 65 35 M 65 35 L 75 35 M 65 35 L 65 25" stroke="%23ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M 15 85 L 35 65 M 35 65 L 25 65 M 35 65 L 35 75" stroke="%23ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M 85 85 L 65 65 M 65 65 L 75 65 M 65 65 L 65 75" stroke="%23ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="43" cy="46" r="3.5" fill="%23ffffff"/><path d="M 43 50 L 43 62 M 40 53 L 46 53 M 41 62 L 41 72 M 45 62 L 45 72" stroke="%23ffffff" stroke-width="3" stroke-linecap="round"/><circle cx="57" cy="46" r="3.5" fill="%23ffffff"/><path d="M 57 50 L 57 62 M 54 53 L 60 53 M 55 62 L 55 72 M 59 62 L 59 72" stroke="%23ffffff" stroke-width="3" stroke-linecap="round"/><text x="50" y="98" fill="%23ffffff" font-family="sans-serif" font-size="7" font-weight="bold" text-anchor="middle">TITIK KUMPUL DARURAT</text><text x="50" y="107" fill="%23ffffff" font-family="sans-serif" font-size="5" font-weight="bold" text-anchor="middle">EMERGENCY ASSEMBLY POINT</text></svg>`;
 
 export function MitigaSeeArPage() {
   const [activeTab, setActiveTab] = useState<MitigaSeeTab>("ar");
   const [arMode, setArMode] = useState<ArMode>("idle");
   const [titikList, setTitikList] = useState<TitikKumpul[]>([]);
+
+  // ── States Tambahan untuk Rute, Foto, dan Edukasi Bencana ──────
+  const [selectedTitik, setSelectedTitik] = useState<TitikKumpul | null>(null);
+  const [showPhotoModal, setShowPhotoModal] = useState<boolean>(false);
+  const [selectedWarning, setSelectedWarning] = useState<ArWarning | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -56,6 +77,8 @@ export function MitigaSeeArPage() {
   const detectorRef = useRef<CocoSsdDetector | null>(null);
   const boundingBoxCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const markerCounterRef = useRef(0);
+  const initialDistanceRef = useRef<number | null>(null);
+  const initializedRef = useRef(false);
 
   // ── Drag to Look Camera Rotation (Desktop Fallback) ─────────────────────
   const startX = useRef(0);
@@ -90,10 +113,65 @@ export function MitigaSeeArPage() {
 
   const isArActive = arMode === "ar-active";
 
-  // ── Load data awal ───────────────────────────────────────────────────────
+  // ── Inisialisasi data titik kumpul default & localStorage ──────────────────
   useEffect(() => {
-    setTitikList(getAllTitikKumpul());
-  }, []);
+    if (initializedRef.current) return;
+    let saved = getAllTitikKumpul();
+    if (saved.length === 0) {
+      const baseLat = userPosition?.lat ?? -6.2088;
+      const baseLng = userPosition?.lng ?? 106.8456;
+      const points: TitikKumpul[] = [
+        {
+          id: "default-lapangan-utama",
+          nama: "Lapangan Utama Sekolah",
+          lat: baseLat + 0.00035,
+          lng: baseLng + 0.00025,
+          fotoBase64: MOCK_SIGN_SVG,
+          timestamp: Date.now() - 86400000,
+          accuracy: 5,
+        },
+        {
+          id: "default-parkir-depan",
+          nama: "Area Parkir Depan",
+          lat: baseLat - 0.00030,
+          lng: baseLng - 0.00035,
+          fotoBase64: MOCK_SIGN_SVG,
+          timestamp: Date.now() - 43200000,
+          accuracy: 7,
+        },
+        {
+          id: "default-lapangan-basket",
+          nama: "Lapangan Olahraga Belakang",
+          lat: baseLat + 0.00015,
+          lng: baseLng - 0.00020,
+          fotoBase64: MOCK_SIGN_SVG,
+          timestamp: Date.now() - 7200000,
+          accuracy: 6,
+        }
+      ];
+      points.forEach(p => {
+        try {
+          saveTitikKumpul(p);
+        } catch(e) {
+          console.error(e);
+        }
+      });
+      saved = points;
+      initializedRef.current = true;
+    } else {
+      initializedRef.current = true;
+    }
+    setTitikList(saved);
+    if (saved.length > 0 && !selectedTitik) {
+      setSelectedTitik(saved[0]);
+    }
+  }, [userPosition, selectedTitik]);
+
+  useEffect(() => {
+    if (titikList.length > 0 && !selectedTitik) {
+      setSelectedTitik(titikList[0]);
+    }
+  }, [titikList, selectedTitik]);
 
   // Clean up detector
   useEffect(() => {
@@ -108,7 +186,6 @@ export function MitigaSeeArPage() {
     if (!isArActive || typeof window === "undefined") return;
 
     const handleOrientation = (e: DeviceOrientationEvent) => {
-      // Jangan timpa jika user sedang melakukan drag manual
       if (isDragging.current) return;
 
       const camera = cameraRef.current;
@@ -123,7 +200,6 @@ export function MitigaSeeArPage() {
       }
       // Android / Standard (alpha)
       else if (e.alpha !== null) {
-        // e.alpha bertambah berlawanan arah jarum jam dari utara
         camera.rotation.y = -(((360 - e.alpha) * Math.PI) / 180);
       }
     };
@@ -153,12 +229,22 @@ export function MitigaSeeArPage() {
     [detections]
   );
 
-  // ── Kalkulasi titik terdekat ─────────────────────────────────────────────
-  const nearestResult = useMemo(() => {
-    return userPosition && titikList.length > 0
-      ? findNearestTitik(userPosition, titikList)
-      : null;
-  }, [userPosition, titikList]);
+  // ── Kalkulasi Jarak & ETA Berdasarkan Titik Pilihan ─────────────────────────
+  const activeDistance = useMemo(() => {
+    if (!userPosition || !selectedTitik) return null;
+    return calculateDistance(userPosition, selectedTitik);
+  }, [userPosition, selectedTitik]);
+
+  useEffect(() => {
+    if (activeDistance !== null && initialDistanceRef.current === null) {
+      initialDistanceRef.current = activeDistance;
+    }
+  }, [activeDistance]);
+
+  const etaMinutes = useMemo(() => {
+    if (activeDistance === null) return 5;
+    return Math.max(1, Math.ceil(activeDistance / (1.2 * 60)));
+  }, [activeDistance]);
 
   // ── Mulai AR ─────────────────────────────────────────────────────────────
   const handleStartAr = useCallback(async () => {
@@ -169,9 +255,8 @@ export function MitigaSeeArPage() {
 
     setArMode("ar-active");
     startWatch();
-    setIsAutoDetectionEnabled(true); // Aktifkan COCO-SSD secara otomatis saat AR dimulai!
+    setIsAutoDetectionEnabled(true);
 
-    // Minta izin sensor orientasi perangkat di iOS jika dibutuhkan
     if (
       typeof window !== "undefined" &&
       typeof (DeviceOrientationEvent as any).requestPermission === "function"
@@ -186,7 +271,6 @@ export function MitigaSeeArPage() {
       }
     }
 
-    // Inisialisasi Three.js scene
     if (canvasRef.current) {
       initScene();
       startRenderLoop((_delta, frame) => {
@@ -196,7 +280,6 @@ export function MitigaSeeArPage() {
       });
     }
 
-    // Mulai kamera untuk video feed + Lapis C
     try {
       let stream: MediaStream | null = null;
       try {
@@ -226,7 +309,6 @@ export function MitigaSeeArPage() {
       console.error("[MitigaSee] Kamera gagal untuk AR:", err);
     }
 
-    // Coba WebXR (Lapis B)
     if (canvasRef.current && rendererRef.current) {
       void startSession(canvasRef.current, rendererRef.current).catch((err) => {
         console.warn("[MitigaSee] WebXR tidak dimulai:", err);
@@ -243,18 +325,16 @@ export function MitigaSeeArPage() {
     setDetectorStatus("idle");
     setManualDetections([]);
     setModelDetections([]);
+    setSelectedWarning(null);
+    initialDistanceRef.current = null;
 
-    // Hentikan kamera
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
 
-    // Akhiri sesi WebXR
     await endSession().catch(() => {});
-
-    // Dispose Three.js resources
     disposeScene();
   }, [stopWatch, stopRenderLoop, endSession, disposeScene]);
 
@@ -263,7 +343,6 @@ export function MitigaSeeArPage() {
     return () => {
       void handleStopAr();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Helper Bounding Boxes dengan Neon Style ────────────────────────────────
@@ -276,7 +355,6 @@ export function MitigaSeeArPage() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Menghindari ukuran canvas 0
     const width = canvas.clientWidth || video.clientWidth || 640;
     const height = canvas.clientHeight || video.clientHeight || 480;
     canvas.width = width;
@@ -295,25 +373,23 @@ export function MitigaSeeArPage() {
       const sw = widthPercent * scaleX;
       const sh = heightPercent * scaleY;
 
-      // Draw glowing neon stroke
-      ctx.strokeStyle = "#ff007f";
-      ctx.lineWidth = 3;
-      ctx.shadowColor = "#ff007f";
-      ctx.shadowBlur = 10;
+      // Glowing neon stroke
+      ctx.strokeStyle = "#ff0055"; // Pink-red neon matching branding colors
+      ctx.lineWidth = 2.5;
+      ctx.shadowColor = "#ff0055";
+      ctx.shadowBlur = 8;
       ctx.strokeRect(sx, sy, sw, sh);
-
-      // Reset shadow untuk teks
       ctx.shadowBlur = 0;
 
       // Label background
       const label = `${getRiskClassLabel(det.className)} ${Math.round((det.confidence || 1) * 100)}%`;
-      ctx.font = "bold 12px sans-serif";
+      ctx.font = "bold 11px sans-serif";
       const tw = ctx.measureText(label).width;
-      ctx.fillStyle = "rgba(127,29,29,0.85)";
-      ctx.fillRect(sx, sy - 20, tw + 8, 20);
+      ctx.fillStyle = "rgba(47, 23, 110, 0.88)"; // Brand purple-900 background
+      ctx.fillRect(sx, sy - 18, tw + 8, 18);
 
       // Label text
-      ctx.fillStyle = "#fca5a5";
+      ctx.fillStyle = "#e8dfff";
       ctx.fillText(label, sx + 4, sy - 5);
     }
   }, []);
@@ -426,7 +502,6 @@ export function MitigaSeeArPage() {
     const dx = Math.abs(e.clientX - startX.current);
     const dy = Math.abs(e.clientY - startY.current);
 
-    // Clicks trigger (if dragged less than 5 pixels)
     if (dx < 5 && dy < 5) {
       if (!isArActive) return;
       const rect = e.currentTarget.getBoundingClientRect();
@@ -452,17 +527,38 @@ export function MitigaSeeArPage() {
     setModelDetections((current) => current.filter((d) => d.id !== detectionId));
   }, []);
 
+  const handleSelectWarning = useCallback((warning: ArWarning) => {
+    setSelectedWarning(warning);
+  }, []);
+
   // ── Hapus titik kumpul ───────────────────────────────────────────────────
   function handleDeleteTitik(id: string) {
     deleteTitikKumpul(id);
-    setTitikList((prev) => prev.filter((t) => t.id !== id));
+    setTitikList((prev) => {
+      const next = prev.filter((t) => t.id !== id);
+      if (selectedTitik?.id === id) {
+        setSelectedTitik(next[0] || null);
+        initialDistanceRef.current = null;
+      }
+      return next;
+    });
   }
 
   // ── Titik baru ditambahkan ───────────────────────────────────────────────
   function handleTitikSaved(titik: TitikKumpul) {
     setTitikList((prev) => [titik, ...prev]);
+    setSelectedTitik(titik);
+    initialDistanceRef.current = null;
     setActiveTab("daftar");
   }
+
+  const handleSelectTarget = (id: string) => {
+    const target = titikList.find(t => t.id === id);
+    if (target) {
+      setSelectedTitik(target);
+      initialDistanceRef.current = null;
+    }
+  };
 
   return (
     <ErrorBoundary>
@@ -471,7 +567,7 @@ export function MitigaSeeArPage() {
           className="min-h-screen bg-cream-50 text-ink-900 font-sans pb-20 md:pb-10"
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         >
-          {/* ── Header (Light Dashboard Theme) ── */}
+          {/* Header */}
           <header className="sticky top-0 z-40 border-b border-purple-700/8 bg-cream-50/90 backdrop-blur-md">
             <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2.5">
@@ -480,9 +576,7 @@ export function MitigaSeeArPage() {
                   className="flex h-9 w-9 items-center justify-center rounded-full border border-purple-700/10 bg-white text-purple-700 shadow-sm transition hover:bg-lavender-100"
                   aria-label="Kembali"
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
-                    <path d="M19 12H5M12 5l-7 7 7 7" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <ArrowLeft className="h-4 w-4" />
                 </Link>
                 <div>
                   <p className="font-heading text-lg font-black text-purple-900 leading-none">
@@ -502,7 +596,7 @@ export function MitigaSeeArPage() {
                     : gpsStatus === "low-accuracy"
                     ? "bg-amber-50 border-amber-200 text-amber-700"
                     : gpsStatus === "denied" || gpsStatus === "unavailable"
-                    ? "bg-red-50 border-red-200 text-red-655"
+                    ? "bg-red-50 border-red-250 text-red-700"
                     : "bg-lavender-50 border-lavender-200 text-purple-700"
                 }`}
               >
@@ -521,7 +615,7 @@ export function MitigaSeeArPage() {
               </div>
             </div>
 
-            {/* Tab Navigation (Consistent design) */}
+            {/* Tab Navigation */}
             <div className="mx-auto flex max-w-5xl gap-1.5 px-4 pb-3">
               {TAB_ITEMS.map((tab) => (
                 <button
@@ -545,7 +639,7 @@ export function MitigaSeeArPage() {
             </div>
           </header>
 
-          {/* ── Konten Tab ── */}
+          {/* Konten Halaman */}
           <div className="mx-auto max-w-5xl px-4 py-6">
             <AnimatePresence mode="wait">
               {/* TAB: MODE AR */}
@@ -557,242 +651,328 @@ export function MitigaSeeArPage() {
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {/* Error GPS */}
+                  {/* GPS Warning */}
                   {isArActive && gpsError && (
-                    <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+                    <div className="mb-4 rounded-2xl border border-coral-200 bg-coral-50 px-4 py-3">
                       <div className="flex items-start gap-2">
-                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-655" />
-                        <p className="text-xs font-semibold text-red-800">{gpsError}</p>
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-coral-750" />
+                        <p className="text-xs font-semibold text-coral-700">{gpsError}</p>
                       </div>
                     </div>
                   )}
 
-                  {/* Grid Layout untuk AR + Control Sidebar */}
-                  <div className={`grid gap-4 ${isArActive ? "lg:grid-cols-[1fr_360px]" : "grid-cols-1"}`}>
-                    
-                    {/* Layar AR / Video View */}
-                    <div 
-                      onPointerDown={handlePointerDown}
-                      onPointerMove={handlePointerMove}
-                      onPointerUp={handlePointerUp}
-                      className="relative overflow-hidden rounded-[2rem] border border-purple-700/10 bg-purple-950 shadow-[0_28px_90px_rgba(25,10,62,0.18)]"
-                      style={{ 
-                        height: isArActive ? "min(60vh, 480px)" : "min(70vh, 520px)",
-                        touchAction: "none"
-                      }}
-                    >
-                      {/* Video feed */}
-                      {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+                  {/* KASUS A: LAYAR SEBELUM AR (Dashboard Navigasi) */}
+                  {!isArActive && (
+                    <div className="grid gap-6 lg:grid-cols-[1fr_360px] grid-cols-1">
+                      
+                      {/* Status Evakuasi Card */}
+                      <div className="relative overflow-hidden rounded-[2rem] border border-purple-700/8 bg-white/80 p-8 shadow-sm flex flex-col gap-5 text-ink-900 items-center justify-center text-center">
+                        <div className="flex h-24 w-24 items-center justify-center rounded-[2.2rem] bg-lavender-100 text-purple-700 border border-lavender-200 shadow-inner">
+                          <Navigation className="h-12 w-12 animate-pulse" />
+                        </div>
+                        <div>
+                          <h3 className="font-heading text-2xl font-black text-purple-900">
+                            Navigasi Evakuasi Siaga
+                          </h3>
+                          <p className="mt-2 text-sm font-semibold text-ink-700 leading-relaxed max-w-sm">
+                            Kamera AR akan memproyeksikan lintasan pemandu di atas lantai menuju ke titik kumpul pilihan secara real-time.
+                          </p>
+                        </div>
+                        
+                        <div className="w-full max-w-sm rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3.5 flex items-start gap-2.5 text-left text-teal-850 text-xs font-semibold leading-relaxed">
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-teal-700" />
+                          <p>
+                            Pergi ke tempat terbuka dan lapang. Selalu ikuti instruksi resmi guru di sekolah dan prioritaskan keselamatan bersama saat terjadi bencana nyata.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Detail Panel & Navigasi Launcher */}
+                      <div className="flex flex-col gap-4">
+                        {/* Target Point Selector Card */}
+                        <div className="rounded-[2rem] border border-purple-700/8 bg-white/80 p-5 shadow-sm flex flex-col gap-4">
+                          <div>
+                            <label className="block text-[10px] font-black uppercase tracking-widest text-purple-700 mb-2">PILIH TITIK KUMPUL TUJUAN</label>
+                            {titikList.length === 0 ? (
+                              <div className="p-3 text-xs rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-bold">
+                                Belum ada titik terdaftar.
+                              </div>
+                            ) : (
+                              <div className="relative">
+                                <select
+                                  id="target-titik-select"
+                                  value={selectedTitik?.id || ""}
+                                  onChange={(e) => handleSelectTarget(e.target.value)}
+                                  className="w-full appearance-none rounded-xl border border-purple-200 bg-white px-4 py-3 text-xs font-bold text-ink-900 outline-none focus:border-purple-500 pr-10"
+                                >
+                                  {titikList.map(t => (
+                                    <option key={t.id} value={t.id}>{t.nama}</option>
+                                  ))}
+                                </select>
+                                <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-ink-400">
+                                  <ChevronRight className="h-4 w-4 rotate-90" />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Selected Destination Details */}
+                          {selectedTitik && (
+                            <div className="rounded-2xl border border-purple-700/5 bg-lavender-100/50 p-4 flex flex-col gap-2.5 text-ink-900">
+                              <h4 className="font-heading text-sm font-black text-purple-900">{selectedTitik.nama}</h4>
+                              <div className="flex flex-col gap-1.5 text-xs text-ink-700">
+                                <div className="flex justify-between">
+                                  <span>Koordinat:</span>
+                                  <span className="font-bold text-purple-900">{selectedTitik.lat.toFixed(5)}, {selectedTitik.lng.toFixed(5)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Jarak Evakuasi:</span>
+                                  <span className="font-bold text-teal-700">{activeDistance !== null ? formatDistance(activeDistance) : "Mendapatkan lokasi..."}</span>
+                                </div>
+                              </div>
+                              
+                              {/* Photo Confirmation Trigger */}
+                              <button
+                                type="button"
+                                onClick={() => setShowPhotoModal(true)}
+                                className="mt-2 text-[11px] font-black uppercase tracking-wider text-purple-700 flex items-center justify-center gap-1.5 hover:text-purple-900 transition"
+                              >
+                                <Camera className="h-3.5 w-3.5" />
+                                Lihat Foto Palang Titik Kumpul
+                              </button>
+                            </div>
+                          )}
+
+                          {/* Start AR Action */}
+                          {titikList.length > 0 ? (
+                            <button
+                              type="button"
+                              id="btn-mulai-ar"
+                              onClick={handleStartAr}
+                              className="mt-2 w-full flex items-center justify-center gap-2 rounded-2xl bg-purple-900 hover:bg-purple-800 py-3.5 font-heading text-sm font-black text-white shadow transition active:translate-y-0.5"
+                            >
+                              <Camera className="h-4.5 w-4.5" />
+                              MASUK NAVIGASI AR
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setActiveTab("tambah")}
+                              className="mt-2 w-full flex items-center justify-center gap-2 rounded-2xl bg-amber-600 hover:bg-amber-500 py-3.5 font-heading text-sm font-black text-white shadow transition"
+                            >
+                              <Plus className="h-4.5 w-4.5" />
+                              TANDAI TITIK KUMPUL PERTAMA
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Layer Info Cards */}
+                        <div className="grid grid-cols-1 gap-3">
+                          <LayerInfoCard
+                            color="indigo"
+                            label="Lapis Evakuasi"
+                            title="Panduan Jalur Kamera AR"
+                            desc="Lintasan 3D neon biru-putih dan panah meluncur akan diproyeksikan langsung pada feed kamera untuk memandu rute evakuasi."
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* KASUS B: LAYAR AR AKTIF (Kamera Navigation View) */}
+                  {isArActive && (
+                    <div className="relative overflow-hidden rounded-[2rem] border border-purple-700/10 bg-purple-950 shadow-2xl w-full h-[65vh] min-h-[500px]">
+                      
+                      {/* Video Feed */}
                       <video
                         ref={videoRef}
                         playsInline
                         autoPlay
                         muted
-                        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
-                          isArActive ? "opacity-100" : "opacity-0"
-                        }`}
+                        className="absolute inset-0 h-full w-full object-cover opacity-100 z-0"
                       />
 
-                      {/* Bounding Box overlay (AI) */}
+                      {/* Canvas 2D untuk Bounding Box COCO-SSD */}
                       <canvas
                         ref={boundingBoxCanvasRef}
                         className="pointer-events-none absolute inset-0 z-10 h-full w-full"
                       />
 
-                      {/* Three.js canvas */}
+                      {/* Canvas 3D untuk Three.js Navigation Layer */}
                       <canvas
                         ref={canvasRef}
-                        className="absolute inset-0 h-full w-full z-20"
-                        style={{ pointerEvents: "none" }}
+                        className="absolute inset-0 h-full w-full z-20 pointer-events-none"
                       />
 
-                      {/* Safety Marker Overlay (Manual & AI warning signs) */}
+                      {/* Safety Marker Overlay (Detected Warning Icons) */}
                       <SafetyMarkerOverlay
                         warnings={warnings}
                         onRemoveWarning={handleRemoveWarning}
+                        onSelectWarning={handleSelectWarning}
                       />
 
-                      {/* Info panduan drag-to-look desktop */}
-                      {isArActive && !rendererRef.current?.xr.isPresenting && (
-                        <div className="pointer-events-none absolute left-3 bottom-3 z-30 rounded-xl bg-purple-950/70 border border-white/10 px-3 py-1.5 backdrop-blur-sm">
-                          <p className="text-[10px] font-bold text-white/90">
+                      {/* HUD: Navigation Instruction Badge di Tengah Atas */}
+                      <div className="pointer-events-none absolute left-1/2 top-4 z-35 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-purple-950/85 border border-purple-500/30 px-4 py-2 shadow-lg backdrop-blur-sm">
+                        <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-400" />
+                        <span className="text-xs font-black uppercase tracking-wider text-cyan-300">FOLLOW THE WAY ⬆️</span>
+                      </div>
+
+                      {/* HUD: Estimated Time di Kanan Bawah */}
+                      <div className="pointer-events-none absolute right-3 bottom-3 z-30 rounded-xl bg-purple-950/85 border border-purple-800/30 px-3 py-2 shadow backdrop-blur-sm flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-purple-400" />
+                        <div className="text-left">
+                          <p className="text-[9px] font-bold text-purple-300 uppercase leading-none">SISA WAKTU</p>
+                          <p className="font-heading text-xs font-black text-emerald-400 leading-tight mt-0.5">{etaMinutes} MINS ({activeDistance !== null ? formatDistance(activeDistance) : "..."})</p>
+                        </div>
+                      </div>
+
+                      {/* Back/Stop Button di Pojok Kanan Atas */}
+                      <button
+                        type="button"
+                        id="btn-stop-ar"
+                        onClick={handleStopAr}
+                        className="absolute right-3 top-3 z-45 flex items-center gap-1.5 rounded-full border border-purple-800/30 bg-purple-950/85 px-4.5 py-2 font-heading text-xs font-black text-white backdrop-blur-sm transition hover:bg-purple-900"
+                      >
+                        <Square className="h-3 w-3 text-red-500 fill-red-500" />
+                        Keluar
+                      </button>
+
+                      {/* Drag to look instructions (Desktop fallback) */}
+                      {!rendererRef.current?.xr.isPresenting && (
+                        <div className="pointer-events-none absolute left-1/2 top-16 z-30 -translate-x-1/2 rounded-full bg-purple-950/70 px-3 py-1 backdrop-blur-sm">
+                          <p className="text-[10px] font-bold text-purple-200">
                             🖱️ Geser layar untuk melihat sekeliling (Drag to look)
                           </p>
                         </div>
                       )}
 
-                      {/* Idle state (Matches dashboard card) */}
-                      {!isArActive && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-6 p-6 text-center z-30 bg-gradient-to-b from-purple-950/60 to-purple-950/90 text-white">
-                          <div className="flex h-20 w-20 items-center justify-center rounded-[1.6rem] bg-purple-900/60 text-emerald-400 border border-purple-700/20 shadow-md">
-                            <Radio className="h-10 w-10 animate-pulse" />
-                          </div>
-                          <div>
-                            <h2 className="font-heading text-3xl font-black text-white">
-                              Mata Siaga AR
-                            </h2>
-                            <p className="mt-2 text-sm font-semibold text-purple-200">
-                              Kombinasi navigasi evakuasi & deteksi bahaya real-time
-                            </p>
-                          </div>
+                      {/* 3D Layers */}
+                      <ErrorBoundary>
+                        <BeaconLayer
+                          sceneRef={sceneRef}
+                          cameraRef={cameraRef}
+                          titikKumpulList={titikList}
+                          userPosition={userPosition}
+                          isActive={isArActive}
+                        />
+                      </ErrorBoundary>
 
-                          {titikList.length === 0 ? (
-                            <div className="rounded-2xl border border-amber-700/30 bg-amber-950/80 px-6 py-4">
-                              <p className="text-sm font-semibold text-amber-300">
-                                Belum ada titik kumpul terdaftar.
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => setActiveTab("tambah")}
-                                className="mt-3 rounded-full bg-amber-600 px-5 py-2.5 font-heading text-xs font-black text-white transition hover:bg-amber-500"
-                              >
-                                Tandai Titik Pertama
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              type="button"
-                              id="btn-mulai-ar"
-                              onClick={handleStartAr}
-                              className="flex items-center gap-2 rounded-full bg-purple-900 px-8 py-4 font-heading text-base font-black text-white shadow-[0_6px_0_#20104f] transition active:translate-y-1 active:shadow-[0_3px_0_#20104f] hover:bg-purple-800"
-                            >
-                              <Radio className="h-5 w-5" />
-                              Mulai AR
-                            </button>
-                          )}
-                        </div>
-                      )}
+                      <ErrorBoundary>
+                        <SurfaceArrowLayer
+                          sceneRef={sceneRef}
+                          cameraRef={cameraRef}
+                          xrStatus={xrStatus}
+                          hitInfo={hitInfo}
+                          userPosition={userPosition}
+                          nearestTitik={selectedTitik}
+                          isActive={isArActive}
+                        />
+                      </ErrorBoundary>
 
-                      {/* AR Aktif Layers */}
-                      {isArActive && (
-                        <>
-                          {/* Lapis A: Beacon GPS */}
-                          <ErrorBoundary
-                            fallback={
-                              <div className="pointer-events-none absolute left-3 top-16 z-30 rounded-full bg-red-950/80 border border-red-800/20 px-3 py-1.5 text-xs font-semibold text-red-300">
-                                ⚠️ Beacon GPS error
-                              </div>
-                            }
-                          >
-                            <BeaconLayer
-                              sceneRef={sceneRef}
-                              cameraRef={cameraRef}
-                              titikKumpulList={titikList}
-                              userPosition={userPosition}
-                              isActive={isArActive}
-                            />
-                          </ErrorBoundary>
+                      {/* HUD status default */}
+                      <ArStatusHud
+                        nearestDistanceM={activeDistance}
+                        nearestName={selectedTitik?.nama ?? null}
+                        gpsStatus={gpsStatus}
+                        isLowAccuracy={isLowAccuracy}
+                        accuracy={accuracy}
+                        isActive={isArActive}
+                      />
 
-                          {/* Lapis B: Panah Surface-AR / Floating Compass */}
-                          <ErrorBoundary
-                            fallback={
-                              <div className="pointer-events-none absolute left-3 top-24 z-30 rounded-full bg-amber-950/80 border border-amber-800/20 px-3 py-1.5 text-xs font-semibold text-amber-300">
-                                ⚠️ Panah AR nonaktif
-                              </div>
-                            }
-                          >
-                            <SurfaceArrowLayer
-                              sceneRef={sceneRef}
-                              cameraRef={cameraRef}
-                              xrStatus={xrStatus}
-                              hitInfo={hitInfo}
-                              userPosition={userPosition}
-                              nearestTitik={nearestResult?.titik ?? null}
-                              isActive={isArActive}
-                            />
-                          </ErrorBoundary>
-
-                          {/* HUD Ringkas di Layar */}
-                          <ArStatusHud
-                            nearestDistanceM={nearestResult?.distanceM ?? null}
-                            nearestName={nearestResult?.titik.nama ?? null}
-                            gpsStatus={gpsStatus}
-                            isLowAccuracy={isLowAccuracy}
-                            accuracy={accuracy}
-                            isActive={isArActive}
-                          />
-
-                          {/* Tombol Stop */}
+                      {/* Drawer untuk Deteksi Bahaya AI (COCO-SSD) dan Photo Confirmation */}
+                      <div className="absolute right-3 top-16 z-30 flex flex-col gap-2">
+                        {/* Auto-detection control */}
+                        <div className="pointer-events-auto bg-purple-950/85 border border-purple-800/30 rounded-xl p-1 shadow-lg backdrop-blur-sm">
                           <button
                             type="button"
-                            id="btn-stop-ar"
-                            onClick={handleStopAr}
-                            className="absolute right-3 top-3 z-40 flex items-center gap-1.5 rounded-full border border-white/10 bg-purple-950/80 px-4 py-2 font-heading text-xs font-black text-white backdrop-blur-sm transition hover:bg-purple-900/90"
+                            onClick={() => setIsAutoDetectionEnabled(!isAutoDetectionEnabled)}
+                            className={`flex h-8 w-8 items-center justify-center rounded-lg transition ${
+                              isAutoDetectionEnabled ? "bg-purple-700 text-white" : "text-purple-300 hover:bg-purple-900"
+                            }`}
+                            title={isAutoDetectionEnabled ? "Matikan AI" : "Aktifkan AI"}
                           >
-                            <Square className="h-3 w-3" />
-                            Berhenti
+                            <Camera className="h-4.5 w-4.5" />
                           </button>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Sidebar Kontrol (Consistent Light Theme) */}
-                    {isArActive && (
-                      <aside className="grid gap-4 lg:content-start">
-                        {/* Status Jarak */}
-                        <div className="rounded-[1.4rem] border border-purple-700/8 bg-white/70 p-4 backdrop-blur shadow-sm text-ink-900">
-                          <p className="text-xs font-black text-purple-700 uppercase tracking-widest leading-none">Rute Evakuasi</p>
-                          {nearestResult ? (
-                            <div className="mt-2.5">
-                              <h4 className="font-heading text-base font-black text-ink-900">{nearestResult.titik.nama}</h4>
-                              <p className="mt-1 text-sm text-teal-700 font-bold">Jarak: {formatDistance(nearestResult.distanceM)}</p>
-                            </div>
-                          ) : (
-                            <p className="mt-2 text-sm text-ink-500">Menghitung jarak ke titik kumpul...</p>
-                          )}
                         </div>
 
-                        {/* Deteksi Otomatis AI (COCO-SSD) */}
-                        <ArAutoDetectionControl
-                          status={detectorStatus}
-                          enabled={isAutoDetectionEnabled}
-                          disabled={!isArActive}
-                          errorMessage={detectorErrorMessage}
-                          onToggle={() => setIsAutoDetectionEnabled(!isAutoDetectionEnabled)}
-                        />
+                        {/* Toggle sign photo confirmation */}
+                        {selectedTitik && (
+                          <div className="pointer-events-auto bg-purple-950/85 border border-purple-800/30 rounded-xl p-1 shadow-lg backdrop-blur-sm">
+                            <button
+                              type="button"
+                              onClick={() => setShowPhotoModal(true)}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-purple-300 hover:bg-purple-900 hover:text-purple-400 transition"
+                              title="Lihat Foto Palang"
+                            >
+                              <Layers className="h-4.5 w-4.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
-                        {/* Toolbar Penanda Risiko Manual */}
-                        <ArRiskToolbar
-                          options={standaloneArSafetyLensActivity.riskOptions}
-                          selectedClass={selectedRiskClass}
-                          onSelectClass={setSelectedRiskClass}
-                          onClearWarnings={() => setManualDetections([])}
-                        />
+                      {/* Modal Edukasi Warning Bencana (Tapped Warning Details) */}
+                      <AnimatePresence>
+                        {selectedWarning && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 50 }}
+                            className="absolute inset-x-3 bottom-16 z-50 rounded-[2rem] border border-purple-500/30 bg-purple-950/95 p-5 text-white shadow-2xl backdrop-blur-md pointer-events-auto max-w-sm mx-auto"
+                          >
+                            <div className="flex items-start gap-3">
+                              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-950/50 border border-red-800/30 text-red-400">
+                                <AlertTriangle className="h-6 w-6" />
+                              </span>
+                              <div className="flex-1 text-left">
+                                <h4 className="font-heading text-base font-black text-white">{selectedWarning.title}</h4>
+                                <p className="mt-2 text-xs leading-relaxed text-slate-350">{selectedWarning.message}</p>
+                                <div className="mt-3 flex items-start gap-1.5 rounded-xl bg-purple-900/50 border border-purple-800/25 px-3 py-2 text-[10px] font-semibold text-purple-200">
+                                  <span className="font-black text-cyan-400">Solusi:</span>
+                                  <span>{selectedWarning.actionLabel}</span>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setSelectedWarning(null)}
+                                className="text-purple-300 hover:text-white"
+                              >
+                                <X className="h-5 w-5" />
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setSelectedWarning(null)}
+                              className="mt-4 w-full rounded-xl bg-purple-750 hover:bg-purple-700 py-2.5 font-heading text-xs font-black text-white transition"
+                            >
+                              Mengerti & Siaga
+                            </button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
 
-                        {/* Panel Umpan Balik Warnings */}
-                        <ArFeedbackPanel
-                          warnings={warnings}
-                          successFeedback={standaloneArSafetyLensActivity.successFeedback}
-                          rewardXp={standaloneArSafetyLensActivity.rewardXp}
-                          onComplete={() => {
-                            void handleStopAr();
-                            alert("Bagus! Kamu berhasil memetakan risiko sekitar demi keselamatan bersama.");
-                          }}
-                        />
-                      </aside>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  {/* Info 3 Lapis (Consistent Light Theme Cards) */}
-                  {!isArActive && titikList.length > 0 && (
-                    <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <LayerInfoCard
-                        color="emerald"
-                        label="Lapis A"
-                        title="Beacon GPS"
-                        desc="Pilar cahaya neon melayang vertikal di atas tiap titik kumpul. Ukuran berubah dinamis berdasarkan jarak."
+                  {/* Manual Detection Toolbar & feedback (AR Active Drawer) */}
+                  {isArActive && (
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Toolbar Penanda Risiko Manual */}
+                      <ArRiskToolbar
+                        options={standaloneArSafetyLensActivity.riskOptions}
+                        selectedClass={selectedRiskClass}
+                        onSelectClass={setSelectedRiskClass}
+                        onClearWarnings={() => setManualDetections([])}
                       />
-                      <LayerInfoCard
-                        color="amber"
-                        label="Lapis B"
-                        title="Panah AR"
-                        desc="Panah penunjuk jalan interaktif. Merekat di lantai pada WebXR, atau berupa kompas 3D mengambang di desktop."
-                      />
-                      <LayerInfoCard
-                        color="indigo"
-                        label="Lapis C"
-                        title="Deteksi Risiko"
-                        desc="Pemindai AI TensorFlow COCO-SSD untuk melacak ancaman sekitar (kursi, meja, benda tinggi) + penanda manual."
+
+                      {/* Panel Umpan Balik Warnings */}
+                      <ArFeedbackPanel
+                        warnings={warnings}
+                        successFeedback={standaloneArSafetyLensActivity.successFeedback}
+                        rewardXp={standaloneArSafetyLensActivity.rewardXp}
+                        onComplete={() => {
+                          void handleStopAr();
+                          alert("Luar biasa! Kamu berhasil memetakan rintangan evakuasi di sekolah secara presisi.");
+                        }}
                       />
                     </div>
                   )}
@@ -834,6 +1014,68 @@ export function MitigaSeeArPage() {
               )}
             </AnimatePresence>
           </div>
+
+          {/* Modal Konfirmasi Foto Palang Titik Kumpul */}
+          <AnimatePresence>
+            {showPhotoModal && selectedTitik && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setShowPhotoModal(false)}
+                  className="absolute inset-0 bg-purple-950/40 backdrop-blur-sm pointer-events-auto"
+                />
+                
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  className="relative z-10 w-full max-w-sm overflow-hidden rounded-[2rem] border border-purple-700/10 bg-white p-6 text-center shadow-xl pointer-events-auto text-ink-900"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setShowPhotoModal(false)}
+                    className="absolute right-4 top-4 text-ink-400 hover:text-ink-900 transition"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+
+                  <h3 className="font-heading text-lg font-black text-purple-900 flex items-center justify-center gap-2 mb-4">
+                    <Camera className="h-5 w-5 text-purple-700" />
+                    Foto Palang Titik Kumpul
+                  </h3>
+
+                  {selectedTitik.fotoBase64 ? (
+                    <div className="relative overflow-hidden rounded-2xl border border-purple-100 h-64 bg-lavender-50">
+                      <img
+                        src={selectedTitik.fotoBase64}
+                        alt={`Foto palang ${selectedTitik.nama}`}
+                        className="h-full w-full object-contain"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-purple-200 bg-lavender-50/50 text-ink-400 text-xs font-semibold">
+                      Tidak ada foto terdaftar.
+                    </div>
+                  )}
+
+                  <p className="mt-4 text-xs font-bold text-ink-700">
+                    Lokasi: <span className="text-purple-900 font-extrabold">{selectedTitik.nama}</span>
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPhotoModal(false)}
+                    className="mt-5 w-full rounded-xl bg-purple-900 hover:bg-purple-800 py-3 text-xs font-black text-white transition shadow-sm"
+                  >
+                    Tutup Foto
+                  </button>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
         </main>
       </BrowserCompatCheck>
     </ErrorBoundary>
@@ -843,9 +1085,9 @@ export function MitigaSeeArPage() {
 // ─── Helper: Layer info card ──────────────────────────────────────────────────
 type LayerColor = "emerald" | "amber" | "indigo";
 const COLOR_MAP: Record<LayerColor, string> = {
-  emerald: "bg-white/80 border-purple-700/8 text-teal-800 shadow-sm",
-  amber: "bg-white/80 border-purple-700/8 text-amber-800 shadow-sm",
-  indigo: "bg-white/80 border-purple-700/8 text-purple-900 shadow-sm",
+  emerald: "bg-white border-purple-700/8 text-teal-700 shadow-sm",
+  amber: "bg-white border-purple-700/8 text-amber-700 shadow-sm",
+  indigo: "bg-white border-purple-700/8 text-purple-900 shadow-sm",
 };
 
 function LayerInfoCard({
@@ -863,11 +1105,12 @@ function LayerInfoCard({
     <article
       className={`rounded-[1.4rem] border p-4 backdrop-blur-sm ${COLOR_MAP[color]}`}
     >
-      <p className="text-[10px] font-black uppercase tracking-widest text-purple-600/70">
+      <p className="text-[10px] font-black uppercase tracking-widest text-ink-400">
         {label}
       </p>
-      <p className="mt-0.5 font-heading text-lg font-black text-ink-900">{title}</p>
-      <p className="mt-1 text-sm font-semibold leading-relaxed text-ink-700">{desc}</p>
+      <p className="mt-0.5 font-heading text-sm font-black text-ink-900">{title}</p>
+      <p className="mt-1 text-[11px] font-semibold leading-relaxed text-ink-700">{desc}</p>
     </article>
   );
 }
+

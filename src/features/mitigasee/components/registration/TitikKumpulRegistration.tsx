@@ -136,10 +136,12 @@ export function TitikKumpulRegistration({
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const width = video.videoWidth || video.clientWidth || 640;
+    const height = video.videoHeight || video.clientHeight || 480;
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext("2d");
-    ctx?.drawImage(video, 0, 0);
+    ctx?.drawImage(video, 0, 0, width, height);
 
     let dataUrl = canvas.toDataURL("image/jpeg", 0.85);
     dataUrl = await compressImage(dataUrl, 800);
@@ -188,15 +190,15 @@ export function TitikKumpulRegistration({
   }
 
   return (
-    <div className="rounded-[1.4rem] border border-purple-800/30 bg-purple-950/60 p-5 shadow-lg backdrop-blur-md">
-      <h3 className="mb-4 font-heading text-lg font-black text-white">
+    <div className="rounded-[2rem] border border-purple-700/8 bg-white/80 p-5 md:p-6 shadow-[0_14px_42px_rgba(47,23,110,0.06)]">
+      <h3 className="mb-4 font-heading text-lg font-black text-purple-900">
         Tandai Titik Kumpul Baru
       </h3>
 
       {/* IDLE */}
       {step === "idle" && (
         <div className="text-center py-4">
-          <p className="mb-5 text-sm font-semibold text-purple-200">
+          <p className="mb-5 text-sm font-semibold text-ink-700">
             Pergi ke lokasi titik kumpul (lapangan, koridor, dll.), lalu tekan
             tombol di bawah.
           </p>
@@ -204,7 +206,7 @@ export function TitikKumpulRegistration({
             type="button"
             id="btn-tandai-titik"
             onClick={handleStart}
-            className="inline-flex items-center gap-2 rounded-full bg-teal-600 px-6 py-3 font-heading text-sm font-black text-white shadow-[0_4px_0_#115e59] transition active:translate-y-0.5 active:shadow-[0_2px_0_#115e59] hover:bg-teal-500"
+            className="inline-flex items-center gap-2 rounded-full bg-purple-900 px-6 py-3 font-heading text-sm font-extrabold text-white shadow-[0_4px_0_#20104f] transition active:translate-y-0.5 active:shadow-[0_2px_0_#20104f] hover:bg-purple-700"
           >
             <MapPin className="h-4 w-4" />
             Tandai Titik Ini
@@ -215,19 +217,19 @@ export function TitikKumpulRegistration({
       {/* GETTING GPS */}
       {step === "getting-gps" && (
         <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-900 border-t-teal-400" />
-          <p className="text-sm font-semibold text-purple-200">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-800" />
+          <p className="text-sm font-semibold text-ink-700">
             Mendapatkan koordinat GPS...
           </p>
-          <p className="text-xs text-purple-400/80">Arahkan ke langit terbuka untuk akurasi terbaik</p>
+          <p className="text-xs text-ink-400">Arahkan ke langit terbuka untuk akurasi terbaik</p>
         </div>
       )}
 
       {/* REQUESTING CAMERA */}
       {step === "requesting-camera" && (
         <div className="flex flex-col items-center gap-3 py-8 text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-900 border-t-purple-500" />
-          <p className="text-sm font-semibold text-purple-200">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-800" />
+          <p className="text-sm font-semibold text-ink-700">
             Meminta akses kamera...
           </p>
         </div>
@@ -237,15 +239,15 @@ export function TitikKumpulRegistration({
       {step === "capturing" && (
         <div className="flex flex-col items-center gap-4">
           {gpsCoords && (
-            <div className="w-full rounded-xl bg-teal-950/50 border border-teal-850/30 px-3 py-2.5 text-xs font-semibold text-teal-300">
-              📍 GPS: {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}{" "}
-              (±{Math.round(gpsCoords.accuracy)}m)
+            <div className="w-full rounded-xl bg-teal-50 border border-teal-150 px-3 py-2.5 text-xs font-semibold text-teal-850">
+              📍 GPS Terdeteksi: {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}
             </div>
           )}
-          <div className="relative w-full overflow-hidden rounded-2xl bg-black border border-purple-800/20">
+          <div className="relative w-full overflow-hidden rounded-2xl bg-black border border-purple-100">
             {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video
               ref={videoRef}
+              autoPlay
               playsInline
               muted
               className="h-56 w-full object-cover"
@@ -255,7 +257,7 @@ export function TitikKumpulRegistration({
           <button
             type="button"
             onClick={handleCapture}
-            className="flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 font-heading text-sm font-black text-white shadow-[0_4px_0_#4c1d95] transition active:translate-y-0.5 active:shadow-[0_2px_0_#4c1d95] hover:bg-purple-500"
+            className="flex items-center gap-2 rounded-full bg-purple-900 px-6 py-3 font-heading text-sm font-extrabold text-white shadow-[0_4px_0_#20104f] transition active:translate-y-0.5 active:shadow-[0_2px_0_#20104f] hover:bg-purple-750"
           >
             <Camera className="h-4 w-4" />
             Ambil Foto
@@ -267,7 +269,7 @@ export function TitikKumpulRegistration({
       {step === "naming" && (
         <div className="flex flex-col gap-4">
           {capturedPhoto && (
-            <div className="relative overflow-hidden rounded-2xl border border-purple-800/30 h-40">
+            <div className="relative overflow-hidden rounded-2xl border border-purple-100 bg-lavender-50 h-40">
               <img
                 src={capturedPhoto}
                 alt="Foto lokasi"
@@ -278,7 +280,7 @@ export function TitikKumpulRegistration({
           <div>
             <label
               htmlFor="nama-titik-input"
-              className="mb-1.5 block text-xs font-black uppercase tracking-widest text-purple-400"
+              className="mb-1.5 block text-xs font-black uppercase tracking-widest text-purple-700"
             >
               Nama Titik Kumpul
             </label>
@@ -289,14 +291,14 @@ export function TitikKumpulRegistration({
               onChange={(e) => setNamaInput(e.target.value)}
               placeholder='Contoh: "Lapangan Sekolah"'
               maxLength={60}
-              className="w-full rounded-2xl border border-purple-800/30 bg-purple-950 px-4 py-3 text-sm font-semibold text-white outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-900/40"
+              className="w-full rounded-2xl border border-purple-200 bg-white px-4 py-3 text-sm font-semibold text-ink-900 outline-none focus:border-purple-750 focus:ring-2 focus:ring-purple-200"
             />
           </div>
           <div className="flex gap-3">
             <button
               type="button"
               onClick={handleReset}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-purple-800/30 bg-purple-900/30 font-heading text-sm font-black text-purple-300 transition hover:bg-purple-900/50"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full border border-purple-200 bg-white font-heading text-sm font-extrabold text-purple-700 transition hover:bg-purple-50"
             >
               <X className="h-4 w-4" />
               Ulangi
@@ -305,7 +307,7 @@ export function TitikKumpulRegistration({
               type="button"
               onClick={handleSave}
               disabled={!namaInput.trim()}
-              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-teal-650 font-heading text-sm font-black text-white shadow-[0_4px_0_#115e59] transition active:translate-y-0.5 active:shadow-[0_2px_0_#115e59] disabled:opacity-50 hover:bg-teal-555"
+              className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-purple-900 font-heading text-sm font-extrabold text-white shadow-[0_4px_0_#20104f] transition active:translate-y-0.5 active:shadow-[0_2px_0_#20104f] disabled:opacity-50 hover:bg-purple-750"
             >
               <Check className="h-4 w-4" />
               Simpan
@@ -317,24 +319,24 @@ export function TitikKumpulRegistration({
       {/* SAVING */}
       {step === "saving" && (
         <div className="flex flex-col items-center gap-3 py-8">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-900 border-t-teal-400" />
-          <p className="text-sm font-semibold text-purple-200">Menyimpan titik...</p>
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-200 border-t-purple-800" />
+          <p className="text-sm font-semibold text-ink-700">Menyimpan titik...</p>
         </div>
       )}
 
       {/* DONE */}
       {step === "done" && (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-950/60 border border-teal-800/40 text-teal-400">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-50 border border-teal-200 text-teal-600">
             <Check className="h-7 w-7" />
           </div>
-          <p className="font-heading text-lg font-black text-teal-400">
+          <p className="font-heading text-lg font-black text-teal-800">
             Titik Berhasil Disimpan!
           </p>
           <button
             type="button"
             onClick={handleReset}
-            className="mt-2 rounded-full border border-purple-800/30 bg-purple-900/30 px-5 py-2.5 font-heading text-sm font-black text-purple-300 transition hover:bg-purple-900/50"
+            className="mt-2 rounded-full border border-purple-200 bg-white px-5 py-2.5 font-heading text-sm font-extrabold text-purple-700 transition hover:bg-purple-50"
           >
             Tandai Titik Lain
           </button>
@@ -344,15 +346,15 @@ export function TitikKumpulRegistration({
       {/* ERROR */}
       {step === "error" && (
         <div className="flex flex-col gap-3">
-          <div className="rounded-2xl border border-red-800/30 bg-red-950/60 px-4 py-3">
-            <p className="text-sm font-semibold text-red-300">
+          <div className="rounded-2xl border border-red-150 bg-red-50 px-4 py-3">
+            <p className="text-sm font-semibold text-red-800">
               ⚠️ {errorMsg ?? "Terjadi kesalahan yang tidak diketahui."}
             </p>
           </div>
           <button
             type="button"
             onClick={handleReset}
-            className="rounded-full bg-purple-600 px-5 py-2.5 font-heading text-sm font-black text-white shadow-[0_4px_0_#4c1d95] transition active:translate-y-0.5 hover:bg-purple-500"
+            className="rounded-full bg-purple-900 px-5 py-2.5 font-heading text-sm font-extrabold text-white shadow-[0_4px_0_#20104f] transition active:translate-y-0.5 hover:bg-purple-700"
           >
             Coba Lagi
           </button>

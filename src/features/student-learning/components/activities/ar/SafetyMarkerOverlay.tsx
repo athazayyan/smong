@@ -5,9 +5,10 @@ import type { ArWarning } from "@/features/student-learning/types";
 interface SafetyMarkerOverlayProps {
   warnings: ArWarning[];
   onRemoveWarning: (warningId: string) => void;
+  onSelectWarning?: (warning: ArWarning) => void;
 }
 
-export function SafetyMarkerOverlay({ warnings, onRemoveWarning }: SafetyMarkerOverlayProps) {
+export function SafetyMarkerOverlay({ warnings, onRemoveWarning, onSelectWarning }: SafetyMarkerOverlayProps) {
   return (
     <div className="pointer-events-none absolute inset-0 z-30">
       {warnings.map((warning) => {
@@ -15,7 +16,10 @@ export function SafetyMarkerOverlay({ warnings, onRemoveWarning }: SafetyMarkerO
         return (
           <div
             key={warning.id}
-            className={`pointer-events-auto absolute min-h-12 min-w-12 -translate-x-1/2 -translate-y-1/2 rounded-[1.15rem] border-2 px-3 py-2 text-left shadow-[0_12px_30px_rgba(25,10,62,0.22)] backdrop-blur ${tone.shell}`}
+            onClick={() => onSelectWarning?.(warning)}
+            className={`pointer-events-auto absolute min-h-12 min-w-12 -translate-x-1/2 -translate-y-1/2 rounded-[1.15rem] border-2 px-3 py-2 text-left shadow-[0_12px_30px_rgba(25,10,62,0.22)] backdrop-blur ${
+              onSelectWarning ? "cursor-pointer hover:scale-[1.03] active:scale-95 transition-all duration-200" : ""
+            } ${tone.shell}`}
             style={{
               left: `${warning.xPercent}%`,
               top: `${warning.yPercent}%`,
@@ -33,7 +37,10 @@ export function SafetyMarkerOverlay({ warnings, onRemoveWarning }: SafetyMarkerO
                 type="button"
                 aria-label={`Hapus warning ${warning.title}`}
                 className={`ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${tone.close}`}
-                onClick={() => onRemoveWarning(warning.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveWarning(warning.id);
+                }}
               >
                 <X className="h-4 w-4" />
               </button>
