@@ -6,10 +6,10 @@ import {
 
 export const studentNavbarItems = [
   {
-    id: "home",
-    label: "Beranda",
-    href: "/siswa",
-    iconName: "Home",
+    id: "ar-lens",
+    label: "MitigaSee",
+    href: "/siswa/ar",
+    iconName: "Camera",
     isVisible: true,
     placement: "primary",
     mobileSlot: "bottom",
@@ -25,7 +25,7 @@ export const studentNavbarItems = [
   },
   {
     id: "badges",
-    label: "MitigaLabs",
+    label: "MitigaLab",
     href: "/siswa/simulasi-bencana",
     iconName: "Activity",
     isVisible: true,
@@ -40,15 +40,6 @@ export const studentNavbarItems = [
     isVisible: true,
     placement: "primary",
     mobileSlot: "bottom",
-  },
-  {
-    id: "ar-lens",
-    label: "MitigaSee",
-    href: "/siswa/ar",
-    iconName: "Camera",
-    isVisible: true,
-    placement: "secondary",
-    mobileSlot: "sheet",
   },
   {
     id: "early-warning",

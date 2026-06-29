@@ -41,11 +41,11 @@ export function StudentNavbar({ items, schoolSyncStatus, schoolName }: StudentNa
   );
   const primaryItems = visibleItems.filter((item) => item.placement === "primary");
   const desktopItems = visibleItems;
-  const tabletItems = visibleItems.filter((item) => item.placement === "primary").slice(0, 4);
+  const tabletItems = visibleItems.filter((item) => item.placement === "primary");
   const tabletSheetItems = visibleItems.filter(
     (item) => !tabletItems.some((tabletItem) => tabletItem.id === item.id)
   );
-  const bottomItems = visibleItems.filter((item) => item.mobileSlot === "bottom").slice(0, 5);
+  const bottomItems = visibleItems.filter((item) => item.mobileSlot === "bottom");
   const mobileSheetItems = visibleItems.filter((item) => item.mobileSlot !== "bottom");
 
   useEffect(() => {
@@ -102,8 +102,6 @@ export function StudentNavbar({ items, schoolSyncStatus, schoolName }: StudentNa
         <MobileStudentTopBar
           schoolName={schoolName}
           schoolSyncStatus={schoolSyncStatus}
-          isMenuOpen={isMenuOpen}
-          onToggleMenu={() => setIsMenuOpen((current) => !current)}
         />
       </nav>
 
@@ -192,13 +190,9 @@ function TabletStudentNav({
 function MobileStudentTopBar({
   schoolSyncStatus,
   schoolName,
-  isMenuOpen,
-  onToggleMenu,
 }: {
   schoolSyncStatus: SchoolSyncStatus;
   schoolName?: string;
-  isMenuOpen: boolean;
-  onToggleMenu: () => void;
 }) {
   return (
     <div data-student-nav-shell className="mx-auto rounded-[1.7rem] border border-white/75 bg-cream-50/88 px-3 shadow-[0_14px_38px_rgba(47,23,110,0.1)] backdrop-blur-xl md:hidden">
@@ -206,7 +200,6 @@ function MobileStudentTopBar({
         <BrandLink compact />
         <div className="flex min-w-0 items-center gap-2">
           <StatusChip schoolName={schoolName} schoolSyncStatus={schoolSyncStatus} mobile />
-          <MenuButton isOpen={isMenuOpen} onClick={onToggleMenu} label="Buka menu siswa" />
         </div>
       </div>
     </div>
