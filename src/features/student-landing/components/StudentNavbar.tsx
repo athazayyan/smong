@@ -18,6 +18,7 @@ import {
   Shield,
   User,
   X,
+  Bell,
 } from "lucide-react";
 import type { SchoolSyncStatus, StudentNavbarItem } from "../types";
 
@@ -309,11 +310,13 @@ function StudentMobileMenuSheet({
 function BrandLink({ compact = false }: { compact?: boolean }) {
   return (
     <Link href="/siswa" className="flex min-h-11 shrink-0 items-center gap-2">
-      <div className={`${compact ? "h-9 w-9" : "h-10 w-10"} flex items-center justify-center rounded-full bg-purple-700 text-white shadow-[0_7px_0_#32146f]`}>
-        <Shield className="h-5 w-5" />
-      </div>
-      <span className={`${compact ? "text-xl" : "text-2xl"} font-heading font-black text-purple-900`}>
-        Smong
+      <img
+        src="/assets/logo-mitigakids.png"
+        alt="MitigaKids Logo"
+        className={`${compact ? "h-9 w-9" : "h-10 w-10"} object-contain rounded-full border border-purple-100/50 shadow-sm`}
+      />
+      <span className={`${compact ? "text-xl" : "text-2xl"} font-heading font-black text-purple-900 whitespace-nowrap`}>
+        MitigaKids
       </span>
     </Link>
   );
@@ -412,5 +415,6 @@ function renderStudentNavIcon(iconName: StudentNavbarItem["iconName"], className
   if (iconName === "Gamepad2") return <Gamepad2 className={className} />;
   if (iconName === "KeyRound") return <KeyRound className={className} />;
   if (iconName === "Activity") return <Activity className={className} />;
+  if (iconName === "Bell") return <Bell className={className} />;
   return <User className={className} />;
 }

@@ -16,7 +16,7 @@ export const studentNavbarItems = [
   },
   {
     id: "modules",
-    label: "Modul",
+    label: "MitigaLearn",
     href: "/siswa/modul",
     iconName: "BookOpen",
     isVisible: true,
@@ -25,7 +25,7 @@ export const studentNavbarItems = [
   },
   {
     id: "badges",
-    label: "Simulasi Bencana",
+    label: "MitigaLabs",
     href: "/siswa/simulasi-bencana",
     iconName: "Activity",
     isVisible: true,
@@ -34,7 +34,7 @@ export const studentNavbarItems = [
   },
   {
     id: "games",
-    label: "Games",
+    label: "Mitigames",
     href: "/siswa/games",
     iconName: "Gamepad2",
     isVisible: true,
@@ -43,7 +43,7 @@ export const studentNavbarItems = [
   },
   {
     id: "ar-lens",
-    label: "AR Safety Lens",
+    label: "MitigaSee",
     href: "/siswa/ar",
     iconName: "Camera",
     isVisible: true,
@@ -51,19 +51,10 @@ export const studentNavbarItems = [
     mobileSlot: "sheet",
   },
   {
-    id: "school-code",
-    label: "Masukkan Kode",
-    href: "/siswa/kode-sekolah",
-    iconName: "KeyRound",
-    isVisible: true, // Will be controlled conditionally based on state later
-    placement: "status-action",
-    mobileSlot: "hidden-when-synced",
-  },
-  {
-    id: "profile",
-    label: "Profil",
-    href: "/siswa/profil",
-    iconName: "User",
+    id: "early-warning",
+    label: "Siaga BMKG",
+    href: "/siswa/peringatan-dini",
+    iconName: "Bell",
     isVisible: true,
     placement: "primary",
     mobileSlot: "bottom",

@@ -26,9 +26,10 @@ interface ChapterNodeProps {
   displayStatus: ChapterStatus;
   index: number;
   visual: ChapterMapVisual;
+  onClick?: (chapterId: string) => void;
 }
 
-export function ChapterNode({ chapter, displayStatus, index, visual }: ChapterNodeProps) {
+export function ChapterNode({ chapter, displayStatus, index, visual, onClick }: ChapterNodeProps) {
   const isLocked = displayStatus === "locked";
   const isActive = displayStatus === "active";
 
@@ -91,6 +92,18 @@ export function ChapterNode({ chapter, displayStatus, index, visual }: ChapterNo
 
   if (isLocked) {
     return <div data-chapter-node>{content}</div>;
+  }
+
+  if (onClick) {
+    return (
+      <button 
+        data-chapter-node 
+        onClick={() => onClick(chapter.id)} 
+        className="block w-full text-left cursor-pointer"
+      >
+        {content}
+      </button>
+    );
   }
 
   return (

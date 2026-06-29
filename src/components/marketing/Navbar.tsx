@@ -38,11 +38,13 @@ export function Navbar() {
       <nav className="max-w-6xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="w-10 h-10 rounded-full bg-purple-700 flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Shield className="w-5 h-5 text-white" />
-          </div>
-          <span className="font-heading text-2xl font-bold text-purple-900 group-hover:text-purple-700 transition-colors">
-            Smong
+          <img
+            src="/assets/logo-mitigakids.png"
+            alt="MitigaKids Logo"
+            className="w-10 h-10 object-contain rounded-full border border-purple-100/50 shadow-sm group-hover:scale-110 transition-transform"
+          />
+          <span className="font-heading text-2xl font-bold text-purple-900 group-hover:text-purple-700 transition-colors whitespace-nowrap">
+            MitigaKids
           </span>
         </Link>
 

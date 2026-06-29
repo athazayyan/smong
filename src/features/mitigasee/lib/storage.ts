@@ -58,8 +58,10 @@ export async function compressImage(
       // Graceful fallback — kembalikan dataUrl asli tanpa crash
       resolve(dataUrl);
     };
-    // Penting: set crossOrigin SEBELUM src untuk menghindari tainted canvas
-    img.crossOrigin = "anonymous";
+    // Jika bukan URL eksternal (yaitu data:), crossOrigin tidak perlu dan bisa bikin error
+    if (!dataUrl.startsWith("data:")) {
+      img.crossOrigin = "anonymous";
+    }
     img.src = dataUrl;
   });
 }

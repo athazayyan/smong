@@ -21,8 +21,12 @@ export function Sidebar() {
     <aside className="hidden lg:flex flex-col w-20 xl:w-56 shrink-0 bg-white border-r-2 border-lavender-200/50 min-h-screen py-6 px-3 xl:px-4">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2 mb-8 px-2">
-        <Shield className="w-8 h-8 text-purple-700" />
-        <span className="hidden xl:block font-heading text-lg font-bold text-purple-700">Smong</span>
+        <img
+          src="/assets/logo-mitigakids.png"
+          alt="MitigaKids Logo"
+          className="w-8 h-8 object-contain rounded-full border border-purple-100/50 shadow-sm"
+        />
+        <span className="hidden xl:block font-heading text-lg font-bold text-purple-700">MitigaKids</span>
       </Link>
 
       {/* Nav */}

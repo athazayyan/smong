@@ -23,6 +23,8 @@ interface SurfaceArrowLayerProps {
 export function SurfaceArrowLayer({
   sceneRef,
   cameraRef,
+  xrStatus,
+  hitInfo,
   userPosition,
   nearestTitik,
   isActive,
@@ -141,14 +143,20 @@ export function SurfaceArrowLayer({
         const visualX = x * visualScale;
         const visualZ = -z * visualScale; // Z negatif = depan
 
-        // Posisikan group di kaki kamera (tinggi lantai Y = -1.35)
-        arrow.position.copy(camera.position);
-        arrow.position.y = -1.35;
+        // Gunakan hitInfo dari WebXR jika tersedia untuk menempel di lantai nyata (AR sungguhan)
+        if (xrStatus === "active" && hitInfo && hitInfo.found) {
+          const hitMatrix = new THREE.Matrix4().fromArray(hitInfo.matrix);
+          arrow.position.setFromMatrixPosition(hitMatrix);
+        } else {
+          // Posisikan group di kaki kamera (tinggi lantai Y = -1.35) sebagai fallback
+          arrow.position.copy(camera.position);
+          arrow.position.y = -1.35;
+        }
 
         // Hadapkan rute ke target koordinat world
         const targetWorldPos = new THREE.Vector3(
           camera.position.x + visualX,
-          -1.35,
+          arrow.position.y,
           camera.position.z + visualZ
         );
         arrow.lookAt(targetWorldPos);
@@ -181,7 +189,7 @@ export function SurfaceArrowLayer({
     return () => {
       cancelAnimationFrame(animFrameId);
     };
-  }, [userPosition, nearestTitik, cameraRef, isActive]);
+  }, [userPosition, nearestTitik, cameraRef, isActive, xrStatus, hitInfo]);
 
   return null;
 }

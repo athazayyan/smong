@@ -1,0 +1,18 @@
+{
+  "short_name": "MitigaKids",
+  "name": "MitigaKids - Belajar Hari Ini, Siaga Esok Hari",
+  "description": "Platform Pembelajaran Mitigasi Bencana Berbasis Sekolah",
+  "icons": [
+    {
+      "src": "/assets/logo-mitigakids.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/siswa",
+  "background_color": "#faf8f0",
+  "theme_color": "#2f176e",
+  "display": "standalone",
+  "orientation": "portrait"
+}

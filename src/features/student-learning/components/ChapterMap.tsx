@@ -10,9 +10,10 @@ import { ChapterNode } from "./ChapterNode";
 interface ChapterMapProps {
   chapters: ModuleChapter[];
   progress: ModuleProgress;
+  onChapterSelect?: (chapterId: string) => void;
 }
 
-export function ChapterMap({ chapters, progress }: ChapterMapProps) {
+export function ChapterMap({ chapters, progress, onChapterSelect }: ChapterMapProps) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
 
@@ -64,6 +65,7 @@ export function ChapterMap({ chapters, progress }: ChapterMapProps) {
               displayStatus={getChapterDisplayStatus(chapter, index, progress)}
               index={index}
               visual={getChapterMapVisual(chapter.kind)}
+              onClick={onChapterSelect}
             />
           ))}
         </div>

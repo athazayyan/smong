@@ -168,6 +168,17 @@ export function MitigaSeeArPage() {
   }, [userPosition, selectedTitik]);
 
   useEffect(() => {
+    if (isArActive) {
+      document.body.classList.add("gameplay-active");
+    } else {
+      document.body.classList.remove("gameplay-active");
+    }
+    return () => {
+      document.body.classList.remove("gameplay-active");
+    };
+  }, [isArActive]);
+
+  useEffect(() => {
     if (titikList.length > 0 && !selectedTitik) {
       setSelectedTitik(titikList[0]);
     }
@@ -564,11 +575,12 @@ export function MitigaSeeArPage() {
     <ErrorBoundary>
       <BrowserCompatCheck>
         <main
-          className="min-h-screen bg-cream-50 text-ink-900 font-sans pb-20 md:pb-10"
-          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+          className={`bg-cream-50 text-ink-900 font-sans ${isArActive ? "h-screen w-screen overflow-hidden p-0 m-0" : "min-h-screen pb-20 md:pb-10"}`}
+          style={isArActive ? {} : { paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         >
           {/* Header */}
-          <header className="sticky top-0 z-40 border-b border-purple-700/8 bg-cream-50/90 backdrop-blur-md">
+          {!isArActive && (
+            <header className="sticky top-0 z-40 border-b border-purple-700/8 bg-cream-50/90 backdrop-blur-md">
             <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2.5">
                 <Link
@@ -638,9 +650,10 @@ export function MitigaSeeArPage() {
               ))}
             </div>
           </header>
+          )}
 
           {/* Konten Halaman */}
-          <div className="mx-auto max-w-5xl px-4 py-6">
+          <div className={isArActive ? "w-full h-full" : "mx-auto max-w-5xl px-4 py-6"}>
             <AnimatePresence mode="wait">
               {/* TAB: MODE AR */}
               {activeTab === "ar" && (
@@ -781,7 +794,7 @@ export function MitigaSeeArPage() {
 
                   {/* KASUS B: LAYAR AR AKTIF (Kamera Navigation View) */}
                   {isArActive && (
-                    <div className="relative overflow-hidden rounded-[2rem] border border-purple-700/10 bg-purple-950 shadow-2xl w-full h-[65vh] min-h-[500px]">
+                    <div className="overflow-hidden bg-slate-950 shadow-[0_25px_60px_-15px_rgba(47,23,110,0.18)] md:relative md:w-full md:aspect-[4/3] md:rounded-[2rem] md:border-4 md:border-purple-900 fixed inset-0 z-[60] w-screen h-screen rounded-none border-0 flex flex-col justify-between">
                       
                       {/* Video Feed */}
                       <video
@@ -789,7 +802,7 @@ export function MitigaSeeArPage() {
                         playsInline
                         autoPlay
                         muted
-                        className="absolute inset-0 h-full w-full object-cover opacity-100 z-0"
+                        className={`absolute inset-0 h-full w-full object-cover z-0 ${xrStatus === "active" ? "opacity-0" : "opacity-100"}`}
                       />
 
                       {/* Canvas 2D untuk Bounding Box COCO-SSD */}
