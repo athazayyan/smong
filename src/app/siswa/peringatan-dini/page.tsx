@@ -15,7 +15,12 @@ import {
   RefreshCw,
   MapPin,
   ExternalLink,
-  Layers
+  Layers,
+  Clock,
+  Shield,
+  CloudLightning,
+  Eye,
+  Image as ImageIcon
 } from "lucide-react";
 
 type DisasterCategory = "gempa" | "tsunami" | "banjir" | "cuaca_ekstrem";
@@ -52,6 +57,21 @@ interface InariskService {
   type: string;
 }
 
+interface CuacaEkstremAlert {
+  id: string;
+  headline: string;
+  event: string;
+  severity: string;
+  urgency: string;
+  certainty: string;
+  effective: string;
+  expires: string;
+  description: string;
+  areaDesc: string;
+  infografis: string | null;
+  detailUrl: string;
+}
+
 export default function EarlyWarningPage() {
   const [activeCategory, setActiveCategory] = useState<DisasterCategory>("gempa");
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,6 +79,8 @@ export default function EarlyWarningPage() {
   const [inariskServices, setInariskServices] = useState<InariskService[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchSource, setFetchSource] = useState("");
+  const [cuacaEkstremAlerts, setCuacaEkstremAlerts] = useState<CuacaEkstremAlert[]>([]);
+  const [cuacaEkstremSource, setCuacaEkstremSource] = useState("");
   
   // Sub-tab selection for earthquake lists
   const [gempaSubTab, setGempaSubTab] = useState<"terbaru" | "dirasakan" | "m5">("terbaru");
@@ -82,6 +104,16 @@ export default function EarlyWarningPage() {
         const json = await inariskRes.json();
         if (json.success) {
           setInariskServices(json.services);
+        }
+      }
+
+      // 3. Fetch BMKG Cuaca Ekstrem (Nowcasting)
+      const cuacaRes = await fetch("/api/bmkg-cuaca-ekstrem");
+      if (cuacaRes.ok) {
+        const json = await cuacaRes.json();
+        if (json.success) {
+          setCuacaEkstremAlerts(json.alerts || []);
+          setCuacaEkstremSource(json.source || "");
         }
       }
     } catch (e) {
@@ -136,12 +168,44 @@ export default function EarlyWarningPage() {
       title: "Peringatan Genangan & Banjir Luap",
       description: "Potensi genangan air tinggi di kawasan dataran rendah sekitar bantaran sungai pesisir utara Jawa akibat hujan lebat.",
       level: "waspada"
-    },
-    cuaca_ekstrem: {
-      status: "siaga",
-      title: "Siklon Tropis & Angin Monsun",
-      description: "Hujan intensitas sedang-lebat disertai petir dan angin kencang berdurasi singkat di sebagian besar wilayah Sumatra bagian selatan dan barat.",
-      level: "siaga"
+    }
+  };
+
+  // Helper: severity badge styling
+  const getSeverityStyle = (severity: string) => {
+    switch (severity.toLowerCase()) {
+      case "extreme":
+        return { bg: "bg-red-50", border: "border-red-200", text: "text-red-950", badge: "bg-red-600 text-white border-red-700", dot: "bg-red-500", icon: "text-red-600" };
+      case "severe":
+        return { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-950", badge: "bg-orange-600 text-white border-orange-700", dot: "bg-orange-500", icon: "text-orange-600" };
+      case "moderate":
+        return { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-950", badge: "bg-amber-500 text-white border-amber-600", dot: "bg-amber-500", icon: "text-amber-600" };
+      default:
+        return { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-950", badge: "bg-yellow-500 text-white border-yellow-600", dot: "bg-yellow-500", icon: "text-yellow-600" };
+    }
+  };
+
+  // Helper: countdown text
+  const getCountdown = (expiresStr: string) => {
+    if (!expiresStr) return null;
+    const expires = new Date(expiresStr);
+    const now = new Date();
+    const diffMs = expires.getTime() - now.getTime();
+    if (diffMs <= 0) return "Sudah berakhir";
+    const hours = Math.floor(diffMs / 3_600_000);
+    const minutes = Math.floor((diffMs % 3_600_000) / 60_000);
+    if (hours > 0) return `Berakhir dalam ${hours} jam ${minutes} menit`;
+    return `Berakhir dalam ${minutes} menit`;
+  };
+
+  // Helper: format datetime to WIB display
+  const formatWIB = (isoStr: string) => {
+    if (!isoStr) return "-";
+    try {
+      const d = new Date(isoStr);
+      return d.toLocaleString("id-ID", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short", year: "numeric" }) + " WIB";
+    } catch {
+      return isoStr;
     }
   };
 
@@ -397,11 +461,137 @@ export default function EarlyWarningPage() {
               ) : (
                 <p className="text-xs font-semibold text-ink-700 text-center py-6">Pemantauan gempa tidak tersedia.</p>
               )
+            ) : activeCategory === "cuaca_ekstrem" ? (
+              // CUACA EKSTREM: Real-time BMKG Nowcasting alerts
+              <div className="flex flex-col gap-4">
+                {cuacaEkstremAlerts.length === 0 ? (
+                  // No active warnings — ALL SAFE
+                  <div className="p-6 rounded-2xl border bg-emerald-50 border-emerald-200 text-emerald-950">
+                    <div className="flex items-start gap-3">
+                      <span className="h-12 w-12 rounded-full bg-emerald-200 border border-emerald-300 text-emerald-700 flex items-center justify-center shrink-0">
+                        <Shield className="h-6 w-6" />
+                      </span>
+                      <div>
+                        <h4 className="font-heading text-base font-black uppercase tracking-wide">Tidak Ada Peringatan Aktif</h4>
+                        <p className="text-xs font-semibold mt-2 leading-relaxed">
+                          Saat ini tidak terdeteksi peringatan dini cuaca ekstrem di seluruh wilayah Indonesia. Tetap waspada dan pantau pembaruan berkala.
+                        </p>
+                        <span className="inline-block mt-2.5 px-2.5 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-900 border border-emerald-800 text-white">
+                          Status: Aman
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Active alerts
+                  <>
+                    {/* Alert count banner */}
+                    <div className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-orange-100 border border-orange-200">
+                      <CloudLightning className="h-4 w-4 text-orange-700 animate-pulse" />
+                      <span className="text-xs font-black text-orange-900">
+                        {cuacaEkstremAlerts.length} Peringatan Cuaca Aktif di Indonesia
+                      </span>
+                    </div>
+
+                    {/* Alert cards */}
+                    <div className="flex flex-col gap-3 max-h-[32rem] overflow-y-auto pr-1">
+                      {cuacaEkstremAlerts.map((alert) => {
+                        const sev = getSeverityStyle(alert.severity);
+                        const countdown = getCountdown(alert.expires);
+
+                        return (
+                          <div key={alert.id} className={`p-4 rounded-2xl border ${sev.bg} ${sev.border} ${sev.text}`}>
+                            {/* Header row */}
+                            <div className="flex items-start gap-3">
+                              <span className={`h-10 w-10 rounded-full border flex items-center justify-center shrink-0 ${sev.bg} ${sev.border} ${sev.icon}`}>
+                                <CloudLightning className="h-5 w-5" />
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h4 className="font-heading text-sm font-black leading-snug">{alert.headline}</h4>
+                                </div>
+                                <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+                                  <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase border ${sev.badge}`}>
+                                    {alert.severity || "Alert"}
+                                  </span>
+                                  {alert.urgency && (
+                                    <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-white/60 border border-current/10">
+                                      {alert.urgency}
+                                    </span>
+                                  )}
+                                  {alert.certainty && (
+                                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-white/40 border border-current/10 flex items-center gap-0.5">
+                                      <Eye className="h-2.5 w-2.5" />
+                                      {alert.certainty}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Time info */}
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              <div className="bg-white/50 rounded-lg px-3 py-2 border border-current/5">
+                                <span className="text-[9px] font-black uppercase tracking-wider block opacity-70">Mulai Berlaku</span>
+                                <span className="text-[10px] font-bold">{formatWIB(alert.effective)}</span>
+                              </div>
+                              <div className="bg-white/50 rounded-lg px-3 py-2 border border-current/5">
+                                <span className="text-[9px] font-black uppercase tracking-wider block opacity-70">Berakhir</span>
+                                <span className="text-[10px] font-bold">{formatWIB(alert.expires)}</span>
+                              </div>
+                            </div>
+
+                            {/* Countdown */}
+                            {countdown && (
+                              <div className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/40 border border-current/5">
+                                <Clock className="h-3 w-3 animate-pulse" />
+                                <span className="text-[10px] font-black">{countdown}</span>
+                              </div>
+                            )}
+
+                            {/* Region */}
+                            {alert.areaDesc && (
+                              <div className="mt-2 flex items-center gap-1.5">
+                                <MapPin className="h-3 w-3 opacity-60" />
+                                <span className="text-[10px] font-bold">Wilayah: {alert.areaDesc}</span>
+                              </div>
+                            )}
+
+                            {/* Description */}
+                            <p className="text-[11px] font-semibold mt-2.5 leading-relaxed opacity-90">
+                              {alert.description}
+                            </p>
+
+                            {/* Infografis link */}
+                            {alert.infografis && (
+                              <a
+                                href={alert.infografis}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-3 inline-flex items-center gap-1.5 bg-white/70 border border-current/10 hover:bg-white/90 px-3 py-1.5 rounded-full text-[10px] font-black shadow-sm transition"
+                              >
+                                <ImageIcon className="h-3 w-3" />
+                                Lihat Infografis BMKG
+                                <ExternalLink className="h-2.5 w-2.5" />
+                              </a>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+
+                <span className="text-[9px] font-bold text-ink-400 mt-2 text-right block leading-relaxed">
+                  Sumber: {cuacaEkstremSource || "BMKG Nowcasting CAP Alert"} • Badan Meteorologi, Klimatologi, dan Geofisika
+                </span>
+              </div>
             ) : (
-              // Other categories (Tsunami, Flood, Weather) mock warnings
+              // Other categories (Tsunami, Flood) mock warnings
               <div className="flex flex-col gap-4">
                 {(() => {
                   const alertData = mockAlerts[activeCategory as keyof typeof mockAlerts];
+                  if (!alertData) return null;
                   const isAman = alertData.level === "aman";
                   
                   return (
