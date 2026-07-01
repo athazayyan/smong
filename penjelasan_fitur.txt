@@ -1,0 +1,38 @@
+# PENJELASAN FITUR PLATFORM MITIGAKIDS
+
+Platform MitigaKids adalah platform edukasi kebencanaan berbasis web interaktif yang dirancang khusus untuk siswa (SD - SMA). Platform ini membantu siswa mempelajari langkah-langkah mitigasi bencana secara gamified (menyenangkan) dan aplikatif. Berikut adalah penjelasan untuk setiap fitur utama di dalam website:
+
+1. BERANDA / DASHBOARD SISWA (Akses via Logo MitigaKids)
+Merupakan halaman pusat kendali siswa. Di sini, siswa dapat memantau ringkasan perkembangan belajar mereka, meliputi:
+- Sistem Gamifikasi: Level, Poin Pengalaman (XP), dan Streak (rutinitas belajar harian).
+- Misi Harian (Daily Mission): Tugas rutin yang dapat diselesaikan untuk mendapatkan reward tambahan.
+- Sinkronisasi Sekolah: Status integrasi kelas dengan akun guru menggunakan Kode Sekolah.
+
+2. MITIGASEE (Augmented Reality & AI)
+Fitur andalan berbasis Web-AR (Augmented Reality di browser) yang membantu siswa memvisualisasikan arah dan mencari titik kumpul serta rute evakuasi di dunia nyata secara mandiri untuk kecakapan spatial. MitigaSee menjalankan 3 lapisan teknologi canggih secara bersamaan:
+- Beacon GPS Layer: Memetakan dan menampilkan pin/titik kumpul evakuasi terdekat menggunakan koordinat GPS (Three.js).
+- Surface AR Arrow Layer: Memproyeksikan panah 3D penunjuk jalan yang menempel pada permukaan jalan/lantai di dunia nyata menggunakan WebXR (khusus perangkat Android ber-ARCore).
+- Object Detection Layer (AI): Mendeteksi objek berbahaya/berisiko di sekitar siswa secara real-time melalui kamera menggunakan teknologi AI (TensorFlow.js / COCO-SSD).
+Siswa juga dapat menambah atau mendaftarkan titik kumpul baru dengan foto dan koordinat GPS.
+
+3. MITIGALEARN (Modul Pembelajaran)
+Fitur modul teori kebencanaan (seperti Gempa Bumi, Tsunami, Banjir, dan juga kebencanaan dengan unser budaya  seperti smong, larak, dll) yang didesain secara visual menggunakan sistem peta perjalanan (learning path) bergaya Duolingo. Fitur ini mencakup:
+- Materi teori mitigasi yang disesuaikan dengan tingkat sekolah siswa.
+- Kuis Pre-test dan Post-test untuk mengevaluasi pemahaman siswa sebelum dan sesudah mengambil modul.
+- Materi disajikan dengan cerita, animasi ringan, dan langkah aman yang tidak membosankan, multimodal learning. 
+
+4. MITIGALAB (Simulasi Bencana & Praktikum)
+Laboratorium virtual di mana siswa dapat melakukan praktikum atau simulasi bencana, bentuk paramter bencana,dan  evakuasi digital. Dalam fitur ini, siswa diajak mempraktikkan teori dengan mengambil keputusan-keputusan kritis pada berbagai skenario kondisi (pra-bencana, saat bencana, pasca-bencana).
+
+5. MITIGAMES (Permainan Edukatif)
+Pusat permainan yang melatih respons kognitif dan fisik (motorik) siswa dalam menghadapi bencana. Fitur ini meliputi:
+- Board Game (Papan Permainan): Permainan strategi digital dengan sistem skor/kompetisi ringan.
+- Motion Game: Game interaktif berbasis sensor gerak (kamera). Siswa harus memperagakan langsung langkah mitigasi secara fisik, misalnya merunduk, berlindung, dan berpegangan ("Drop, Cover, Hold on") yang kemudian dideteksi dan dinilai oleh sistem kamera.
+
+6. SIAGA BMKG (Peringatan Dini)
+Sistem kewaspadaan real-time yang terintegrasi langsung dengan API data peringatan cuaca dari BMKG dan InaRISK. Fitur ini:
+- Menampilkan peringatan dini, laporan potensi gempa/tsunami, dan cuaca ekstrem secara aktual (live).
+- Memberikan panduan aksi cepat otomatis (Action Guide) yang muncul berdasarkan status siaga bencana terdekat di area siswa.
+
+7. PROFIL & PENGHARGAAN (BADGE)
+Sistem profil untuk merangkum identitas, koleksi Badges (lencana) pencapaian yang diperoleh dari Lab/Learn, dan progres keseluruhan siswa agar mereka termotivasi menuntaskan seluruh rute pembelajaran mitigasi.

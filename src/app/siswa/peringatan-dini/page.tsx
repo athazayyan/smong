@@ -191,7 +191,7 @@ export default function EarlyWarningPage() {
         <div>
           <h1 className="font-heading text-3xl font-black text-purple-900 leading-tight flex items-center gap-2">
             <Bell className="h-7 w-7 text-purple-700 animate-pulse" />
-            Siaga BMKG & Pusat Peringatan Dini
+            Siaga BMKG & Pusat Informasi Bencana
           </h1>
           <p className="text-sm font-semibold text-ink-700 leading-relaxed">
             Pantau status kebencanaan real-time dan pelajari langkah perlindungan diri yang tepat.
